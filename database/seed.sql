@@ -1,0 +1,145 @@
+-- Synthetic company seed data. No real companies or contacts are represented.
+
+insert into public.companies (
+    id,
+    name,
+    website,
+    industry,
+    employee_count,
+    annual_revenue_usd,
+    headquarters_city,
+    headquarters_country,
+    lifecycle_stage,
+    fit_score
+) values
+    (
+        '10000000-0000-4000-8000-000000000001',
+        'Northstar Robotics Labs',
+        'https://northstar-robotics.example',
+        'Manufacturing Technology',
+        420,
+        48000000.00,
+        'Austin',
+        'United States',
+        'qualified',
+        84
+    ),
+    (
+        '10000000-0000-4000-8000-000000000002',
+        'Blue Harbor Finance',
+        'https://blueharbor-finance.example',
+        'Financial Services',
+        260,
+        73000000.00,
+        'Boston',
+        'United States',
+        'prospect',
+        78
+    ),
+    (
+        '10000000-0000-4000-8000-000000000003',
+        'Greenfield Health Systems',
+        'https://greenfield-health.example',
+        'Healthcare',
+        850,
+        126000000.00,
+        'Denver',
+        'United States',
+        'qualified',
+        91
+    ),
+    (
+        '10000000-0000-4000-8000-000000000004',
+        'Atlas Grid Utilities',
+        'https://atlas-grid.example',
+        'Energy',
+        620,
+        98000000.00,
+        'Phoenix',
+        'United States',
+        'prospect',
+        73
+    ),
+    (
+        '10000000-0000-4000-8000-000000000005',
+        'Silverline Retail Group',
+        'https://silverline-retail.example',
+        'Retail',
+        310,
+        54000000.00,
+        'Chicago',
+        'United States',
+        'prospect',
+        69
+    ),
+    (
+        '10000000-0000-4000-8000-000000000006',
+        'Cobalt Cloud Services',
+        'https://cobalt-cloud.example',
+        'Cloud Services',
+        145,
+        29000000.00,
+        'Seattle',
+        'United States',
+        'qualified',
+        88
+    ),
+    (
+        '10000000-0000-4000-8000-000000000007',
+        'Pioneer Logistics Network',
+        'https://pioneer-logistics.example',
+        'Logistics',
+        530,
+        67000000.00,
+        'Atlanta',
+        'United States',
+        'prospect',
+        76
+    ),
+    (
+        '10000000-0000-4000-8000-000000000008',
+        'Summit Legal Partners',
+        'https://summit-legal.example',
+        'Legal Services',
+        95,
+        18000000.00,
+        'New York',
+        'United States',
+        'prospect',
+        63
+    ),
+    (
+        '10000000-0000-4000-8000-000000000009',
+        'Meridian BioMaterials',
+        'https://meridian-biomaterials.example',
+        'Biotechnology',
+        210,
+        41000000.00,
+        'San Diego',
+        'United States',
+        'qualified',
+        86
+    ),
+    (
+        '10000000-0000-4000-8000-000000000010',
+        'Vector Learning Platforms',
+        'https://vector-learning.example',
+        'Education Technology',
+        180,
+        22000000.00,
+        'Raleigh',
+        'United States',
+        'prospect',
+        71
+    )
+on conflict (id) do update set
+    name = excluded.name,
+    website = excluded.website,
+    industry = excluded.industry,
+    employee_count = excluded.employee_count,
+    annual_revenue_usd = excluded.annual_revenue_usd,
+    headquarters_city = excluded.headquarters_city,
+    headquarters_country = excluded.headquarters_country,
+    lifecycle_stage = excluded.lifecycle_stage,
+    fit_score = excluded.fit_score,
+    updated_at = now();

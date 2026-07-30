@@ -136,11 +136,13 @@ Implemented:
 - Basic backend health test.
 - Ruff and pytest configuration.
 - Backend CI workflow.
+- Week 1 Day 2 Supabase migration for `profiles`, `companies`, and `contacts`.
+- First RLS policy set for the project roles from the brief.
+- Synthetic seed data with 10 fictional companies and fictional contacts.
 
 Next:
 
-- Supabase schema v1 for profiles, companies, and contacts.
-- Initial RLS policies and seed data.
+- Apply and manually test Supabase schema v1, RLS allow/deny behavior, and seed data.
 - Backend configuration, structured logging, and auth verification.
 - Company/contact API contract and endpoints.
 - Next.js app shell and protected login flow.

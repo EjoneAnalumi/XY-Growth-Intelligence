@@ -13,17 +13,19 @@ The goal is to build a secure internal platform that helps XY CYBER manage prosp
 
 ## Current Status
 
-This repository currently contains the initial monorepo foundation only:
+This repository currently contains the initial monorepo foundation plus the Week 1 Day 2 database baseline:
 
 - Minimal FastAPI backend with `GET /health`
 - Basic pytest coverage for the health endpoint
 - Placeholder frontend directory structure
-- Database migration, policy, and seed directories
+- Supabase migration for `profiles`, `companies`, and `contacts`, applied to the live Supabase project via the Supabase CLI (`supabase db push`)
+- First RLS policies using the brief roles: Admin, Management, Business Development, Technical Analyst, and Read Only
+- Synthetic seed data with 10 fictional companies and fictional contacts, applied via the Supabase CLI (`supabase db query --file supabase/seed.sql --linked`)
 - Project documentation placeholders
 - Docker Compose and environment template placeholders
 - CI placeholder for backend lint and tests
 
-The full product workflow is still TODO. Do not start optional AI summaries, advanced charts, public deployment, or live third-party scanning until the required MVP flow works end to end.
+The full Week 1 vertical slice is still TODO because Supabase auth integration, company/contact APIs, and the Next.js login/company/contact screens are not implemented yet. Do not start optional AI summaries, advanced charts, public deployment, or live third-party scanning until the required MVP flow works end to end.
 
 ## Local Setup Placeholder
 
@@ -31,8 +33,8 @@ Prerequisites:
 
 - Python 3.12
 - Node.js LTS
-- Docker Desktop
-- Supabase CLI, when database work begins
+- Docker Desktop (optional; only needed for local Supabase development via `supabase start`, not required for the current CLI workflow against the remote project)
+- Supabase CLI (`npm install -g supabase`), already installed, logged in, and linked to the project via `supabase link --project-ref <project-ref>`
 
 Backend skeleton check:
 
@@ -78,7 +80,7 @@ A user must be able to log in, create a company, add a contact, and see the data
 
 Until this works, prioritize:
 
-1. Supabase schema, migrations, seed data, and first RLS policies.
+1. Apply and manually test the Supabase schema, seed data, and first RLS policies.
 2. FastAPI config, health endpoint, auth verification, and company/contact APIs.
 3. Next.js app shell, login, protected routes, and company/contact list/forms.
 4. Integration evidence, tests, and documentation.

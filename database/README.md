@@ -1,27 +1,28 @@
-# Database
+## Apply to Supabase (via CLI)
 
-Supabase PostgreSQL database files live here.
+This project uses the Supabase CLI to apply migrations and seed data, not `psql` directly.
 
-## Directories
+Prerequisites: Supabase CLI installed (`npm install -g supabase`), logged in (`supabase login`), and the project linked (`supabase link --project-ref <your-project-ref>`).
 
-- `migrations`: SQL migrations tracked in Git.
-- `policies`: Row Level Security policy notes and test evidence.
-- `seed`: Synthetic seed data and seed scripts.
+Apply schema migrations to the remote (cloud) database:
 
-## Rules
+```bash
+supabase db push
+```
 
-- Use UUID primary keys.
-- Include `created_at` and `updated_at` timestamps.
-- Include `created_by` and `updated_by` where meaningful.
-- Use soft delete fields such as `archived_at` or `deleted_at` for business records where practical.
-- Add indexes for foreign keys and common dashboard filters.
-- Enable and test RLS for sensitive business tables.
-- Use synthetic data only.
-- Do not store real customer, prospect, or personal data.
+Apply seed data to the remote database:
 
-## Week 1 TODO
+```bash
+supabase db query --file supabase/seed.sql --linked
+```
 
-- Create migrations for `profiles`, `companies`, and `contacts`.
-- Add 10 synthetic companies and related contacts.
-- Add first RLS allow/deny policies.
-- Document how to apply migrations and seed data.
+For local development with Docker (optional):
+
+```bash
+supabase start
+supabase db reset
+```
+
+Note: `supabase/migrations/` and `supabase/seed.sql` (used by the Supabase CLI) are the operational source of truth. `database/migrations/` and `database/seed.sql` are kept as a readable reference copy for documentation purposes.
+
+Do not run seed scripts against a production database. The internship project uses synthetic data only.

@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 
 from app.core.auth import get_current_user, require_roles
 from app.schemas.companies import CompanyCreate, CompanyListResponse, CompanyResponse
@@ -19,9 +19,14 @@ Repository = Annotated[InMemoryGrowthRepository, Depends(get_growth_repository)]
 
 
 @router.get("", response_model=CompanyListResponse)
-def list_companies(repository: Repository, current_user: ReaderUser) -> CompanyListResponse:
-    companies = repository.list_companies()
-    return CompanyListResponse(items=companies, total=len(companies))
+def list_companies(
+    repository: Repository,
+    current_user: ReaderUser,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> CompanyListResponse:
+    companies = repository.list_companies(limit=limit, offset=offset)
+    return CompanyListResponse(items=companies, total=repository.count_companies())
 
 
 @router.post(

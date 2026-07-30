@@ -51,6 +51,24 @@ def test_create_company_rejects_read_only_role() -> None:
     assert response.status_code == 403
 
 
+def test_list_companies_supports_pagination() -> None:
+    for name in ["Northstar Robotics Labs", "Blue Harbor Finance"]:
+        client.post("/companies", headers=writer_headers, json={"name": name})
+
+    response = client.get("/companies?limit=1&offset=1", headers=writer_headers)
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 2
+    assert len(response.json()["items"]) == 1
+    assert response.json()["items"][0]["name"] == "Blue Harbor Finance"
+
+
+def test_list_companies_rejects_invalid_pagination() -> None:
+    response = client.get("/companies?limit=0", headers=writer_headers)
+
+    assert response.status_code == 422
+
+
 def test_get_company_returns_not_found() -> None:
     response = client.get(
         "/companies/10000000-0000-4000-8000-000000000001",
@@ -136,3 +154,41 @@ def test_create_contact_rejects_read_only_role() -> None:
     )
 
     assert response.status_code == 403
+
+
+def test_list_contacts_supports_company_filter_and_pagination() -> None:
+    first_company = client.post(
+        "/companies",
+        headers=writer_headers,
+        json={"name": "Northstar Robotics Labs"},
+    ).json()
+    second_company = client.post(
+        "/companies",
+        headers=writer_headers,
+        json={"name": "Blue Harbor Finance"},
+    ).json()
+
+    for first_name, company_id in [
+        ("Mira", first_company["id"]),
+        ("Jon", first_company["id"]),
+        ("Elena", second_company["id"]),
+    ]:
+        client.post(
+            "/contacts",
+            headers=writer_headers,
+            json={
+                "company_id": company_id,
+                "first_name": first_name,
+                "last_name": "Demo",
+            },
+        )
+
+    response = client.get(
+        f"/contacts?company_id={first_company['id']}&limit=1&offset=1",
+        headers=writer_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 2
+    assert len(response.json()["items"]) == 1
+    assert response.json()["items"][0]["first_name"] == "Jon"

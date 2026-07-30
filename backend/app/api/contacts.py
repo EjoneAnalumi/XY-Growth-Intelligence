@@ -23,9 +23,12 @@ def list_contacts(
     repository: Repository,
     current_user: ReaderUser,
     company_id: Annotated[UUID | None, Query()] = None,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
 ) -> ContactListResponse:
-    contacts = repository.list_contacts(company_id)
-    return ContactListResponse(items=contacts, total=len(contacts))
+    contacts = repository.list_contacts(company_id=company_id, limit=limit, offset=offset)
+    total = repository.count_contacts(company_id=company_id)
+    return ContactListResponse(items=contacts, total=total)
 
 
 @router.post(

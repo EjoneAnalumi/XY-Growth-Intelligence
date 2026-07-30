@@ -15,8 +15,12 @@ class InMemoryGrowthRepository:
         self._companies.clear()
         self._contacts.clear()
 
-    def list_companies(self) -> list[CompanyResponse]:
-        return list(self._companies.values())
+    def list_companies(self, limit: int, offset: int) -> list[CompanyResponse]:
+        companies = list(self._companies.values())
+        return companies[offset : offset + limit]
+
+    def count_companies(self) -> int:
+        return len(self._companies)
 
     def create_company(self, payload: CompanyCreate, current_user: CurrentUser) -> CompanyResponse:
         now = datetime.now(UTC)
@@ -36,13 +40,24 @@ class InMemoryGrowthRepository:
     def get_company(self, company_id: UUID) -> CompanyResponse | None:
         return self._companies.get(company_id)
 
-    def list_contacts(self, company_id: UUID | None = None) -> list[ContactResponse]:
+    def list_contacts(
+        self,
+        company_id: UUID | None,
+        limit: int,
+        offset: int,
+    ) -> list[ContactResponse]:
         contacts = list(self._contacts.values())
 
-        if company_id is None:
-            return contacts
+        if company_id is not None:
+            contacts = [contact for contact in contacts if contact.company_id == company_id]
 
-        return [contact for contact in contacts if contact.company_id == company_id]
+        return contacts[offset : offset + limit]
+
+    def count_contacts(self, company_id: UUID | None) -> int:
+        if company_id is None:
+            return len(self._contacts)
+
+        return sum(1 for contact in self._contacts.values() if contact.company_id == company_id)
 
     def create_contact(
         self,

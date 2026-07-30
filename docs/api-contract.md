@@ -57,7 +57,7 @@ Local development demo tokens:
 ### Companies
 
 ```http
-GET /companies
+GET /companies?limit=50&offset=0
 Authorization: Bearer dev-business-development
 ```
 
@@ -113,14 +113,14 @@ Not found response:
 ### Contacts
 
 ```http
-GET /contacts
+GET /contacts?limit=50&offset=0
 Authorization: Bearer dev-business-development
 ```
 
 Optional query:
 
 ```http
-GET /contacts?company_id={company_id}
+GET /contacts?company_id={company_id}&limit=50&offset=0
 ```
 
 ```http

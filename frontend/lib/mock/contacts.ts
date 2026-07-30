@@ -7,6 +7,7 @@ export type Contact = {
   role: string;
 };
 
+
 export const contacts: Contact[] = [
   {
     id: "1",
@@ -23,5 +24,13 @@ export const contacts: Contact[] = [
     lastName: "Brown",
     email: "anna@abcfinance.com",
     role: "Manager",
+  },
+  {
+    id: "3",
+    companyId: "3",
+    firstName: "David",
+    lastName: "Wilson",
+    email: "david@techcorp.com",
+    role: "Security Analyst",
   },
 ];

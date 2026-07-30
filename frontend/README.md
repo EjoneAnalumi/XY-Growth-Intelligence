@@ -1,8 +1,6 @@
 # Frontend
 
-Next.js has not been initialized yet.
-
-This directory is intentionally a placeholder until frontend foundation work begins.
+Next.js frontend for the XY CYBER Growth Intelligence MVP.
 
 ## Required Stack
 
@@ -12,15 +10,40 @@ This directory is intentionally a placeholder until frontend foundation work beg
 - shadcn/ui
 - Chart library for dashboard views
 
-## Required Week 1 Work
+## Current Implementation
 
-- Initialize Next.js app.
-- Add responsive app shell.
+- App Router structure.
+- Design tokens in `app/globals.css` and `tailwind.config.ts`.
+- Login page at `/login`.
+- Protected app shell for authenticated routes.
+- Responsive navigation for desktop and mobile.
+- Placeholder protected pages for dashboard, companies, and contacts.
+- Local mock session helper until Supabase Auth is ready.
+
+## Run Locally
+
+PowerShell blocks the `npm.ps1` shim on some Windows machines. Use `npm.cmd`.
+
+```bash
+npm.cmd install
+npm.cmd run dev
+```
+
+Open:
+
+```text
+http://localhost:3000/login
+```
+
+Use the prefilled demo login form. It stores a local mock session only.
+
+## Required Week 1 Work Still Pending
+
 - Add Supabase client setup.
-- Add login page.
-- Add protected route behavior.
 - Add company/contact list and forms.
 - Handle loading, empty, validation, permission, server-error, and success states.
+- Integrate with backend company/contact APIs.
+- Replace mock auth with Supabase Auth.
 
 ## Important Boundary
 

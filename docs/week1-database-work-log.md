@@ -15,7 +15,7 @@ The Week 1 database work needed to cover:
 - Basic allow/deny policies.
 - `read_only` users blocked from inserts and updates.
 - Indexes for company and contact lookups.
-- Seed data with 10 fake companies.
+- Seed data with at least 10 fake companies.
 - Fake contacts only.
 - No real secrets or real data.
 - A short document explaining RLS behavior.
@@ -43,7 +43,7 @@ The Week 1 database work needed to cover:
 
 ### 1. Real Project Roles Added
 
-File: `database/migrations/001_initial_schema.sql`
+File: `database/migrations/20260729000001_initial_schema.sql`
 
 `profiles.role` now defaults to `read_only` and accepts only:
 
@@ -59,7 +59,7 @@ The schema now matches the boss brief exactly. We no longer use the generic `mem
 
 ### 2. Read Only Users Cannot Write
 
-File: `database/migrations/001_initial_schema.sql`
+File: `database/migrations/20260729000001_initial_schema.sql`
 
 Company and contact write policies now require:
 
@@ -75,7 +75,7 @@ This fixes the biggest security issue. A `read_only` user can read active record
 
 ### 3. Technical Analyst Is Read-Only For Week 1 CRM Tables
 
-File: `database/migrations/001_initial_schema.sql`
+File: `database/migrations/20260729000001_initial_schema.sql`
 
 `technical_analyst` is included as a valid role, but it is not included in the Week 1 CRM writer roles.
 
@@ -85,7 +85,7 @@ The technical analyst role will matter more for later Risk Snapshot work. For We
 
 ### 4. Profile Privilege Escalation Blocked
 
-File: `database/migrations/001_initial_schema.sql`
+File: `database/migrations/20260729000001_initial_schema.sql`
 
 Added `prevent_profile_privilege_escalation()` trigger.
 
@@ -101,7 +101,7 @@ Without this, a user might be able to update their own profile into a stronger r
 
 ### 5. Company Fields Expanded For Schema V1
 
-File: `database/migrations/001_initial_schema.sql`
+File: `database/migrations/20260729000001_initial_schema.sql`
 
 Added fields aligned with the brief:
 
@@ -125,7 +125,7 @@ This keeps Week 1 focused, but avoids a schema that is too small for the require
 
 ### 6. Contact Fields Expanded For Schema V1
 
-File: `database/migrations/001_initial_schema.sql`
+File: `database/migrations/20260729000001_initial_schema.sql`
 
 Added fields aligned with the brief:
 
@@ -143,7 +143,7 @@ Contacts need enough structure for buyer/champion/influencer/procurement trackin
 
 ### 7. Updated Timestamp Function Hardened
 
-File: `database/migrations/001_initial_schema.sql`
+File: `database/migrations/20260729000001_initial_schema.sql`
 
 `set_updated_at()` now includes:
 
@@ -157,7 +157,7 @@ This is a small hardening step for database functions.
 
 ### 8. Explicit Grants Added
 
-File: `database/migrations/001_initial_schema.sql`
+File: `database/migrations/20260729000001_initial_schema.sql`
 
 Added:
 
@@ -175,7 +175,7 @@ Supabase needs privileges and RLS policies. Grants allow PostgREST to attempt th
 
 ### 9. Indexes Added For Lookups
 
-File: `database/migrations/001_initial_schema.sql`
+File: `database/migrations/20260729000001_initial_schema.sql`
 
 Indexes now cover common lookups and filters:
 
@@ -199,18 +199,18 @@ The brief requires indexes for foreign keys and common dashboard/search filters.
 
 ### 10. Seed Data Expanded
 
-File: `database/seed.sql`
+File: `database/seed/seed.sql`
 
 Seed now creates:
 
-- 10 fictional companies
-- 12 fictional contacts
+- 30 fictional companies
+- 50 fictional contacts
 - reserved `.example` domains
 - fake `+1-555-01xx` phone numbers
 
 Reason:
 
-The Day 2 checklist requires 10 fake companies and fake contacts only.
+The Day 2 checklist requires at least 10 fake companies and fake contacts only. This seed file already exceeds that minimum and supports later demo/dashboard work.
 
 ### 11. RLS Documentation Added
 
@@ -253,7 +253,7 @@ The brief requires decisions and implementation status to be documented. The doc
 - Basic allow/deny policies exist: done.
 - `read_only` cannot insert/update records: done.
 - Indexes exist for company/contact lookups: done.
-- Seed creates 10 fake companies: done.
+- Seed creates at least 10 fake companies: done. Current file creates 30.
 - Seed uses fake contacts only: done.
 - No real secrets or real data: checked.
 - Short RLS doc exists: done.

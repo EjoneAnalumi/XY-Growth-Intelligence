@@ -18,9 +18,9 @@ This repository currently contains the initial monorepo foundation plus the Week
 - Minimal FastAPI backend with `GET /health`
 - Basic pytest coverage for the health endpoint
 - Placeholder frontend directory structure
-- Supabase migration for `profiles`, `companies`, and `contacts`, applied to the live Supabase project via the Supabase CLI (`supabase db push`)
+- Supabase migration for `profiles`, `companies`, and `contacts`, ready to apply through the local Supabase CLI workflow (`supabase start` and `supabase db reset`)
 - First RLS policies using the brief roles: Admin, Management, Business Development, Technical Analyst, and Read Only
-- Synthetic seed data with 10 fictional companies and fictional contacts, applied via the Supabase CLI (`supabase db query --file supabase/seed.sql --linked`)
+- Synthetic seed data with 30 fictional companies and 50 fictional contacts, configured for local Supabase reset through `database/seed/seed.sql`
 - Project documentation placeholders
 - Docker Compose and environment template placeholders
 - CI placeholder for backend lint and tests
@@ -33,8 +33,8 @@ Prerequisites:
 
 - Python 3.12
 - Node.js LTS
-- Docker Desktop (optional; only needed for local Supabase development via `supabase start`, not required for the current CLI workflow against the remote project)
-- Supabase CLI (`npm install -g supabase`), already installed, logged in, and linked to the project via `supabase link --project-ref <project-ref>`
+- Docker Desktop for the local Supabase stack
+- Supabase CLI (`npm install -g supabase`)
 
 Backend skeleton check:
 
@@ -60,6 +60,17 @@ docker compose up --build
 ```
 
 The frontend service is intentionally not wired yet because Next.js has not been initialized.
+
+Local Supabase schema and seed check:
+
+```bash
+supabase start
+supabase db reset
+```
+
+`supabase/config.toml` applies migrations from `database/migrations/**/*.sql` and seed data from `database/seed/seed.sql`.
+
+Remote or hosted Supabase changes are not the default Week 1 path. Treat remote database pushes as a coordinated decision and use only approved synthetic data.
 
 ## Security Rules
 

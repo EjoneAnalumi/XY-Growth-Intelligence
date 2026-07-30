@@ -79,6 +79,6 @@ Red examples include public deployment, real customer data, paid services, disab
 - Options considered: Keep `admin/member`; use the five roles from the brief.
 - Decision: Use `admin`, `management`, `business_development`, `technical_analyst`, and `read_only` in `profiles.role`.
 - Reason: The brief explicitly requires those roles and Read Only users must not be able to create or update business records.
-- Affected files or APIs: `database/migrations/001_initial_schema.sql`, `database/policies/week1-rls.md`.
+- Affected files or APIs: `database/migrations/20260729000001_initial_schema.sql`, `database/policies/week1-rls.md`.
 - Rollback approach: Replace role constraint and RLS helper checks in a follow-up migration if the supervisor changes the role model.
 - Supervisor approval required: No

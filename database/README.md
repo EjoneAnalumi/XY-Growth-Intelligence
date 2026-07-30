@@ -1,28 +1,46 @@
-## Apply to Supabase (via CLI)
+# Database
 
-This project uses the Supabase CLI to apply migrations and seed data, not `psql` directly.
+This project uses Supabase PostgreSQL with tracked migrations, seed data, and Row Level Security.
 
-Prerequisites: Supabase CLI installed (`npm install -g supabase`), logged in (`supabase login`), and the project linked (`supabase link --project-ref <your-project-ref>`).
+## Local First Workflow
 
-Apply schema migrations to the remote (cloud) database:
+The project brief says local Docker development comes first. Use the local Supabase stack for Week 1 verification.
 
-```bash
-supabase db push
-```
+Prerequisites:
 
-Apply seed data to the remote database:
+- Docker Desktop
+- Supabase CLI
 
-```bash
-supabase db query --file supabase/seed.sql --linked
-```
-
-For local development with Docker (optional):
+Run from the repository root:
 
 ```bash
 supabase start
 supabase db reset
 ```
 
-Note: `supabase/migrations/` and `supabase/seed.sql` (used by the Supabase CLI) are the operational source of truth. `database/migrations/` and `database/seed.sql` are kept as a readable reference copy for documentation purposes.
+`supabase db reset` uses `supabase/config.toml` and applies:
+
+- migrations from `database/migrations/**/*.sql`
+- seed data from `database/seed/seed.sql`
+
+## Remote Supabase
+
+Remote or hosted Supabase changes are not the default Week 1 path. Use them only after team coordination and approval, with synthetic data only.
+
+If a disposable approved remote project is used later, document that decision first and verify the exact commands before running them.
+
+## Current Week 1 Files
+
+- `database/migrations/20260729000001_initial_schema.sql`
+- `database/seed/seed.sql`
+- `database/policies/week1-rls.md`
+- `database/policies/week1-rls-test-plan.md`
+
+## Current Seed Data
+
+- 30 fictional companies
+- 50 fictional contacts
+- reserved `.example` domains
+- fake `+1-555-01xx` phone numbers
 
 Do not run seed scripts against a production database. The internship project uses synthetic data only.

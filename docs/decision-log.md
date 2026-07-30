@@ -68,3 +68,17 @@ Red examples include public deployment, real customer data, paid services, disab
 - Affected files or APIs: `.gitignore`, `README.md`, `LOCAL_WORK_LOG.md`.
 - Rollback approach: Remove local log and rely only on shared docs if the team wants all notes public.
 - Supervisor approval required: No
+
+### 2026-07-29 - Use Brief Roles For Week 1 RLS
+
+- Date: 2026-07-29
+- Decision owner: Backend and Data Owner
+- Decision level: Green
+- Status: Accepted
+- Problem: The first database draft used generic `admin` and `member` roles, which did not match the project brief and made RLS too permissive.
+- Options considered: Keep `admin/member`; use the five roles from the brief.
+- Decision: Use `admin`, `management`, `business_development`, `technical_analyst`, and `read_only` in `profiles.role`.
+- Reason: The brief explicitly requires those roles and Read Only users must not be able to create or update business records.
+- Affected files or APIs: `database/migrations/20260729000001_initial_schema.sql`, `database/policies/week1-rls.md`.
+- Rollback approach: Replace role constraint and RLS helper checks in a follow-up migration if the supervisor changes the role model.
+- Supervisor approval required: No

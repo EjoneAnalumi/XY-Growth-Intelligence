@@ -13,17 +13,19 @@ The goal is to build a secure internal platform that helps XY CYBER manage prosp
 
 ## Current Status
 
-This repository currently contains the initial monorepo foundation only:
+This repository currently contains the initial monorepo foundation plus the Week 1 Day 2 database baseline:
 
 - Minimal FastAPI backend with `GET /health`
 - Basic pytest coverage for the health endpoint
 - Placeholder frontend directory structure
-- Database migration, policy, and seed directories
+- Supabase migration for `profiles`, `companies`, and `contacts`, ready to apply through the local Supabase CLI workflow (`supabase start` and `supabase db reset`)
+- First RLS policies using the brief roles: Admin, Management, Business Development, Technical Analyst, and Read Only
+- Synthetic seed data with 30 fictional companies and 50 fictional contacts, configured for local Supabase reset through `database/seed/seed.sql`
 - Project documentation placeholders
 - Docker Compose and environment template placeholders
 - CI placeholder for backend lint and tests
 
-The full product workflow is still TODO. Do not start optional AI summaries, advanced charts, public deployment, or live third-party scanning until the required MVP flow works end to end.
+The full Week 1 vertical slice is still TODO because Supabase auth integration, company/contact APIs, and the Next.js login/company/contact screens are not implemented yet. Do not start optional AI summaries, advanced charts, public deployment, or live third-party scanning until the required MVP flow works end to end.
 
 ## Local Setup Placeholder
 
@@ -31,8 +33,8 @@ Prerequisites:
 
 - Python 3.12
 - Node.js LTS
-- Docker Desktop
-- Supabase CLI, when database work begins
+- Docker Desktop for the local Supabase stack
+- Supabase CLI (`npm install -g supabase`)
 
 Backend skeleton check:
 
@@ -59,6 +61,17 @@ docker compose up --build
 
 The frontend service is intentionally not wired yet because Next.js has not been initialized.
 
+Local Supabase schema and seed check:
+
+```bash
+supabase start
+supabase db reset
+```
+
+`supabase/config.toml` applies migrations from `database/migrations/**/*.sql` and seed data from `database/seed/seed.sql`.
+
+Remote or hosted Supabase changes are not the default Week 1 path. Treat remote database pushes as a coordinated decision and use only approved synthetic data.
+
 ## Security Rules
 
 - Use synthetic data only.
@@ -78,7 +91,7 @@ A user must be able to log in, create a company, add a contact, and see the data
 
 Until this works, prioritize:
 
-1. Supabase schema, migrations, seed data, and first RLS policies.
+1. Apply and manually test the Supabase schema, seed data, and first RLS policies.
 2. FastAPI config, health endpoint, auth verification, and company/contact APIs.
 3. Next.js app shell, login, protected routes, and company/contact list/forms.
 4. Integration evidence, tests, and documentation.

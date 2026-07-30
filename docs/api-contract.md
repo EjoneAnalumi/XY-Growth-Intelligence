@@ -54,6 +54,117 @@ Local development demo tokens:
 - `dev-technical-analyst`
 - `dev-read-only`
 
+### Companies
+
+```http
+GET /companies
+Authorization: Bearer dev-business-development
+```
+
+Response:
+
+```json
+{
+  "items": [],
+  "total": 0
+}
+```
+
+```http
+POST /companies
+Authorization: Bearer dev-business-development
+Content-Type: application/json
+```
+
+Valid request:
+
+```json
+{
+  "name": "Northstar Robotics Labs",
+  "domain": "northstar-robotics.example",
+  "industry": "Manufacturing Technology",
+  "headquarters_country": "United States",
+  "lead_source": "conference"
+}
+```
+
+Invalid request:
+
+```json
+{
+  "name": "",
+  "employee_count": -1
+}
+```
+
+```http
+GET /companies/{company_id}
+Authorization: Bearer dev-business-development
+```
+
+Not found response:
+
+```json
+{
+  "detail": "Company not found."
+}
+```
+
+### Contacts
+
+```http
+GET /contacts
+Authorization: Bearer dev-business-development
+```
+
+Optional query:
+
+```http
+GET /contacts?company_id={company_id}
+```
+
+```http
+POST /contacts
+Authorization: Bearer dev-business-development
+Content-Type: application/json
+```
+
+Valid request:
+
+```json
+{
+  "company_id": "10000000-0000-4000-8000-000000000001",
+  "first_name": "Mira",
+  "last_name": "Vale",
+  "email": "mira.vale@northstar-robotics.example",
+  "decision_category": "champion"
+}
+```
+
+Invalid request:
+
+```json
+{
+  "company_id": "not-a-uuid",
+  "first_name": "",
+  "last_name": "",
+  "email": "not-an-email"
+}
+```
+
+```http
+GET /contacts/{contact_id}
+Authorization: Bearer dev-business-development
+```
+
+Not found response:
+
+```json
+{
+  "detail": "Contact not found."
+}
+```
+
 ## Minimum API Groups From Brief
 
 These groups are required later in the MVP:
@@ -91,11 +202,11 @@ These groups are required later in the MVP:
 ## TODO: Week 1 Contracts
 
 - `GET /users/me`
-- `GET /companies`
-- `POST /companies`
-- `GET /companies/{id}`
+- `GET /companies`: implemented with local in-memory repository.
+- `POST /companies`: implemented with local in-memory repository.
+- `GET /companies/{id}`: implemented with local in-memory repository.
 - `PATCH /companies/{id}`
-- `GET /contacts`
-- `POST /contacts`
-- `GET /contacts/{id}`
+- `GET /contacts`: implemented with local in-memory repository.
+- `POST /contacts`: implemented with local in-memory repository.
+- `GET /contacts/{id}`: implemented with local in-memory repository.
 - `PATCH /contacts/{id}`

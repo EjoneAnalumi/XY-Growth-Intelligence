@@ -192,3 +192,20 @@ def test_list_contacts_supports_company_filter_and_pagination() -> None:
     assert response.json()["total"] == 2
     assert len(response.json()["items"]) == 1
     assert response.json()["items"][0]["first_name"] == "Jon"
+
+
+def test_openapi_documents_company_and_contact_endpoints() -> None:
+    response = client.get("/openapi.json")
+
+    assert response.status_code == 200
+    paths = response.json()["paths"]
+    assert "/companies" in paths
+    assert "get" in paths["/companies"]
+    assert "post" in paths["/companies"]
+    assert "/companies/{company_id}" in paths
+    assert "get" in paths["/companies/{company_id}"]
+    assert "/contacts" in paths
+    assert "get" in paths["/contacts"]
+    assert "post" in paths["/contacts"]
+    assert "/contacts/{contact_id}" in paths
+    assert "get" in paths["/contacts/{contact_id}"]

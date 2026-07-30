@@ -20,6 +20,40 @@ Response:
 }
 ```
 
+### Current User
+
+```http
+GET /users/me
+Authorization: Bearer dev-business-development
+```
+
+Local development response:
+
+```json
+{
+  "id": "00000000-0000-4000-8000-000000000003",
+  "email": "bd.demo@example.test",
+  "full_name": "Business Development Demo",
+  "role": "business_development"
+}
+```
+
+Invalid or missing token response:
+
+```json
+{
+  "detail": "Missing bearer token."
+}
+```
+
+Local development demo tokens:
+
+- `dev-admin`
+- `dev-management`
+- `dev-business-development`
+- `dev-technical-analyst`
+- `dev-read-only`
+
 ## Minimum API Groups From Brief
 
 These groups are required later in the MVP:

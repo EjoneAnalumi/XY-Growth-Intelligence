@@ -12,7 +12,7 @@ Red examples include public deployment, real customer data, paid services, disab
 
 ## Template
 
-### YYYY-MM-DD - Decision Title
+### DD-MM-YYYY - Decision Title
 
 - Date:
 - Decision owner:
@@ -41,9 +41,9 @@ Red examples include public deployment, real customer data, paid services, disab
 
 ## Decisions
 
-### 2026-07-28 - Use A Single Monorepo
+### 28-07-2026 - Use A Single Monorepo
 
-- Date: 2026-07-28
+- Date: 28-07-2026
 - Decision owner: Project team
 - Decision level: Green
 - Status: Accepted
@@ -55,9 +55,9 @@ Red examples include public deployment, real customer data, paid services, disab
 - Rollback approach: Not planned; this is a project requirement.
 - Supervisor approval required: No
 
-### 2026-07-28 - Keep README And Add Private Local Work Log
+### 28-07-2026 - Keep README And Add Private Local Work Log
 
-- Date: 2026-07-28
+- Date: 28-07-2026
 - Decision owner: Codex support
 - Decision level: Green
 - Status: Accepted
@@ -69,9 +69,9 @@ Red examples include public deployment, real customer data, paid services, disab
 - Rollback approach: Remove local log and rely only on shared docs if the team wants all notes public.
 - Supervisor approval required: No
 
-### 2026-07-29 - Use Brief Roles For Week 1 RLS
+### 29-07-2026 - Use Brief Roles For Week 1 RLS
 
-- Date: 2026-07-29
+- Date: 29-07-2026
 - Decision owner: Backend and Data Owner
 - Decision level: Green
 - Status: Accepted

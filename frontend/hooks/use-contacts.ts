@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { contacts as mockContacts } from "@/lib/mock/contacts";
+import { getContacts } from "@/lib/api/contacts";
 import type { Contact } from "@/types/company";
 
 export function useContacts() {
@@ -10,16 +10,21 @@ export function useContacts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  async function refreshContacts() {
     try {
-      setTimeout(() => {
-        setContacts(mockContacts);
-        setLoading(false);
-      }, 1000);
-    } catch {
-      setError("Failed to load contacts");
+      setLoading(true);
+      setError(null);
+      const data = await getContacts();
+      setContacts(data);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Failed to load contacts");
+    } finally {
       setLoading(false);
     }
+  }
+
+  useEffect(() => {
+    refreshContacts();
   }, []);
 
   return {
@@ -27,5 +32,6 @@ export function useContacts() {
     loading,
     error,
     setContacts,
+    refreshContacts,
   };
 }

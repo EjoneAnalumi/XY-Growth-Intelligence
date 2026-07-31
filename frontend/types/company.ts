@@ -4,6 +4,7 @@ export type Company = {
   domain: string;
   industry: string;
   country: string;
+  status?: string;
 };
 
 export type CompanyFormValues = {

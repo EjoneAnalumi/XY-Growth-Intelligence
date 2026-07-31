@@ -3,6 +3,7 @@ const sessionKey = "xy-growth-intelligence:mock-session";
 export type MockSession = {
   email: string;
   role: "business_development";
+  token: "dev-business-development";
 };
 
 export function getMockSession(): MockSession | null {
@@ -27,7 +28,8 @@ export function getMockSession(): MockSession | null {
 export function signInMock(email: string): MockSession {
   const session: MockSession = {
     email,
-    role: "business_development"
+    role: "business_development",
+    token: "dev-business-development"
   };
 
   window.localStorage.setItem(sessionKey, JSON.stringify(session));

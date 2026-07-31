@@ -7,24 +7,27 @@ import CompanyCard from "@/components/companies/company-card";
 import CompanyForm from "@/components/companies/company-form";
 import { Button } from "@/components/ui/button";
 import { useCompanies } from "@/hooks/use-companies";
+import { createCompany } from "@/lib/api/companies";
 import type { Company, CompanyFormValues } from "@/types/company";
 
 export default function CompaniesPage() {
-  const { companies, loading, error } = useCompanies();
+  const { companies, loading, error, setCompanies } = useCompanies();
   const [showForm, setShowForm] = useState(false);
-  const [companyList, setCompanyList] = useState<Company[]>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  function handleAdd(company: CompanyFormValues) {
-    const newCompany: Company = {
-      id: crypto.randomUUID(),
-      ...company,
-    };
+  async function handleAdd(company: CompanyFormValues) {
+    try {
+      setSubmitError(null);
+      const newCompany: Company = await createCompany(company);
 
-    setCompanyList((prev) => [...prev, newCompany]);
-    setShowForm(false);
+      setCompanies((prev) => [...prev, newCompany]);
+      setShowForm(false);
+    } catch (caughtError) {
+      setSubmitError(
+        caughtError instanceof Error ? caughtError.message : "Failed to create company."
+      );
+    }
   }
-
-  const allCompanies = [...companies, ...companyList];
 
   return (
     <div className="space-y-5">
@@ -36,7 +39,7 @@ export default function CompaniesPage() {
               Companies
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Manage companies, view details, and prepare for backend integration.
+              Manage companies, view details, and verify backend persistence after refresh.
             </p>
           </div>
 
@@ -49,6 +52,12 @@ export default function CompaniesPage() {
 
       {showForm ? <CompanyForm onAdd={handleAdd} /> : null}
 
+      {submitError ? (
+        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {submitError}
+        </p>
+      ) : null}
+
       <section className="rounded-md border bg-card p-6 shadow-sm">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
@@ -57,23 +66,21 @@ export default function CompaniesPage() {
 
           <div>
             <h2 className="font-semibold">Company List</h2>
-            <p className="text-sm text-muted-foreground">Companies loaded from mock API.</p>
+            <p className="text-sm text-muted-foreground">Companies loaded from FastAPI.</p>
           </div>
         </div>
 
         {loading ? <p className="text-sm text-muted-foreground">Loading companies...</p> : null}
 
-        {error ? (
-          <p className="text-sm text-red-500">Failed to load companies. Please try again.</p>
-        ) : null}
+        {error ? <p className="text-sm text-red-500">{error}</p> : null}
 
-        {!loading && !error && allCompanies.length === 0 ? (
+        {!loading && !error && companies.length === 0 ? (
           <p className="text-sm text-muted-foreground">No companies found.</p>
         ) : null}
 
-        {!loading && !error && allCompanies.length > 0 ? (
+        {!loading && !error && companies.length > 0 ? (
           <div className="space-y-4">
-            {allCompanies.map((company) => (
+            {companies.map((company) => (
               <CompanyCard
                 key={company.id}
                 name={company.name}

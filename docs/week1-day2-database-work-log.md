@@ -1,6 +1,6 @@
-# Week 1 Database Work Log
+# Week 1 Day 2 Database Work Log
 
-Date: 2026-07-29
+Date: 29-07-2026
 
 Scope: Supabase database baseline for Week 1 / Day 2 of the XY CYBER Growth Intelligence internship project.
 

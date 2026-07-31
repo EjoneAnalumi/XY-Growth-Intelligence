@@ -7,15 +7,17 @@ import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signInMock } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/api/users";
+import { signInMock, signOutMock } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("bd.demo@example.test");
   const [password, setPassword] = useState("demo-password");
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
 
@@ -24,8 +26,17 @@ export default function LoginPage() {
       return;
     }
 
-    signInMock(email);
-    router.replace("/dashboard");
+    try {
+      setIsSubmitting(true);
+      signInMock(email);
+      await getCurrentUser();
+      router.replace("/dashboard");
+    } catch {
+      signOutMock();
+      setError("Backend login check failed. Make sure FastAPI is running on port 8000.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -78,8 +89,8 @@ export default function LoginPage() {
               </p>
             ) : null}
 
-            <Button type="submit" className="w-full">
-              Sign in
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Signing in..." : "Sign in"}
             </Button>
           </form>
         </div>

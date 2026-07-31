@@ -10,25 +10,28 @@ export function useCompanies() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadCompanies() {
-      try {
-        setLoading(true);
-        const data = await getCompanies();
-        setCompanies(data);
-      } catch {
-        setError("Failed to load companies");
-      } finally {
-        setLoading(false);
-      }
+  async function refreshCompanies() {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getCompanies();
+      setCompanies(data);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Failed to load companies");
+    } finally {
+      setLoading(false);
     }
+  }
 
-    loadCompanies();
+  useEffect(() => {
+    refreshCompanies();
   }, []);
 
   return {
     companies,
     loading,
     error,
+    setCompanies,
+    refreshCompanies,
   };
 }

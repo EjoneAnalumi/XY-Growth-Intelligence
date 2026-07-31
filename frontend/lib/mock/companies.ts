@@ -1,31 +1,25 @@
-export type Company = {
-  id: string;
-  name: string;
-  domain: string;
-  industry: string;
-  country: string;
-};
+import type { Company } from "@/types/company";
 
 export const companies: Company[] = [
   {
     id: "1",
-    name: "XY Cyber",
-    domain: "xy-cyber.com",
-    industry: "Cyber Security",
-    country: "Kosovo",
+    name: "Northstar Robotics Labs",
+    domain: "northstar-robotics.example",
+    industry: "Manufacturing Technology",
+    country: "United States",
   },
   {
     id: "2",
-    name: "ABC Finance",
-    domain: "abcfinance.com",
-    industry: "Finance",
+    name: "Blue Harbor Finance",
+    domain: "blueharbor-finance.example",
+    industry: "Financial Services",
     country: "Germany",
   },
   {
     id: "3",
-    name: "Tech Solutions",
-    domain: "techsolutions.com",
-    industry: "Technology",
+    name: "Greenfield Health Systems",
+    domain: "greenfield-health.example",
+    industry: "Healthcare",
     country: "Switzerland",
   },
 ];

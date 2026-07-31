@@ -1,321 +1,172 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type { Company, ContactFormValues } from "@/types/company";
 
-type Props = {
-  onAdd:(contact:{
-    firstName:string;
-    lastName:string;
-    email:string;
-    role:string;
-  })=>void;
+type ContactFormProps = {
+  companies: Company[];
+  onAdd: (contact: ContactFormValues) => void;
 };
 
-
-export default function ContactForm({onAdd}:Props){
-
-
-const [firstName,setFirstName]=useState("");
-const [lastName,setLastName]=useState("");
-const [email,setEmail]=useState("");
-const [role,setRole]=useState("");
-
-const [error,setError] = useState("");
-const [success,setSuccess] = useState("");
-
-
-
-
-function handleSubmit(e:React.FormEvent){
-
-e.preventDefault();
-
-
-
-const cleanFirstName = firstName.trim();
-const cleanLastName = lastName.trim();
-const cleanEmail = email.trim();
-const cleanRole = role.trim();
-
-
-
-
-if(
-  !cleanFirstName ||
-  !cleanLastName ||
-  !cleanEmail ||
-  !cleanRole
-){
-
-setError("All fields are required.");
-setSuccess("");
-
-return;
-
-}
-
-
-
-
-
-const nameRegex = /^[a-zA-Z\s]+$/;
-
-
-if(!nameRegex.test(cleanFirstName)){
-
-setError("First name can contain only letters.");
-setSuccess("");
-
-return;
-
-}
-
-
-
-
-if(!nameRegex.test(cleanLastName)){
-
-setError("Last name can contain only letters.");
-setSuccess("");
-
-return;
-
-}
-
-
-
-
-
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-
-if(!emailRegex.test(cleanEmail)){
-
-setError("Please enter a valid email address.");
-setSuccess("");
-
-return;
-
-}
-
-
-
-
-
-if(cleanRole.length < 2){
-
-setError("Role must contain at least 2 characters.");
-setSuccess("");
-
-return;
-
-}
-
-
-
-
-setError("");
-
-
-
-onAdd({
-
- firstName:cleanFirstName,
-
- lastName:cleanLastName,
-
- email:cleanEmail,
-
- role:cleanRole
-
-});
-
-
-
-setSuccess("Contact added successfully.");
-
-
-
-setFirstName("");
-setLastName("");
-setEmail("");
-setRole("");
-
-}
-
-
-
-
-
-return (
-
-<form 
-onSubmit={handleSubmit}
-className="rounded-md border bg-card p-6 shadow-sm space-y-4"
->
-
-
-
-<h2 className="font-semibold">
-Add Contact
-</h2>
-
-
-
-
-{error && (
-
-<p className="text-sm text-red-500">
-{error}
-</p>
-
-)}
-
-
-
-
-{success && (
-
-<p className="text-sm text-green-600">
-{success}
-</p>
-
-)}
-
-
-
-
-
-
-<div className="space-y-3">
-
-
-
-<div>
-
-<label className="text-sm font-medium">
-First Name
-</label>
-
-
-<input
-
-className="mt-1 border rounded-md p-2 w-full"
-
-placeholder="Enter first name"
-
-value={firstName}
-
-onChange={(e)=>setFirstName(e.target.value)}
-
-/>
-
-</div>
-
-
-
-
-
-<div>
-
-<label className="text-sm font-medium">
-Last Name
-</label>
-
-
-<input
-
-className="mt-1 border rounded-md p-2 w-full"
-
-placeholder="Enter last name"
-
-value={lastName}
-
-onChange={(e)=>setLastName(e.target.value)}
-
-/>
-
-</div>
-
-
-
-
-
-
-<div>
-
-<label className="text-sm font-medium">
-Email
-</label>
-
-
-<input
-
-className="mt-1 border rounded-md p-2 w-full"
-
-placeholder="Enter email"
-
-type="email"
-
-value={email}
-
-onChange={(e)=>setEmail(e.target.value)}
-
-/>
-
-</div>
-
-
-
-
-
-
-<div>
-
-<label className="text-sm font-medium">
-Role
-</label>
-
-
-<input
-
-className="mt-1 border rounded-md p-2 w-full"
-
-placeholder="Enter role"
-
-value={role}
-
-onChange={(e)=>setRole(e.target.value)}
-
-/>
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-<button
-
-className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-
->
-
-Add Contact
-
-</button>
-
-
-
-
-</form>
-
-)
-
+export default function ContactForm({ companies, onAdd }: ContactFormProps) {
+  const [values, setValues] = useState<ContactFormValues>({
+    companyId: companies[0]?.id ?? "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    role: "",
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!values.companyId && companies[0]) {
+      setValues((current) => ({ ...current, companyId: companies[0].id }));
+    }
+  }, [companies, values.companyId]);
+
+  function updateField(field: keyof ContactFormValues, value: string) {
+    setValues((current) => ({ ...current, [field]: value }));
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const cleanedValues = {
+      companyId: values.companyId,
+      firstName: values.firstName.trim(),
+      lastName: values.lastName.trim(),
+      email: values.email.trim().toLowerCase(),
+      role: values.role.trim(),
+    };
+    const nameRegex = /^[a-zA-Z\s'-]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (
+      !cleanedValues.companyId ||
+      !cleanedValues.firstName ||
+      !cleanedValues.lastName ||
+      !cleanedValues.email ||
+      !cleanedValues.role
+    ) {
+      setError("All fields are required.");
+      setSuccess(null);
+      return;
+    }
+
+    if (!nameRegex.test(cleanedValues.firstName) || !nameRegex.test(cleanedValues.lastName)) {
+      setError("Names can contain only letters, spaces, hyphens, and apostrophes.");
+      setSuccess(null);
+      return;
+    }
+
+    if (!emailRegex.test(cleanedValues.email)) {
+      setError("Enter a valid email address.");
+      setSuccess(null);
+      return;
+    }
+
+    if (cleanedValues.role.length < 2) {
+      setError("Role must contain at least 2 characters.");
+      setSuccess(null);
+      return;
+    }
+
+    setError(null);
+    onAdd(cleanedValues);
+    setSuccess("Contact added successfully.");
+    setValues({
+      companyId: cleanedValues.companyId,
+      firstName: "",
+      lastName: "",
+      email: "",
+      role: "",
+    });
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-md border bg-card p-5 shadow-sm">
+      <div>
+        <h2 className="text-lg font-semibold tracking-normal">Add contact</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Link each contact to a fictional company record.
+        </p>
+      </div>
+
+      {error ? (
+        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
+
+      {success ? (
+        <p className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-primary">
+          {success}
+        </p>
+      ) : null}
+
+      <div className="space-y-2">
+        <Label htmlFor="contact-company">Company</Label>
+        <select
+          id="contact-company"
+          className="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          value={values.companyId}
+          onChange={(event) => updateField("companyId", event.target.value)}
+        >
+          {companies.map((company) => (
+            <option key={company.id} value={company.id}>
+              {company.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="contact-first-name">First name</Label>
+          <Input
+            id="contact-first-name"
+            value={values.firstName}
+            onChange={(event) => updateField("firstName", event.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="contact-last-name">Last name</Label>
+          <Input
+            id="contact-last-name"
+            value={values.lastName}
+            onChange={(event) => updateField("lastName", event.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="contact-email">Email</Label>
+          <Input
+            id="contact-email"
+            type="email"
+            value={values.email}
+            onChange={(event) => updateField("email", event.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="contact-role">Role</Label>
+          <Input
+            id="contact-role"
+            value={values.role}
+            onChange={(event) => updateField("role", event.target.value)}
+          />
+        </div>
+      </div>
+
+      <Button type="submit" disabled={companies.length === 0}>
+        Save contact
+      </Button>
+    </form>
+  );
 }

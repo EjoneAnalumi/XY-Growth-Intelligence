@@ -1,35 +1,21 @@
-type CompanyCardProps = {
-  name: string;
-  domain: string;
-  industry: string;
-  country: string;
-};
+import type { Company } from "@/types/company";
 
-export default function CompanyCard({
-  name,
-  domain,
-  industry,
-  country,
-}: CompanyCardProps) {
+type CompanyCardProps = Pick<Company, "name" | "domain" | "industry" | "country">;
+
+export default function CompanyCard({ name, domain, industry, country }: CompanyCardProps) {
   return (
-    <div className="border rounded-lg p-4 mb-4 bg-white shadow-sm">
-      <h2 className="text-lg font-semibold">{name}</h2>
-
-      <p>{domain}</p>
-
-      <p>{industry}</p>
-
-      <p>{country}</p>
-
-      <div className="mt-4 flex gap-2">
-        <button className="px-3 py-1 bg-blue-600 text-white rounded">
-          View
-        </button>
-
-        <button className="px-3 py-1 bg-gray-200 rounded">
-          Edit
-        </button>
+    <article className="rounded-md border bg-card p-4 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="text-base font-semibold tracking-normal">{name}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{domain}</p>
+        </div>
+        <span className="w-fit rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+          {country}
+        </span>
       </div>
-    </div>
+
+      <p className="mt-3 text-sm">{industry}</p>
+    </article>
   );
 }

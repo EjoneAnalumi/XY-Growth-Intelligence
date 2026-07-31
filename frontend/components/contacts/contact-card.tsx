@@ -1,37 +1,31 @@
-type Props = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-};
+import type { Contact } from "@/types/company";
 
+type ContactCardProps = Pick<Contact, "firstName" | "lastName" | "email" | "role"> & {
+  companyName?: string;
+};
 
 export default function ContactCard({
   firstName,
   lastName,
   email,
   role,
-}: Props) {
-
-
+  companyName,
+}: ContactCardProps) {
   return (
-    <div className="rounded-md border bg-card p-4 shadow-sm">
+    <article className="rounded-md border bg-card p-4 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="text-base font-semibold tracking-normal">
+            {firstName} {lastName}
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">{email}</p>
+        </div>
+        <span className="w-fit rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+          {role}
+        </span>
+      </div>
 
-      <h3 className="font-semibold">
-        {firstName} {lastName}
-      </h3>
-
-
-      <p className="text-sm text-muted-foreground">
-        {email}
-      </p>
-
-
-      <p className="mt-1 text-sm">
-        Role: {role}
-      </p>
-
-
-    </div>
+      {companyName ? <p className="mt-3 text-sm text-muted-foreground">{companyName}</p> : null}
+    </article>
   );
 }

@@ -1,18 +1,15 @@
 from fastapi import APIRouter, HTTPException, status
 
+from app.schemas.tasks import TaskCreate, TaskListResponse, TaskResponse, TaskUpdate
 from app.services.crud_task import (
     create_task,
-    get_tasks,
-    get_task,
-    update_task,
     delete_task,
+    get_task,
+    get_tasks,
+    update_task,
 )
-from app.schemas.tasks import TaskCreate, TaskListResponse, TaskResponse, TaskUpdate
 
-router = APIRouter(
-    prefix="/tasks",
-    tags=["Tasks"]
-)
+router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 
 @router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
@@ -41,10 +38,7 @@ def get_one(task_id: str):
 @router.patch("/{task_id}", response_model=TaskResponse)
 @router.put("/{task_id}", response_model=TaskResponse)
 def update(task_id: str, data: TaskUpdate):
-    task = update_task(
-        task_id,
-        data.model_dump(exclude_none=True, mode="json")
-    )
+    task = update_task(task_id, data.model_dump(exclude_none=True, mode="json"))
 
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")

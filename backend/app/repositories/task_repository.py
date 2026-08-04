@@ -1,87 +1,37 @@
-from app.core.database import supabase
 from uuid import UUID
+
+from app.core.database import supabase
 
 
 class TaskRepository:
-
-
     def create(self, data: dict):
         data = self._convert_types(data)
 
-        response = (
-            supabase
-            .table("tasks")
-            .insert(data)
-            .execute()
-        )
+        response = supabase.table("tasks").insert(data).execute()
 
         return response.data[0]
 
-
-
     def get_all(self):
-
-        response = (
-            supabase
-            .table("tasks")
-            .select("*")
-            .execute()
-        )
+        response = supabase.table("tasks").select("*").execute()
 
         return response.data
 
-
-    def get_by_id(
-        self,
-        task_id: str
-    ):
-
-        response = (
-            supabase
-            .table("tasks")
-            .select("*")
-            .eq("id", task_id)
-            .execute()
-        )
+    def get_by_id(self, task_id: str):
+        response = supabase.table("tasks").select("*").eq("id", task_id).execute()
 
         return response.data[0] if response.data else None
 
-
-
-    def update(
-        self,
-        task_id: str,
-        data: dict
-    ):
+    def update(self, task_id: str, data: dict):
         data = self._convert_types(data)
 
-        response = (
-            supabase
-            .table("tasks")
-            .update(data)
-            .eq("id", task_id)
-            .execute()
-        )
+        response = supabase.table("tasks").update(data).eq("id", task_id).execute()
 
         return response.data[0] if response.data else None
 
-
-
-    def delete(
-        self,
-        task_id: str
-    ):
-
-        response = (
-            supabase
-            .table("tasks")
-            .delete()
-            .eq("id", task_id)
-            .execute()
-        )
+    def delete(self, task_id: str):
+        response = supabase.table("tasks").delete().eq("id", task_id).execute()
 
         return response.data
-
 
     def _convert_types(self, data: dict):
         converted = {}

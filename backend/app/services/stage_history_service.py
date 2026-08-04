@@ -1,6 +1,5 @@
 from app.repositories.stage_history_repository import StageHistoryRepository
 
-
 repository = StageHistoryRepository()
 
 

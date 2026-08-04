@@ -1,6 +1,5 @@
 from app.repositories.task_repository import TaskRepository
 
-
 repository = TaskRepository()
 
 
@@ -17,13 +16,8 @@ def get_task(task_id: str):
 
 
 def update_task(task_id: str, data: dict):
-    return repository.update(
-        task_id,
-        data
-    )
+    return repository.update(task_id, data)
 
 
 def delete_task(task_id: str):
-    return repository.delete(
-        task_id
-    )
+    return repository.delete(task_id)

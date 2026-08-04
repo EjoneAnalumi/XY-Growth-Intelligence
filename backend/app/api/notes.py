@@ -1,18 +1,15 @@
 from fastapi import APIRouter, HTTPException, status
 
+from app.schemas.notes import NoteCreate, NoteListResponse, NoteResponse, NoteUpdate
 from app.services.crud_note import (
     create_note,
-    get_notes,
-    get_note,
-    update_note,
     delete_note,
+    get_note,
+    get_notes,
+    update_note,
 )
-from app.schemas.notes import NoteCreate, NoteListResponse, NoteResponse, NoteUpdate
 
-router = APIRouter(
-    prefix="/notes",
-    tags=["Notes"]
-)
+router = APIRouter(prefix="/notes", tags=["Notes"])
 
 
 @router.post("", response_model=NoteResponse, status_code=status.HTTP_201_CREATED)
@@ -41,10 +38,7 @@ def get_one(note_id: str):
 @router.patch("/{note_id}", response_model=NoteResponse)
 @router.put("/{note_id}", response_model=NoteResponse)
 def update(note_id: str, data: NoteUpdate):
-    note = update_note(
-        note_id,
-        data.model_dump(exclude_none=True, mode="json")
-    )
+    note = update_note(note_id, data.model_dump(exclude_none=True, mode="json"))
 
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")

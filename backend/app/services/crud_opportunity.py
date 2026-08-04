@@ -1,6 +1,5 @@
 from app.repositories.opportunity_repository import OpportunityRepository
 
-
 repository = OpportunityRepository()
 
 
@@ -21,13 +20,8 @@ def get_opportunity_by_id(opportunity_id: str):
 
 
 def update_opportunity(opportunity_id: str, data: dict):
-    return repository.update(
-        opportunity_id,
-        data
-    )
+    return repository.update(opportunity_id, data)
 
 
 def delete_opportunity(opportunity_id: str):
-    return repository.delete(
-        opportunity_id
-    )
+    return repository.delete(opportunity_id)

@@ -1,20 +1,20 @@
 from fastapi import APIRouter, HTTPException, status
 
+from app.schemas.activities import (
+    ActivityCreate,
+    ActivityListResponse,
+    ActivityResponse,
+    ActivityUpdate,
+)
 from app.services.crud_activity import (
     create_activity,
+    delete_activity,
     get_activities,
     get_activity,
     update_activity,
-    delete_activity,
 )
 
-from app.schemas.activities import ActivityCreate, ActivityListResponse, ActivityResponse, ActivityUpdate
-
-
-router = APIRouter(
-    prefix="/activities",
-    tags=["Activities"]
-)
+router = APIRouter(prefix="/activities", tags=["Activities"])
 
 
 @router.post("", response_model=ActivityResponse, status_code=status.HTTP_201_CREATED)
@@ -43,10 +43,7 @@ def get_one(activity_id: str):
 @router.patch("/{activity_id}", response_model=ActivityResponse)
 @router.put("/{activity_id}", response_model=ActivityResponse)
 def update(activity_id: str, data: ActivityUpdate):
-    activity = update_activity(
-        activity_id,
-        data.model_dump(exclude_none=True, mode="json")
-    )
+    activity = update_activity(activity_id, data.model_dump(exclude_none=True, mode="json"))
 
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")

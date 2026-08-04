@@ -14,7 +14,6 @@ from app.services.crud_pipeline_stage import (
     update_pipeline_stage,
 )
 
-
 router = APIRouter(prefix="/pipeline-stages", tags=["Pipeline Stages"])
 
 
@@ -43,10 +42,7 @@ def get_one(stage_id: str):
 
 @router.patch("/{stage_id}", response_model=PipelineStageResponse)
 def update(stage_id: str, data: PipelineStageUpdate):
-    stage = update_pipeline_stage(
-        stage_id,
-        data.model_dump(exclude_none=True, mode="json")
-    )
+    stage = update_pipeline_stage(stage_id, data.model_dump(exclude_none=True, mode="json"))
 
     if not stage:
         raise HTTPException(status_code=404, detail="Pipeline stage not found")

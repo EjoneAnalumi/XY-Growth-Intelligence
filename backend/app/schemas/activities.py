@@ -44,11 +44,7 @@ class ActivityUpdate(BaseModel):
             pattern="^(call|email|meeting|linkedin_message|conference|introduction|workshop|demo|proposal|follow_up|internal_note)$"
         ),
     ] = None
-    subject: str | None = Field(
-        default=None,
-        min_length=1,
-        max_length=255
-    )
+    subject: str | None = Field(default=None, min_length=1, max_length=255)
     notes: str | None = None
     occurred_at: datetime | None = None
     owner_id: UUID | None = None

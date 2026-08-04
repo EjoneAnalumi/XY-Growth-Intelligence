@@ -1,6 +1,5 @@
 from app.repositories.pipeline_stage_repository import PipelineStageRepository
 
-
 repository = PipelineStageRepository()
 
 

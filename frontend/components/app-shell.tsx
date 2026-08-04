@@ -3,6 +3,7 @@
 import {
   BarChart3,
   Building2,
+  BriefcaseBusiness,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -22,6 +23,7 @@ const navigation = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/companies", label: "Companies", icon: Building2 },
   { href: "/contacts", label: "Contacts", icon: UsersRound },
+  { href: "/opportunities", label: "Opportunities", icon: BriefcaseBusiness },
   { href: "/reports", label: "Reports", icon: BarChart3 }
 ];
 

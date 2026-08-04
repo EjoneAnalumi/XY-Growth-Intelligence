@@ -34,6 +34,26 @@ class ActivityCreate(BaseModel):
     owner_id: UUID | None = None
 
 
+class ActivityUpdate(BaseModel):
+    company_id: UUID | None = None
+    contact_id: UUID | None = None
+    opportunity_id: UUID | None = None
+    activity_type: Annotated[
+        str | None,
+        Field(
+            pattern="^(call|email|meeting|linkedin_message|conference|introduction|workshop|demo|proposal|follow_up|internal_note)$"
+        ),
+    ] = None
+    subject: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=255
+    )
+    notes: str | None = None
+    occurred_at: datetime | None = None
+    owner_id: UUID | None = None
+
+
 class ActivityResponse(ActivityCreate):
     id: UUID
     created_by: UUID | None = None

@@ -23,6 +23,13 @@ class NoteCreate(BaseModel):
     body: Annotated[str, Field(min_length=1)]
 
 
+class NoteUpdate(BaseModel):
+    company_id: UUID | None = None
+    contact_id: UUID | None = None
+    opportunity_id: UUID | None = None
+    body: Annotated[str | None, Field(min_length=1)] = None
+
+
 class NoteResponse(NoteCreate):
     id: UUID
     created_by: UUID | None = None

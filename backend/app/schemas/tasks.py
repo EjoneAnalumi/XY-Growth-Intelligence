@@ -29,12 +29,16 @@ class TaskCreate(BaseModel):
 
 
 class TaskUpdate(BaseModel):
+    company_id: UUID | None = None
+    opportunity_id: UUID | None = None
+    owner_id: UUID | None = None
     title: Annotated[str | None, Field(min_length=1, max_length=255)] = None
     description: str | None = None
     due_at: datetime | None = None
     priority: Annotated[str | None, Field(pattern="^(low|medium|high|urgent)$")] = None
     status: Annotated[str | None, Field(pattern="^(open|in_progress|completed|cancelled)$")] = None
     outcome: str | None = None
+    completed_at: datetime | None = None
 
 
 class TaskResponse(TaskCreate):

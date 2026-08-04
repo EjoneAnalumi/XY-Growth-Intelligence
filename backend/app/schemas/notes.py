@@ -12,9 +12,9 @@ class NoteCreate(BaseModel):
                 {
                     "company_id": "10000000-0000-4000-8000-000000000001",
                     "body": (
-    "Client requested SOC 2 Type II compliance evidence "
-    "before contract signing."
-),
+                        "Client requested SOC 2 Type II compliance evidence "
+                        "before contract signing."
+                    ),
                 }
             ]
         }

@@ -165,6 +165,301 @@ Not found response:
 }
 ```
 
+### Pipeline Stages
+
+Pipeline stages are read by all authenticated roles. Creating, editing, or archiving stages is
+limited to `admin` and `management`.
+
+```http
+GET /pipeline-stages
+Authorization: Bearer dev-business-development
+```
+
+Response:
+
+```json
+{
+  "items": [
+    {
+      "id": "30000000-0000-4000-8000-000000000001",
+      "name": "Identified",
+      "sort_order": 10,
+      "default_probability": 5,
+      "is_won": false,
+      "is_lost": false,
+      "created_at": "2026-08-05T10:00:00Z",
+      "updated_at": "2026-08-05T10:00:00Z"
+    }
+  ],
+  "total": 15
+}
+```
+
+```http
+POST /pipeline-stages
+Authorization: Bearer dev-management
+Content-Type: application/json
+```
+
+Valid request:
+
+```json
+{
+  "name": "Custom Review",
+  "sort_order": 160,
+  "default_probability": 20,
+  "is_won": false,
+  "is_lost": false
+}
+```
+
+Permission denied response for Business Development:
+
+```json
+{
+  "detail": "User does not have permission to perform this action."
+}
+```
+
+### Opportunities
+
+Opportunity writes are limited to `admin`, `management`, and `business_development`.
+
+```http
+GET /opportunities
+Authorization: Bearer dev-business-development
+```
+
+Response:
+
+```json
+{
+  "items": [],
+  "total": 0
+}
+```
+
+```http
+POST /opportunities
+Authorization: Bearer dev-business-development
+Content-Type: application/json
+```
+
+Valid request:
+
+```json
+{
+  "company_id": "10000000-0000-4000-8000-000000000001",
+  "contact_id": "20000000-0000-4000-8000-000000000001",
+  "stage_id": "30000000-0000-4000-8000-000000000001",
+  "name": "Managed SOC Pilot",
+  "service": "Managed SOC",
+  "value_usd": 50000,
+  "probability": 40,
+  "expected_close_date": "2026-09-30",
+  "need": "Compliance-driven monitoring requirement",
+  "next_action": "Schedule pilot planning call"
+}
+```
+
+Successful response includes calculated weighted value:
+
+```json
+{
+  "id": "generated-uuid",
+  "company_id": "10000000-0000-4000-8000-000000000001",
+  "contact_id": "20000000-0000-4000-8000-000000000001",
+  "stage_id": "30000000-0000-4000-8000-000000000001",
+  "name": "Managed SOC Pilot",
+  "service": "Managed SOC",
+  "value_usd": 50000,
+  "probability": 40,
+  "weighted_value_usd": 20000,
+  "expected_close_date": "2026-09-30",
+  "owner_id": null,
+  "need": "Compliance-driven monitoring requirement",
+  "blockers": null,
+  "competitor": null,
+  "next_action": "Schedule pilot planning call",
+  "next_action_due_at": null,
+  "lost_reason": null,
+  "created_by": "00000000-0000-4000-8000-000000000003",
+  "updated_by": "00000000-0000-4000-8000-000000000003",
+  "archived_at": null,
+  "created_at": "2026-08-05T10:00:00Z",
+  "updated_at": "2026-08-05T10:00:00Z"
+}
+```
+
+```http
+PATCH /opportunities/{opportunity_id}
+Authorization: Bearer dev-business-development
+Content-Type: application/json
+```
+
+Valid request:
+
+```json
+{
+  "value_usd": 60000,
+  "probability": 50,
+  "next_action": "Send pilot checklist"
+}
+```
+
+```http
+DELETE /opportunities/{opportunity_id}
+Authorization: Bearer dev-business-development
+```
+
+Delete is currently implemented as archive/soft delete and returns the archived record.
+
+```http
+PATCH /opportunities/{opportunity_id}/move-stage
+Authorization: Bearer dev-business-development
+Content-Type: application/json
+```
+
+Valid request:
+
+```json
+{
+  "to_stage_id": "30000000-0000-4000-8000-000000000003",
+  "note": "Prospect replied to outreach."
+}
+```
+
+Response:
+
+```json
+{
+  "message": "Opportunity stage updated successfully.",
+  "opportunity": {
+    "id": "generated-opportunity-uuid",
+    "stage_id": "30000000-0000-4000-8000-000000000003"
+  },
+  "history": {
+    "id": "generated-history-uuid",
+    "opportunity_id": "generated-opportunity-uuid",
+    "from_stage_id": "30000000-0000-4000-8000-000000000001",
+    "to_stage_id": "30000000-0000-4000-8000-000000000003",
+    "changed_by": "00000000-0000-4000-8000-000000000003",
+    "note": "Prospect replied to outreach.",
+    "changed_at": "2026-08-05T10:05:00Z"
+  }
+}
+```
+
+```http
+GET /opportunities/{opportunity_id}/stage-history
+Authorization: Bearer dev-business-development
+```
+
+Response:
+
+```json
+[
+  {
+    "id": "generated-history-uuid",
+    "opportunity_id": "generated-opportunity-uuid",
+    "from_stage_id": "30000000-0000-4000-8000-000000000001",
+    "to_stage_id": "30000000-0000-4000-8000-000000000003",
+    "changed_by": "00000000-0000-4000-8000-000000000003",
+    "note": "Prospect replied to outreach.",
+    "changed_at": "2026-08-05T10:05:00Z"
+  }
+]
+
+```
+
+### Activities
+
+```http
+POST /activities
+Authorization: Bearer dev-business-development
+Content-Type: application/json
+```
+
+Valid request:
+
+```json
+{
+  "company_id": "10000000-0000-4000-8000-000000000001",
+  "opportunity_id": "generated-opportunity-uuid",
+  "activity_type": "meeting",
+  "subject": "Discovery meeting",
+  "notes": "Reviewed SOC monitoring priorities."
+}
+```
+
+Supported activity types:
+
+- `call`
+- `email`
+- `meeting`
+- `linkedin_message`
+- `conference`
+- `introduction`
+- `workshop`
+- `demo`
+- `proposal`
+- `follow_up`
+- `internal_note`
+
+### Tasks
+
+```http
+POST /tasks
+Authorization: Bearer dev-business-development
+Content-Type: application/json
+```
+
+Valid request:
+
+```json
+{
+  "company_id": "10000000-0000-4000-8000-000000000001",
+  "opportunity_id": "generated-opportunity-uuid",
+  "title": "Send pilot checklist",
+  "due_at": "2026-08-07T17:00:00Z",
+  "priority": "high",
+  "status": "open"
+}
+```
+
+```http
+PATCH /tasks/{task_id}
+Authorization: Bearer dev-business-development
+Content-Type: application/json
+```
+
+Valid request:
+
+```json
+{
+  "status": "completed",
+  "outcome": "Checklist sent"
+}
+```
+
+### Notes
+
+```http
+POST /notes
+Authorization: Bearer dev-business-development
+Content-Type: application/json
+```
+
+Valid request:
+
+```json
+{
+  "company_id": "10000000-0000-4000-8000-000000000001",
+  "opportunity_id": "generated-opportunity-uuid",
+  "body": "Client asked for compliance references."
+}
+```
+
 ## Minimum API Groups From Brief
 
 These groups are required later in the MVP:
@@ -210,3 +505,14 @@ These groups are required later in the MVP:
 - `POST /contacts`: implemented with local in-memory repository.
 - `GET /contacts/{id}`: implemented with local in-memory repository.
 - `PATCH /contacts/{id}`
+- `GET /pipeline-stages`: implemented with local in-memory repository.
+- `POST /pipeline-stages`: implemented for Admin/Management.
+- `GET /opportunities`: implemented with local in-memory repository.
+- `POST /opportunities`: implemented with weighted value calculation.
+- `PATCH /opportunities/{id}`: implemented with weighted value recalculation.
+- `DELETE /opportunities/{id}`: implemented as archive/soft delete.
+- `PATCH /opportunities/{id}/move-stage`: implemented with stage history.
+- `GET /opportunities/{id}/stage-history`: implemented.
+- `GET/POST/PATCH/DELETE /activities`: implemented with local in-memory repository.
+- `GET/POST/PATCH/DELETE /tasks`: implemented with local in-memory repository.
+- `GET/POST/PATCH/DELETE /notes`: implemented with local in-memory repository.

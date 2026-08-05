@@ -11,6 +11,10 @@ jobs:
     name: Backend lint and test
     runs-on: ubuntu-latest
 
+    env:
+      SUPABASE_URL: "http://localhost:54321"
+      SUPABASE_KEY: "test-key"
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4

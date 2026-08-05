@@ -16,9 +16,9 @@ class Settings:
         self.log_level = getenv("LOG_LEVEL", "INFO")
         self.cors_origins = [
             origin.strip()
-            for origin in getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(
-                ","
-            )
+            for origin in getenv(
+                "CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+            ).split(",")
             if origin.strip()
         ]
 

@@ -17,7 +17,7 @@ Day 6 Intern 2 requires:
 - Added `Opportunities` navigation.
 - Added `/opportunities` protected route.
 - Added opportunity create form.
-- Added opportunity table with company, stage, value, probability, weighted value, and next action.
+- Added opportunity table with company, stage, value in EUR, probability, weighted value, and next action.
 - Added `/opportunities/[id]` protected detail route.
 - Added opportunity detail field display.
 - Added edit form for opportunity fields.

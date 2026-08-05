@@ -206,7 +206,7 @@ export default function OpportunityForm({
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
-          <Label htmlFor="opportunity-value">Value USD</Label>
+          <Label htmlFor="opportunity-value">Value EUR</Label>
           <Input
             id="opportunity-value"
             type="number"

@@ -1,79 +1,52 @@
-from fastapi import APIRouter, HTTPException
-
-from app.schemas.opportunities import (
-    OpportunityCreate,
-    OpportunityStageMove,
-    OpportunityUpdate,
-)
-from app.services.crud_opportunity import (
-    create_opportunity,
-    delete_opportunity,
-    get_opportunities,
-    get_opportunity_by_id,
-    update_opportunity,
-)
-from app.services.stage_history_service import create_stage_history
-
-router = APIRouter(prefix="/opportunities", tags=["Opportunities"])
+from datetime import date, datetime
+from uuid import UUID
 
 
-@router.post("/")
-def create(data: OpportunityCreate):
-    return create_opportunity(data.model_dump(mode="json"))
-
-
-@router.get("/")
-def get_all():
-    return get_opportunities()
-
-
-@router.get("/{opportunity_id}")
-def get_by_id(opportunity_id: str):
-    opportunity = get_opportunity_by_id(opportunity_id)
-
-    if not opportunity:
-        raise HTTPException(status_code=404, detail="Opportunity not found")
-
-    return opportunity
-
-
-@router.patch("/{opportunity_id}")
-def update(opportunity_id: str, data: OpportunityUpdate):
-    return update_opportunity(opportunity_id, data.model_dump(exclude_none=True, mode="json"))
-
-
-@router.delete("/{opportunity_id}")
-def delete(opportunity_id: str):
-    return delete_opportunity(opportunity_id)
-
-
-@router.patch("/{opportunity_id}/stage")
-def move_stage(opportunity_id: str, body: OpportunityStageMove):
-    opportunity = get_opportunity_by_id(opportunity_id)
-
-    if not opportunity:
-        raise HTTPException(status_code=404, detail="Opportunity not found")
-
-    old_stage = opportunity["stage_id"]
-
-    new_stage = str(body.to_stage_id)
-
-    if old_stage == new_stage:
-        raise HTTPException(status_code=400, detail="Opportunity already has this stage")
-
-    updated = update_opportunity(opportunity_id, {"stage_id": new_stage})
-
-    history = create_stage_history(
-        {
-            "opportunity_id": opportunity_id,
-            "from_stage_id": old_stage,
-            "to_stage_id": new_stage,
-            "note": body.note,
-        }
-    )
-
-    return {
-        "message": "Opportunity stage updated successfully",
-        "opportunity": updated,
-        "history": history,
-    }
+class Opportunity:
+    def __init__(
+        self,
+        id: UUID,
+        company_id: UUID,
+        stage_id: UUID,
+        name: str,
+        contact_id: UUID | None = None,
+        service: str | None = None,
+        value_usd: float | None = None,
+        probability: int = 0,
+        weighted_value_usd: float | None = None,
+        expected_close_date: date | None = None,
+        owner_id: UUID | None = None,
+        need: str | None = None,
+        blockers: str | None = None,
+        competitor: str | None = None,
+        next_action: str | None = None,
+        next_action_due_at: datetime | None = None,
+        lost_reason: str | None = None,
+        created_by: UUID | None = None,
+        updated_by: UUID | None = None,
+        archived_at: datetime | None = None,
+        created_at: datetime | None = None,
+        updated_at: datetime | None = None,
+    ):
+        self.id = id
+        self.company_id = company_id
+        self.contact_id = contact_id
+        self.stage_id = stage_id
+        self.name = name
+        self.service = service
+        self.value_usd = value_usd
+        self.probability = probability
+        self.weighted_value_usd = weighted_value_usd
+        self.expected_close_date = expected_close_date
+        self.owner_id = owner_id
+        self.need = need
+        self.blockers = blockers
+        self.competitor = competitor
+        self.next_action = next_action
+        self.next_action_due_at = next_action_due_at
+        self.lost_reason = lost_reason
+        self.created_by = created_by
+        self.updated_by = updated_by
+        self.archived_at = archived_at
+        self.created_at = created_at
+        self.updated_at = updated_at

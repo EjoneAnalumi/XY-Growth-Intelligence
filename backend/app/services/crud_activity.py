@@ -1,23 +1,22 @@
-from app.repositories.activity_repository import ActivityRepository
+from app.schemas.users import CurrentUser
+from app.services.pipeline_repository import pipeline_repository
 
-repository = ActivityRepository()
 
-
-def create_activity(data: dict):
-    return repository.create(data)
+def create_activity(data: dict, current_user: CurrentUser):
+    return pipeline_repository.create_record("activities", data, current_user)
 
 
 def get_activities():
-    return repository.get_all()
+    return pipeline_repository.list_records("activities")
 
 
 def get_activity(activity_id: str):
-    return repository.get_by_id(activity_id)
+    return pipeline_repository.get_record("activities", activity_id)
 
 
-def update_activity(activity_id: str, data: dict):
-    return repository.update(activity_id, data)
+def update_activity(activity_id: str, data: dict, current_user: CurrentUser):
+    return pipeline_repository.update_record("activities", activity_id, data, current_user)
 
 
-def delete_activity(activity_id: str):
-    return repository.delete(activity_id)
+def delete_activity(activity_id: str, current_user: CurrentUser):
+    return pipeline_repository.archive_record("activities", activity_id, current_user)

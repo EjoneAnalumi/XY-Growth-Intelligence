@@ -1,23 +1,22 @@
-from app.repositories.pipeline_stage_repository import PipelineStageRepository
+from app.schemas.users import CurrentUser
+from app.services.pipeline_repository import pipeline_repository
 
-repository = PipelineStageRepository()
 
-
-def create_pipeline_stage(data: dict):
-    return repository.create(data)
+def create_pipeline_stage(data: dict, current_user: CurrentUser):
+    return pipeline_repository.create_record("pipeline_stages", data, current_user)
 
 
 def get_pipeline_stages():
-    return repository.get_all()
+    return pipeline_repository.list_records("pipeline_stages")
 
 
 def get_pipeline_stage(stage_id: str):
-    return repository.get_by_id(stage_id)
+    return pipeline_repository.get_record("pipeline_stages", stage_id)
 
 
-def update_pipeline_stage(stage_id: str, data: dict):
-    return repository.update(stage_id, data)
+def update_pipeline_stage(stage_id: str, data: dict, current_user: CurrentUser):
+    return pipeline_repository.update_record("pipeline_stages", stage_id, data, current_user)
 
 
-def delete_pipeline_stage(stage_id: str):
-    return repository.delete(stage_id)
+def delete_pipeline_stage(stage_id: str, current_user: CurrentUser):
+    return pipeline_repository.archive_record("pipeline_stages", stage_id, current_user)

@@ -1,18 +1,23 @@
-import os
-
-from dotenv import load_dotenv
-
-from supabase import Client, create_client
-
-load_dotenv()
+from functools import lru_cache
+from os import getenv
+from typing import Any
 
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+class SupabaseUnavailableError(RuntimeError):
+    pass
 
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise RuntimeError("Supabase environment variables missing")
+@lru_cache
+def get_supabase_client() -> Any:
+    supabase_url = getenv("SUPABASE_URL")
+    supabase_key = getenv("SUPABASE_ANON_KEY") or getenv("SUPABASE_KEY")
 
+    if not supabase_url or not supabase_key:
+        raise SupabaseUnavailableError("Supabase environment variables are not configured.")
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    try:
+        from supabase import create_client
+    except ModuleNotFoundError as exc:
+        raise SupabaseUnavailableError("Supabase dependency is not installed.") from exc
+
+    return create_client(supabase_url, supabase_key)

@@ -460,6 +460,47 @@ Valid request:
 }
 ```
 
+### Dashboard Summary
+
+```http
+GET /dashboard/summary
+Authorization: Bearer dev-business-development
+```
+
+Valid response shape:
+
+```json
+{
+  "total_opportunities": 4,
+  "open_opportunities": 2,
+  "won_opportunities": 1,
+  "lost_opportunities": 1,
+  "pipeline_value_usd": 140000,
+  "weighted_pipeline_value_usd": 80000,
+  "overdue_tasks": 1,
+  "due_this_week_tasks": 1,
+  "activities_count": 2,
+  "average_days_in_current_stage": 0,
+  "stage_summaries": [
+    {
+      "stage_id": "30000000-0000-4000-8000-000000000001",
+      "stage_name": "Identified",
+      "opportunity_count": 1,
+      "total_value_usd": 100000,
+      "weighted_value_usd": 50000
+    }
+  ]
+}
+```
+
+Metric rules:
+
+- `pipeline_value_usd` counts active opportunities that are not in Won or Lost stages.
+- `weighted_pipeline_value_usd` is `value_usd * probability / 100` for active open opportunities.
+- `days_in_current_stage` is calculated from the latest stage movement into the current stage, or from `created_at` if the opportunity never moved.
+- `overdue_tasks` excludes completed and cancelled tasks.
+- `due_this_week_tasks` excludes completed and cancelled tasks and uses the next seven days.
+
 ## Minimum API Groups From Brief
 
 These groups are required later in the MVP:
@@ -516,3 +557,4 @@ These groups are required later in the MVP:
 - `GET/POST/PATCH/DELETE /activities`: implemented with local in-memory repository.
 - `GET/POST/PATCH/DELETE /tasks`: implemented with local in-memory repository.
 - `GET/POST/PATCH/DELETE /notes`: implemented with local in-memory repository.
+- `GET /dashboard/summary`: implemented with weighted pipeline, stage duration, task, activity, and stage summary metrics.

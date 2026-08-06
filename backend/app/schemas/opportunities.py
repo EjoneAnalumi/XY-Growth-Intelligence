@@ -80,6 +80,8 @@ class OpportunityStageMove(BaseModel):
 class OpportunityResponse(OpportunityCreate):
     id: UUID
     weighted_value_usd: float | None = 0.0
+    current_stage_entered_at: datetime | None = None
+    days_in_current_stage: int = 0
     created_by: UUID | None = None
     updated_by: UUID | None = None
     archived_at: datetime | None = None

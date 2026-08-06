@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import ActivityTaskPanel from "@/components/opportunities/activity-task-panel";
 import OpportunityForm from "@/components/opportunities/opportunity-form";
 import { Button } from "@/components/ui/button";
 import { useCompanies } from "@/hooks/use-companies";
@@ -181,6 +182,8 @@ export default function OpportunityDetailPage() {
           ))}
         </dl>
       </section>
+
+      <ActivityTaskPanel opportunity={opportunity} companies={companies} contacts={contacts} />
 
       <section className="rounded-md border bg-card p-5 shadow-sm">
         <h2 className="font-semibold">Stage History</h2>

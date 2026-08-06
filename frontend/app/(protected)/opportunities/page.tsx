@@ -4,13 +4,14 @@ import { Plus, Target } from "lucide-react";
 import { useState } from "react";
 
 import OpportunityForm from "@/components/opportunities/opportunity-form";
+import OpportunityKanban from "@/components/opportunities/opportunity-kanban";
 import OpportunityTable from "@/components/opportunities/opportunity-table";
 import { Button } from "@/components/ui/button";
 import { useCompanies } from "@/hooks/use-companies";
 import { useContacts } from "@/hooks/use-contacts";
 import { useOpportunities } from "@/hooks/use-opportunities";
 import { usePipelineStages } from "@/hooks/use-pipeline-stages";
-import { createOpportunity } from "@/lib/api/opportunities";
+import { createOpportunity, moveOpportunityStage } from "@/lib/api/opportunities";
 import type { Opportunity, OpportunityFormValues } from "@/types/opportunity";
 
 export default function OpportunitiesPage() {
@@ -19,6 +20,7 @@ export default function OpportunitiesPage() {
   const { stages, loading: stagesLoading, error: stagesError } = usePipelineStages();
   const { opportunities, loading, error, setOpportunities } = useOpportunities();
   const [showForm, setShowForm] = useState(false);
+  const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function handleCreateOpportunity(values: OpportunityFormValues) {
@@ -32,6 +34,15 @@ export default function OpportunitiesPage() {
         caughtError instanceof Error ? caughtError.message : "Failed to create opportunity."
       );
     }
+  }
+
+  async function handleMoveStage(opportunityId: string, toStageId: string, note: string) {
+    const result = await moveOpportunityStage(opportunityId, toStageId, note);
+    setOpportunities((current) =>
+      current.map((opportunity) =>
+        opportunity.id === opportunityId ? result.opportunity : opportunity,
+      ),
+    );
   }
 
   const setupLoading = companiesLoading || stagesLoading;
@@ -93,13 +104,36 @@ export default function OpportunitiesPage() {
       ) : null}
 
       <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
-            <Target className="h-5 w-5 text-primary" />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
+              <Target className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="font-semibold">Opportunity Pipeline</h2>
+              <p className="text-sm text-muted-foreground">
+                Move stages from Kanban or review the table view.
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-semibold">Opportunity Table</h2>
-            <p className="text-sm text-muted-foreground">Opportunities loaded from FastAPI.</p>
+
+          <div className="flex w-fit rounded-md border bg-card p-1">
+            <Button
+              type="button"
+              size="sm"
+              variant={viewMode === "kanban" ? "default" : "ghost"}
+              onClick={() => setViewMode("kanban")}
+            >
+              Kanban
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={viewMode === "table" ? "default" : "ghost"}
+              onClick={() => setViewMode("table")}
+            >
+              Table
+            </Button>
           </div>
         </div>
 
@@ -113,7 +147,16 @@ export default function OpportunitiesPage() {
           </p>
         ) : null}
 
-        {!loading && !error && opportunities.length > 0 ? (
+        {!loading && !error && opportunities.length > 0 && viewMode === "kanban" ? (
+          <OpportunityKanban
+            opportunities={opportunities}
+            companies={companies}
+            stages={stages}
+            onMoveStage={handleMoveStage}
+          />
+        ) : null}
+
+        {!loading && !error && opportunities.length > 0 && viewMode === "table" ? (
           <OpportunityTable opportunities={opportunities} companies={companies} stages={stages} />
         ) : null}
       </section>

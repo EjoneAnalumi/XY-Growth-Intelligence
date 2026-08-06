@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Building2, Plus } from "lucide-react";
 
+import IcpScorePanel from "@/components/companies/icp-score-panel";
 import CompanyCard from "@/components/companies/company-card";
 import CompanyForm from "@/components/companies/company-form";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,8 @@ export default function CompaniesPage() {
           {submitError}
         </p>
       ) : null}
+
+      <IcpScorePanel companies={companies} />
 
       <section className="rounded-md border bg-card p-6 shadow-sm">
         <div className="mb-6 flex items-center gap-3">

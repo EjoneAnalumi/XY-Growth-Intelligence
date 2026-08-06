@@ -3,17 +3,21 @@ from uuid import UUID, uuid4
 
 from app.schemas.companies import CompanyCreate, CompanyResponse
 from app.schemas.contacts import ContactCreate, ContactResponse
+from app.schemas.icp import IcpScoreResponse
 from app.schemas.users import CurrentUser
+from app.scoring.icp import IcpScore
 
 
 class InMemoryGrowthRepository:
     def __init__(self) -> None:
         self._companies: dict[UUID, CompanyResponse] = {}
         self._contacts: dict[UUID, ContactResponse] = {}
+        self._icp_scores: dict[UUID, list[IcpScoreResponse]] = {}
 
     def reset(self) -> None:
         self._companies.clear()
         self._contacts.clear()
+        self._icp_scores.clear()
 
     def list_companies(self, limit: int, offset: int) -> list[CompanyResponse]:
         companies = list(self._companies.values())
@@ -84,6 +88,40 @@ class InMemoryGrowthRepository:
 
     def get_contact(self, contact_id: UUID) -> ContactResponse | None:
         return self._contacts.get(contact_id)
+
+    def save_icp_score(
+        self,
+        company_id: UUID,
+        score: IcpScore,
+        current_user: CurrentUser,
+    ) -> IcpScoreResponse | None:
+        company = self.get_company(company_id)
+
+        if company is None:
+            return None
+
+        now = datetime.now(UTC)
+        result = IcpScoreResponse(
+            id=uuid4(),
+            company_id=company_id,
+            score=score.score,
+            max_score=score.max_score,
+            tier=score.tier,
+            explanations=score.explanations,
+            calculated_by=UUID(current_user.id),
+            calculated_at=now,
+        )
+        self._icp_scores.setdefault(company_id, []).append(result)
+        self._companies[company_id] = company.model_copy(update={"fit_score": score.score})
+        return result
+
+    def get_latest_icp_score(self, company_id: UUID) -> IcpScoreResponse | None:
+        scores = self._icp_scores.get(company_id, [])
+
+        if not scores:
+            return None
+
+        return scores[-1]
 
 
 repository = InMemoryGrowthRepository()

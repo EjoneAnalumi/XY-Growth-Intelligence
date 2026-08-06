@@ -5,7 +5,9 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 
 from app.core.auth import get_current_user, require_roles
 from app.schemas.companies import CompanyCreate, CompanyListResponse, CompanyResponse
+from app.schemas.icp import IcpScoreResponse
 from app.schemas.users import CurrentUser
+from app.scoring.icp import IcpScoringEngine
 from app.services.growth_repository import InMemoryGrowthRepository, get_growth_repository
 
 router = APIRouter(prefix="/companies", tags=["companies"])
@@ -79,3 +81,32 @@ def get_company(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found.")
 
     return company
+
+
+@router.post(
+    "/{company_id}/calculate-icp",
+    response_model=IcpScoreResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        401: {"description": "Missing or invalid bearer token."},
+        403: {"description": "User role cannot calculate ICP scores."},
+        404: {"description": "Company not found."},
+    },
+)
+def calculate_company_icp(
+    company_id: UUID,
+    repository: Repository,
+    current_user: WriterUser,
+) -> IcpScoreResponse:
+    company = repository.get_company(company_id)
+
+    if company is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found.")
+
+    score = IcpScoringEngine().calculate(company)
+    result = repository.save_icp_score(company_id, score, current_user)
+
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found.")
+
+    return result

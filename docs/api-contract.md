@@ -110,6 +110,42 @@ Not found response:
 }
 ```
 
+```http
+POST /companies/{company_id}/calculate-icp
+Authorization: Bearer dev-business-development
+```
+
+Valid response shape:
+
+```json
+{
+  "id": "90000000-0000-4000-8000-000000000001",
+  "company_id": "10000000-0000-4000-8000-000000000001",
+  "score": 100,
+  "max_score": 100,
+  "tier": "strong_fit",
+  "explanations": [
+    {
+      "rule_id": "industry_fit",
+      "label": "Industry fit",
+      "points": 25,
+      "max_points": 25,
+      "explanation": "Financial Services is a highly regulated target industry."
+    }
+  ],
+  "calculated_by": "00000000-0000-4000-8000-000000000003",
+  "calculated_at": "2026-08-06T09:00:00Z"
+}
+```
+
+Scoring rules:
+
+- Score is deterministic for the same company input.
+- Score range is `0` to `100`.
+- Tiers are `strong_fit`, `good_fit`, `possible_fit`, and `low_fit`.
+- The result stores rule-by-rule explanations.
+- The company `fit_score` is updated to the latest calculated score.
+
 ### Contacts
 
 ```http
@@ -541,6 +577,7 @@ These groups are required later in the MVP:
 - `GET /companies`: implemented with local in-memory repository.
 - `POST /companies`: implemented with local in-memory repository.
 - `GET /companies/{id}`: implemented with local in-memory repository.
+- `POST /companies/{id}/calculate-icp`: implemented with deterministic scoring and stored explanations.
 - `PATCH /companies/{id}`
 - `GET /contacts`: implemented with local in-memory repository.
 - `POST /contacts`: implemented with local in-memory repository.

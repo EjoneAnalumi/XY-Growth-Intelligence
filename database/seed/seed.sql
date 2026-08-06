@@ -92,3 +92,145 @@ INSERT INTO public.contacts (
     ('20000000-0000-4000-8000-000000000049', '10000000-0000-4000-8000-000000000007', 'Kevin', 'Murphy', 'kevin@pioneer-logistics.example', '+1-555-0149', 'Analyst', 'IT', 'Technical contact', 'low', 'unknown', ARRAY['email'], NOW(), NOW(), false),
     ('20000000-0000-4000-8000-000000000050', '10000000-0000-4000-8000-000000000008', 'Lucy', 'Bailey', 'lucy@summit-legal.example', '+1-555-0150', 'Legal Assistant', 'Legal', 'Technical contact', 'low', 'unknown', ARRAY['email'], NOW(), NOW(), false)
 ON CONFLICT (id) DO UPDATE SET first_name = EXCLUDED.first_name, updated_at = NOW();
+
+-- Synthetic Week 2 Day 7 seed expansion.
+-- Known active seed metrics:
+-- opportunities: 20 total, 17 open, 2 won, 1 lost
+-- activities: 40 total
+-- tasks: 25 total, with predictable overdue and due-this-week rows
+
+INSERT INTO public.pipeline_stages (
+    id, name, sort_order, default_probability, is_won, is_lost
+) VALUES
+    ('30000000-0000-4000-8000-000000000001', 'Identified', 10, 5, false, false),
+    ('30000000-0000-4000-8000-000000000002', 'Researching', 20, 10, false, false),
+    ('30000000-0000-4000-8000-000000000003', 'Contacted', 30, 15, false, false),
+    ('30000000-0000-4000-8000-000000000004', 'Meeting Scheduled', 40, 25, false, false),
+    ('30000000-0000-4000-8000-000000000005', 'Discovery Completed', 50, 35, false, false),
+    ('30000000-0000-4000-8000-000000000006', 'Qualified', 60, 45, false, false),
+    ('30000000-0000-4000-8000-000000000007', 'Assessment Offered', 70, 50, false, false),
+    ('30000000-0000-4000-8000-000000000008', 'Pilot Proposed', 80, 60, false, false),
+    ('30000000-0000-4000-8000-000000000009', 'Pilot Active', 90, 70, false, false),
+    ('30000000-0000-4000-8000-000000000010', 'Proposal Sent', 100, 75, false, false),
+    ('30000000-0000-4000-8000-000000000011', 'Negotiation', 110, 85, false, false),
+    ('30000000-0000-4000-8000-000000000012', 'Contract Review', 120, 90, false, false),
+    ('30000000-0000-4000-8000-000000000013', 'Won', 130, 100, true, false),
+    ('30000000-0000-4000-8000-000000000014', 'Lost', 140, 0, false, true),
+    ('30000000-0000-4000-8000-000000000015', 'On Hold', 150, 0, false, false)
+ON CONFLICT (name) DO UPDATE SET
+    id = EXCLUDED.id,
+    sort_order = EXCLUDED.sort_order,
+    default_probability = EXCLUDED.default_probability,
+    is_won = EXCLUDED.is_won,
+    is_lost = EXCLUDED.is_lost,
+    updated_at = NOW();
+
+INSERT INTO public.opportunities (
+    id, company_id, contact_id, stage_id, name, service, value_usd, probability,
+    weighted_value_usd, expected_close_date, need, blockers, competitor, next_action,
+    next_action_due_at, created_at, updated_at
+)
+SELECT
+    seed.id,
+    seed.company_id,
+    seed.contact_id,
+    seed.stage_id,
+    seed.name,
+    seed.service,
+    seed.value_usd,
+    seed.probability,
+    ROUND(seed.value_usd * seed.probability / 100, 2),
+    seed.expected_close_date,
+    seed.need,
+    seed.blockers,
+    seed.competitor,
+    seed.next_action,
+    seed.next_action_due_at,
+    seed.created_at,
+    seed.created_at
+FROM (
+    VALUES
+        ('60000000-0000-4000-8000-000000000001'::uuid, '10000000-0000-4000-8000-000000000001'::uuid, '20000000-0000-4000-8000-000000000001'::uuid, '30000000-0000-4000-8000-000000000001'::uuid, 'Northstar SOC readiness sprint', 'Security Assessment', 20000.00, 5, CURRENT_DATE + 20, 'Validate current cloud controls', null, null, 'Confirm scope call', NOW() + INTERVAL '1 day', NOW() - INTERVAL '2 days'),
+        ('60000000-0000-4000-8000-000000000002'::uuid, '10000000-0000-4000-8000-000000000002'::uuid, '20000000-0000-4000-8000-000000000003'::uuid, '30000000-0000-4000-8000-000000000002'::uuid, 'Blue Harbor incident readiness', 'Incident Response Retainer', 40000.00, 10, CURRENT_DATE + 28, 'Board requires response coverage', 'Budget owner not confirmed', null, 'Send retainer options', NOW() + INTERVAL '2 days', NOW() - INTERVAL '3 days'),
+        ('60000000-0000-4000-8000-000000000003'::uuid, '10000000-0000-4000-8000-000000000003'::uuid, '20000000-0000-4000-8000-000000000004'::uuid, '30000000-0000-4000-8000-000000000003'::uuid, 'Greenfield HIPAA monitoring', 'Managed SOC', 60000.00, 15, CURRENT_DATE + 35, 'HIPAA audit remediation', null, 'Regional MSP', 'Book technical discovery', NOW() + INTERVAL '3 days', NOW() - INTERVAL '4 days'),
+        ('60000000-0000-4000-8000-000000000004'::uuid, '10000000-0000-4000-8000-000000000004'::uuid, '20000000-0000-4000-8000-000000000005'::uuid, '30000000-0000-4000-8000-000000000004'::uuid, 'Atlas Grid exposure review', 'Attack Surface Management', 80000.00, 25, CURRENT_DATE + 42, 'Critical infrastructure exposure review', 'Procurement path unclear', null, 'Run stakeholder meeting', NOW() + INTERVAL '4 days', NOW() - INTERVAL '5 days'),
+        ('60000000-0000-4000-8000-000000000005'::uuid, '10000000-0000-4000-8000-000000000005'::uuid, '20000000-0000-4000-8000-000000000006'::uuid, '30000000-0000-4000-8000-000000000005'::uuid, 'Silverline payment security plan', 'Cloud Security Review', 100000.00, 35, CURRENT_DATE + 49, 'PCI DSS cloud evidence gaps', null, 'Boutique assessor', 'Share findings summary', NOW() + INTERVAL '5 days', NOW() - INTERVAL '6 days'),
+        ('60000000-0000-4000-8000-000000000006'::uuid, '10000000-0000-4000-8000-000000000006'::uuid, '20000000-0000-4000-8000-000000000007'::uuid, '30000000-0000-4000-8000-000000000006'::uuid, 'Cobalt managed detection pilot', 'Managed SOC', 120000.00, 45, CURRENT_DATE + 56, 'Need continuous Kubernetes monitoring', null, null, 'Draft pilot success criteria', NOW() + INTERVAL '6 days', NOW() - INTERVAL '7 days'),
+        ('60000000-0000-4000-8000-000000000007'::uuid, '10000000-0000-4000-8000-000000000007'::uuid, '20000000-0000-4000-8000-000000000008'::uuid, '30000000-0000-4000-8000-000000000007'::uuid, 'Pioneer logistics assessment', 'Security Assessment', 140000.00, 50, CURRENT_DATE + 63, 'Supply-chain risk review', null, null, 'Send assessment proposal', NOW() + INTERVAL '7 days', NOW() - INTERVAL '8 days'),
+        ('60000000-0000-4000-8000-000000000008'::uuid, '10000000-0000-4000-8000-000000000008'::uuid, '20000000-0000-4000-8000-000000000009'::uuid, '30000000-0000-4000-8000-000000000008'::uuid, 'Summit legal privacy monitoring', 'Managed SOC', 160000.00, 60, CURRENT_DATE + 70, 'Client confidentiality controls', 'Partner approval needed', null, 'Review pilot terms', NOW() + INTERVAL '8 days', NOW() - INTERVAL '9 days'),
+        ('60000000-0000-4000-8000-000000000009'::uuid, '10000000-0000-4000-8000-000000000009'::uuid, '20000000-0000-4000-8000-000000000010'::uuid, '30000000-0000-4000-8000-000000000009'::uuid, 'Meridian bio research pilot', 'Cloud Security Review', 180000.00, 70, CURRENT_DATE + 77, 'Research environment monitoring', null, 'Lab IT provider', 'Confirm pilot timeline', NOW() + INTERVAL '9 days', NOW() - INTERVAL '10 days'),
+        ('60000000-0000-4000-8000-000000000010'::uuid, '10000000-0000-4000-8000-000000000010'::uuid, '20000000-0000-4000-8000-000000000011'::uuid, '30000000-0000-4000-8000-000000000010'::uuid, 'Vector learning proposal', 'Security Assessment', 200000.00, 75, CURRENT_DATE + 84, 'FERPA roadmap needed', null, null, 'Send final proposal', NOW() + INTERVAL '10 days', NOW() - INTERVAL '11 days'),
+        ('60000000-0000-4000-8000-000000000011'::uuid, '10000000-0000-4000-8000-000000000011'::uuid, '20000000-0000-4000-8000-000000000013'::uuid, '30000000-0000-4000-8000-000000000011'::uuid, 'Apex security negotiation', 'Managed SOC', 220000.00, 85, CURRENT_DATE + 91, 'SOC 2 readiness gap', 'Legal redlines pending', null, 'Resolve terms', NOW() + INTERVAL '11 days', NOW() - INTERVAL '12 days'),
+        ('60000000-0000-4000-8000-000000000012'::uuid, '10000000-0000-4000-8000-000000000012'::uuid, '20000000-0000-4000-8000-000000000015'::uuid, '30000000-0000-4000-8000-000000000012'::uuid, 'Beacon retail contract review', 'Incident Response Retainer', 240000.00, 90, CURRENT_DATE + 98, 'Retail incident response coverage', null, null, 'Review contract edits', NOW() + INTERVAL '12 days', NOW() - INTERVAL '13 days'),
+        ('60000000-0000-4000-8000-000000000013'::uuid, '10000000-0000-4000-8000-000000000013'::uuid, '20000000-0000-4000-8000-000000000017'::uuid, '30000000-0000-4000-8000-000000000013'::uuid, 'Citadel defense closed win', 'Managed SOC', 260000.00, 100, CURRENT_DATE - 5, 'Defense monitoring requirement', null, null, 'Schedule kickoff', NOW() + INTERVAL '13 days', NOW() - INTERVAL '14 days'),
+        ('60000000-0000-4000-8000-000000000014'::uuid, '10000000-0000-4000-8000-000000000014'::uuid, '20000000-0000-4000-8000-000000000019'::uuid, '30000000-0000-4000-8000-000000000014'::uuid, 'Delta quantum lost pilot', 'Cloud Security Review', 280000.00, 20, CURRENT_DATE - 3, 'Manufacturing roadmap review', 'Selected incumbent provider', 'Incumbent provider', 'Capture lost reason', NOW() + INTERVAL '14 days', NOW() - INTERVAL '15 days'),
+        ('60000000-0000-4000-8000-000000000015'::uuid, '10000000-0000-4000-8000-000000000015'::uuid, '20000000-0000-4000-8000-000000000021'::uuid, '30000000-0000-4000-8000-000000000015'::uuid, 'Echo health on hold', 'Security Assessment', 300000.00, 0, CURRENT_DATE + 110, 'HIPAA monitoring budget paused', 'Budget freeze', null, 'Revisit budget window', NOW() + INTERVAL '15 days', NOW() - INTERVAL '16 days'),
+        ('60000000-0000-4000-8000-000000000016'::uuid, '10000000-0000-4000-8000-000000000016'::uuid, '20000000-0000-4000-8000-000000000023'::uuid, '30000000-0000-4000-8000-000000000001'::uuid, 'Fox fintech early deal', 'Incident Response Retainer', 50000.00, 5, CURRENT_DATE + 117, 'PCI response planning', null, null, 'Qualify sponsor', NOW() + INTERVAL '16 days', NOW() - INTERVAL '17 days'),
+        ('60000000-0000-4000-8000-000000000017'::uuid, '10000000-0000-4000-8000-000000000017'::uuid, '20000000-0000-4000-8000-000000000025'::uuid, '30000000-0000-4000-8000-000000000006'::uuid, 'Genesis genomics qualified pilot', 'Managed SOC', 75000.00, 45, CURRENT_DATE + 124, 'Research security coverage', null, null, 'Align pilot owners', NOW() + INTERVAL '17 days', NOW() - INTERVAL '18 days'),
+        ('60000000-0000-4000-8000-000000000018'::uuid, '10000000-0000-4000-8000-000000000018'::uuid, '20000000-0000-4000-8000-000000000027'::uuid, '30000000-0000-4000-8000-000000000010'::uuid, 'Horizon logistics proposal', 'Attack Surface Management', 125000.00, 75, CURRENT_DATE + 131, 'External footprint visibility', null, null, 'Send procurement pack', NOW() + INTERVAL '18 days', NOW() - INTERVAL '19 days'),
+        ('60000000-0000-4000-8000-000000000019'::uuid, '10000000-0000-4000-8000-000000000019'::uuid, '20000000-0000-4000-8000-000000000029'::uuid, '30000000-0000-4000-8000-000000000011'::uuid, 'Ironclad legal negotiation', 'Security Assessment', 150000.00, 85, CURRENT_DATE + 138, 'Client data protection review', null, 'National consultancy', 'Confirm commercial approval', NOW() + INTERVAL '19 days', NOW() - INTERVAL '20 days'),
+        ('60000000-0000-4000-8000-000000000020'::uuid, '10000000-0000-4000-8000-000000000020'::uuid, '20000000-0000-4000-8000-000000000031'::uuid, '30000000-0000-4000-8000-000000000013'::uuid, 'Jupiter edtech closed win', 'Cloud Security Review', 175000.00, 100, CURRENT_DATE - 1, 'FERPA review completed', null, null, 'Set renewal reminder', NOW() + INTERVAL '20 days', NOW() - INTERVAL '21 days')
+) AS seed (
+    id, company_id, contact_id, stage_id, name, service, value_usd, probability,
+    expected_close_date, need, blockers, competitor, next_action, next_action_due_at,
+    created_at
+)
+ON CONFLICT (id) DO UPDATE SET
+    stage_id = EXCLUDED.stage_id,
+    value_usd = EXCLUDED.value_usd,
+    probability = EXCLUDED.probability,
+    weighted_value_usd = EXCLUDED.weighted_value_usd,
+    next_action = EXCLUDED.next_action,
+    next_action_due_at = EXCLUDED.next_action_due_at,
+    updated_at = NOW();
+
+INSERT INTO public.activities (
+    id, company_id, contact_id, opportunity_id, activity_type, subject, notes, occurred_at
+)
+SELECT
+    ('40000000-0000-4000-8000-' || LPAD(series::text, 12, '0'))::uuid,
+    ('10000000-0000-4000-8000-' || LPAD((((series - 1) % 30) + 1)::text, 12, '0'))::uuid,
+    ('20000000-0000-4000-8000-' || LPAD((((series - 1) % 50) + 1)::text, 12, '0'))::uuid,
+    ('60000000-0000-4000-8000-' || LPAD((((series - 1) % 20) + 1)::text, 12, '0'))::uuid,
+    (ARRAY['call', 'email', 'meeting', 'demo', 'proposal', 'follow_up'])[((series - 1) % 6) + 1],
+    'Seed activity ' || series,
+    'Synthetic activity for dashboard metric verification.',
+    NOW() - (series || ' days')::interval
+FROM generate_series(1, 40) AS series
+ON CONFLICT (id) DO UPDATE SET
+    subject = EXCLUDED.subject,
+    notes = EXCLUDED.notes,
+    updated_at = NOW();
+
+INSERT INTO public.tasks (
+    id, company_id, opportunity_id, title, description, due_at, priority, status, completed_at
+)
+SELECT
+    ('70000000-0000-4000-8000-' || LPAD(series::text, 12, '0'))::uuid,
+    ('10000000-0000-4000-8000-' || LPAD((((series - 1) % 30) + 1)::text, 12, '0'))::uuid,
+    ('60000000-0000-4000-8000-' || LPAD((((series - 1) % 20) + 1)::text, 12, '0'))::uuid,
+    'Seed task ' || series,
+    'Synthetic task for pipeline follow-up tracking.',
+    CASE
+        WHEN series <= 8 THEN NOW() - (series || ' days')::interval
+        WHEN series <= 18 THEN NOW() + ((series - 8) || ' days')::interval
+        ELSE NOW() + ((series + 7) || ' days')::interval
+    END,
+    (ARRAY['low', 'medium', 'high', 'urgent'])[((series - 1) % 4) + 1],
+    CASE
+        WHEN series IN (4, 9, 14, 19, 24) THEN 'completed'
+        WHEN series IN (5, 10, 15, 20, 25) THEN 'in_progress'
+        ELSE 'open'
+    END,
+    CASE
+        WHEN series IN (4, 9, 14, 19, 24) THEN NOW() - INTERVAL '1 day'
+        ELSE NULL
+    END
+FROM generate_series(1, 25) AS series
+ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    due_at = EXCLUDED.due_at,
+    priority = EXCLUDED.priority,
+    status = EXCLUDED.status,
+    completed_at = EXCLUDED.completed_at,
+    updated_at = NOW();

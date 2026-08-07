@@ -102,6 +102,10 @@ export default function ActivityTaskPanel({
     const contact = contacts.find((item) => item.id === opportunity.contactId);
     return contact ? `${contact.firstName} ${contact.lastName}` : "No primary contact";
   }, [contacts, opportunity.contactId]);
+  const openTasks = useMemo(
+    () => tasks.filter((task) => !["completed", "cancelled"].includes(task.status)),
+    [tasks],
+  );
 
   async function handleActivitySubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -337,11 +341,11 @@ export default function ActivityTaskPanel({
         <div className="rounded-md border bg-background p-4">
           <h3 className="text-sm font-semibold">Open Tasks</h3>
           {loading ? <p className="mt-3 text-sm text-muted-foreground">Loading tasks...</p> : null}
-          {!loading && tasks.length === 0 ? (
+          {!loading && openTasks.length === 0 ? (
             <p className="mt-3 text-sm text-muted-foreground">No tasks scheduled yet.</p>
           ) : null}
           <div className="mt-3 space-y-3">
-            {tasks.map((task) => (
+            {openTasks.map((task) => (
               <div key={task.id} className="rounded-md border px-3 py-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-medium">{task.title}</p>

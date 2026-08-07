@@ -1,7 +1,7 @@
 "use client";
 
 import { BarChart3, Lightbulb, RefreshCw } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { calculateIcpScore } from "@/lib/api/icp";
@@ -71,6 +71,12 @@ export default function IcpScorePanel({ companies }: IcpScorePanelProps) {
     [companies, selectedCompanyId],
   );
   const recommendation = buildRecommendation(score);
+
+  useEffect(() => {
+    if (!selectedCompanyId && companies.length > 0) {
+      setSelectedCompanyId(companies[0].id);
+    }
+  }, [companies, selectedCompanyId]);
 
   async function handleCalculate() {
     if (!selectedCompanyId) {

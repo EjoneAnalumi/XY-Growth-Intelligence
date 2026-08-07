@@ -513,6 +513,9 @@ Valid response shape:
   "lost_opportunities": 1,
   "pipeline_value_usd": 140000,
   "weighted_pipeline_value_usd": 80000,
+  "high_priority_opportunities": 1,
+  "inactive_opportunities": 1,
+  "open_tasks": 2,
   "overdue_tasks": 1,
   "due_this_week_tasks": 1,
   "activities_count": 2,
@@ -525,6 +528,19 @@ Valid response shape:
       "total_value_usd": 100000,
       "weighted_value_usd": 50000
     }
+  ],
+  "priority_opportunities": [
+    {
+      "opportunity_id": "60000000-0000-4000-8000-000000000001",
+      "name": "High priority scored deal",
+      "stage_id": "30000000-0000-4000-8000-000000000010",
+      "stage_name": "Proposal Sent",
+      "company_id": "10000000-0000-4000-8000-000000000001",
+      "priority_score": 75,
+      "weighted_value_usd": 160000,
+      "days_in_current_stage": 0,
+      "reason": "high weighted value, strong ICP fit, follow-up due this week"
+    }
   ]
 }
 ```
@@ -536,6 +552,8 @@ Metric rules:
 - `days_in_current_stage` is calculated from the latest stage movement into the current stage, or from `created_at` if the opportunity never moved.
 - `overdue_tasks` excludes completed and cancelled tasks.
 - `due_this_week_tasks` excludes completed and cancelled tasks and uses the next seven days.
+- `priority_opportunities` ranks open opportunities by weighted value, ICP fit score, task urgency, and inactivity.
+- `inactive_opportunities` counts open opportunities that stayed in their stage for at least 14 days and have no recent activity or open task.
 
 ## Minimum API Groups From Brief
 
@@ -595,3 +613,4 @@ These groups are required later in the MVP:
 - `GET/POST/PATCH/DELETE /tasks`: implemented with local in-memory repository.
 - `GET/POST/PATCH/DELETE /notes`: implemented with local in-memory repository.
 - `GET /dashboard/summary`: implemented with weighted pipeline, stage duration, task, activity, and stage summary metrics.
+- Dashboard summary now includes priority and inactive-opportunity workflow metrics.

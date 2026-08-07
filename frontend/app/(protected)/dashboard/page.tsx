@@ -15,7 +15,7 @@ import { useDashboardSummary } from "@/hooks/use-dashboard-summary";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
-  currency: "EUR",
+  currency: "USD",
   maximumFractionDigits: 0,
 });
 

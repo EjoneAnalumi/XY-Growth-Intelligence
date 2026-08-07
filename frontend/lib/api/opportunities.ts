@@ -58,6 +58,12 @@ type StageHistoryApiResponse = {
   changed_at: string;
 };
 
+type OpportunityStageMoveApiResponse = {
+  message: string;
+  opportunity: OpportunityApiResponse;
+  history: StageHistoryApiResponse;
+};
+
 function mapPipelineStage(stage: PipelineStageApiResponse): PipelineStage {
   return {
     id: stage.id,
@@ -187,4 +193,29 @@ export async function getOpportunityStageHistory(
     `/opportunities/${opportunityId}/stage-history`,
   );
   return response.map(mapStageHistory);
+}
+
+export async function moveOpportunityStage(
+  opportunityId: string,
+  toStageId: string,
+  note: string,
+): Promise<{
+  opportunity: Opportunity;
+  history: OpportunityStageHistory;
+}> {
+  const response = await apiRequest<OpportunityStageMoveApiResponse>(
+    `/opportunities/${opportunityId}/move-stage`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        to_stage_id: toStageId,
+        note: note || null,
+      }),
+    },
+  );
+
+  return {
+    opportunity: mapOpportunity(response.opportunity),
+    history: mapStageHistory(response.history),
+  };
 }

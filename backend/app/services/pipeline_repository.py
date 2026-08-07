@@ -195,8 +195,12 @@ class InMemoryPipelineRepository:
     def stage_exists(self, stage_id: str | UUID) -> bool:
         return str(stage_id) in self._pipeline_stages
 
-    def get_dashboard_summary(self) -> dict:
+    def get_dashboard_summary(
+        self,
+        company_fit_scores: dict[str, int | None] | None = None,
+    ) -> dict:
         now = datetime.now(UTC)
+        fit_scores = company_fit_scores or {}
         opportunities = [
             self._with_stage_duration(record, now)
             for record in self._opportunities.values()
@@ -239,6 +243,18 @@ class InMemoryPipelineRepository:
             if self._parse_datetime(task.get("due_at")) is not None
             and now <= self._parse_datetime(task.get("due_at")) <= seven_days_from_now
         ]
+        priority_opportunities = self._priority_opportunities(
+            open_opportunities,
+            tasks,
+            activities,
+            fit_scores,
+            now,
+        )
+        inactive_opportunities = [
+            opportunity
+            for opportunity in open_opportunities
+            if self._is_inactive_opportunity(opportunity, tasks, activities, now)
+        ]
 
         return {
             "total_opportunities": len(opportunities),
@@ -250,11 +266,21 @@ class InMemoryPipelineRepository:
                 open_opportunities,
                 "weighted_value_usd",
             ),
+            "high_priority_opportunities": len(
+                [
+                    opportunity
+                    for opportunity in priority_opportunities
+                    if opportunity["priority_score"] >= 70
+                ]
+            ),
+            "inactive_opportunities": len(inactive_opportunities),
+            "open_tasks": len(tasks),
             "overdue_tasks": len(overdue_tasks),
             "due_this_week_tasks": len(due_this_week_tasks),
             "activities_count": len(activities),
             "average_days_in_current_stage": self._average_stage_duration(open_opportunities),
             "stage_summaries": self._stage_summaries(opportunities),
+            "priority_opportunities": priority_opportunities[:5],
         }
 
     def _collection(self, collection: str) -> dict[str, dict]:
@@ -368,6 +394,149 @@ class InMemoryPipelineRepository:
             )
 
         return summaries
+
+    def _priority_opportunities(
+        self,
+        opportunities: list[dict],
+        tasks: list[dict],
+        activities: list[dict],
+        company_fit_scores: dict[str, int | None],
+        now: datetime,
+    ) -> list[dict]:
+        prioritized = [
+            self._priority_opportunity_summary(
+                opportunity,
+                tasks,
+                activities,
+                company_fit_scores,
+                now,
+            )
+            for opportunity in opportunities
+        ]
+
+        return sorted(
+            prioritized,
+            key=lambda opportunity: (
+                opportunity["priority_score"],
+                opportunity["weighted_value_usd"],
+            ),
+            reverse=True,
+        )
+
+    def _priority_opportunity_summary(
+        self,
+        opportunity: dict,
+        tasks: list[dict],
+        activities: list[dict],
+        company_fit_scores: dict[str, int | None],
+        now: datetime,
+    ) -> dict:
+        weighted_value = float(opportunity.get("weighted_value_usd") or 0)
+        value_points = min(30, int(weighted_value / 5000))
+        fit_points = int((company_fit_scores.get(str(opportunity["company_id"])) or 0) * 0.3)
+        task_points = self._task_priority_points(opportunity["id"], tasks, now)
+        inactive = self._is_inactive_opportunity(opportunity, tasks, activities, now)
+        inactivity_points = 20 if inactive else 0
+        priority_score = min(100, value_points + fit_points + task_points + inactivity_points)
+
+        return {
+            "opportunity_id": opportunity["id"],
+            "name": opportunity["name"],
+            "stage_id": opportunity["stage_id"],
+            "stage_name": self._stage_name(opportunity["stage_id"]),
+            "company_id": opportunity["company_id"],
+            "priority_score": priority_score,
+            "weighted_value_usd": round(weighted_value, 2),
+            "days_in_current_stage": opportunity["days_in_current_stage"],
+            "reason": self._priority_reason(
+                weighted_value,
+                fit_points,
+                task_points,
+                inactive,
+            ),
+        }
+
+    def _task_priority_points(
+        self,
+        opportunity_id: str,
+        tasks: list[dict],
+        now: datetime,
+    ) -> int:
+        opportunity_tasks = [
+            task for task in tasks if task.get("opportunity_id") == opportunity_id
+        ]
+
+        if any(self._is_overdue_task(task, now) for task in opportunity_tasks):
+            return 25
+
+        if any(self._is_due_this_week_task(task, now) for task in opportunity_tasks):
+            return 15
+
+        if any(task.get("priority") in {"urgent", "high"} for task in opportunity_tasks):
+            return 10
+
+        return 0
+
+    def _is_inactive_opportunity(
+        self,
+        opportunity: dict,
+        tasks: list[dict],
+        activities: list[dict],
+        now: datetime,
+    ) -> bool:
+        if opportunity["days_in_current_stage"] < 14:
+            return False
+
+        recent_activity_cutoff = now - timedelta(days=14)
+        fallback_activity_at = datetime.min.replace(tzinfo=UTC)
+        has_recent_activity = any(
+            activity.get("opportunity_id") == opportunity["id"]
+            and (
+                self._parse_datetime(activity.get("occurred_at")) or fallback_activity_at
+            ) >= recent_activity_cutoff
+            for activity in activities
+        )
+        has_open_task = any(
+            task.get("opportunity_id") == opportunity["id"]
+            and task.get("status") not in {"completed", "cancelled"}
+            for task in tasks
+        )
+
+        return not has_recent_activity and not has_open_task
+
+    def _is_overdue_task(self, task: dict, now: datetime) -> bool:
+        due_at = self._parse_datetime(task.get("due_at"))
+        return due_at is not None and due_at < now
+
+    def _is_due_this_week_task(self, task: dict, now: datetime) -> bool:
+        due_at = self._parse_datetime(task.get("due_at"))
+        return due_at is not None and now <= due_at <= now + timedelta(days=7)
+
+    def _stage_name(self, stage_id: str | UUID) -> str:
+        stage = self._pipeline_stages.get(str(stage_id))
+        return stage["name"] if stage else "Unknown stage"
+
+    def _priority_reason(
+        self,
+        weighted_value: float,
+        fit_points: int,
+        task_points: int,
+        inactive: bool,
+    ) -> str:
+        reasons = []
+
+        if weighted_value >= 100000:
+            reasons.append("high weighted value")
+        if fit_points >= 20:
+            reasons.append("strong ICP fit")
+        if task_points >= 25:
+            reasons.append("overdue follow-up")
+        elif task_points >= 15:
+            reasons.append("follow-up due this week")
+        if inactive:
+            reasons.append("inactive opportunity")
+
+        return ", ".join(reasons) if reasons else "standard pipeline follow-up"
 
 
 pipeline_repository = InMemoryPipelineRepository()

@@ -26,6 +26,12 @@ class InMemoryGrowthRepository:
     def count_companies(self) -> int:
         return len(self._companies)
 
+    def get_company_fit_scores(self) -> dict[str, int | None]:
+        return {
+            str(company.id): company.fit_score
+            for company in self._companies.values()
+        }
+
     def create_company(self, payload: CompanyCreate, current_user: CurrentUser) -> CompanyResponse:
         now = datetime.now(UTC)
         user_id = UUID(current_user.id)

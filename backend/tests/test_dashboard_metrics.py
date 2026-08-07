@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 from app.main import app
+from app.services.growth_repository import repository
 from app.services.pipeline_repository import pipeline_repository
 from fastapi.testclient import TestClient
 
@@ -17,6 +18,7 @@ lost_stage_id = "30000000-0000-4000-8000-000000000014"
 
 
 def setup_function() -> None:
+    repository.reset()
     pipeline_repository.reset()
 
 
@@ -120,9 +122,11 @@ def test_dashboard_summary_returns_verified_pipeline_metrics() -> None:
     assert body["lost_opportunities"] == 1
     assert body["pipeline_value_usd"] == 140000
     assert body["weighted_pipeline_value_usd"] == 80000
+    assert body["open_tasks"] == 2
     assert body["overdue_tasks"] == 1
     assert body["due_this_week_tasks"] == 1
     assert body["activities_count"] == 2
+    assert body["inactive_opportunities"] == 0
 
     identified_summary = next(
         summary
@@ -132,6 +136,92 @@ def test_dashboard_summary_returns_verified_pipeline_metrics() -> None:
     assert identified_summary["opportunity_count"] == 1
     assert identified_summary["total_value_usd"] == 100000
     assert identified_summary["weighted_value_usd"] == 50000
+
+
+def test_sales_workflow_updates_dashboard_priority_tasks_and_inactivity() -> None:
+    now = datetime.now(UTC)
+    company = client.post(
+        "/companies",
+        headers=writer_headers,
+        json={
+            "name": "Blue Harbor Finance",
+            "industry": "Financial Services",
+            "employee_count": 650,
+            "annual_revenue_usd": 75000000,
+            "headquarters_country": "United States",
+            "cloud_usage": ["Azure", "AWS"],
+            "regulatory_context": ["PCI DSS", "SOX"],
+            "lead_source": "partner referral",
+            "status": "qualified",
+            "lifecycle_stage": "qualified",
+        },
+    ).json()
+    client.post(
+        f"/companies/{company['id']}/calculate-icp",
+        headers=writer_headers,
+    )
+    priority_opportunity = client.post(
+        "/opportunities",
+        headers=writer_headers,
+        json={
+            "company_id": company["id"],
+            "stage_id": proposal_stage_id,
+            "name": "High priority scored deal",
+            "value_usd": 200000,
+            "probability": 80,
+        },
+    ).json()
+    inactive_opportunity = client.post(
+        "/opportunities",
+        headers=writer_headers,
+        json={
+            "company_id": company["id"],
+            "stage_id": identified_stage_id,
+            "name": "Inactive early deal",
+            "value_usd": 10000,
+            "probability": 10,
+        },
+    ).json()
+    pipeline_repository._opportunities[inactive_opportunity["id"]]["created_at"] = (
+        now - timedelta(days=16)
+    )
+    task = client.post(
+        "/tasks",
+        headers=writer_headers,
+        json={
+            "company_id": company["id"],
+            "opportunity_id": priority_opportunity["id"],
+            "title": "Send commercial follow-up",
+            "priority": "high",
+            "status": "open",
+            "due_at": (now + timedelta(days=2)).isoformat(),
+        },
+    ).json()
+
+    response = client.get("/dashboard/summary", headers=writer_headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["open_tasks"] == 1
+    assert body["due_this_week_tasks"] == 1
+    assert body["inactive_opportunities"] == 1
+    assert body["high_priority_opportunities"] == 1
+    assert body["priority_opportunities"][0]["opportunity_id"] == priority_opportunity["id"]
+    assert body["priority_opportunities"][0]["priority_score"] == 75
+    assert "strong ICP fit" in body["priority_opportunities"][0]["reason"]
+    assert "follow-up due this week" in body["priority_opportunities"][0]["reason"]
+
+    client.patch(
+        f"/tasks/{task['id']}",
+        headers=writer_headers,
+        json={"status": "completed"},
+    )
+    updated_response = client.get("/dashboard/summary", headers=writer_headers)
+
+    assert updated_response.status_code == 200
+    updated_body = updated_response.json()
+    assert updated_body["open_tasks"] == 0
+    assert updated_body["due_this_week_tasks"] == 0
 
 
 def test_opportunity_response_includes_stage_duration() -> None:

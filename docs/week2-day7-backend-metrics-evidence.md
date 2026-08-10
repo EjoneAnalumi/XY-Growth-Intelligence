@@ -36,8 +36,8 @@ Day 7 Intern 1 requires:
   - per-stage opportunity/value summaries
 - Expanded synthetic seed data with:
   - 20 opportunities
-  - 40 activities
-  - 25 tasks
+  - 25 activities
+  - 15 tasks
   - fixed pipeline stage IDs for reliable relationships
 
 ## Verified Known Metrics

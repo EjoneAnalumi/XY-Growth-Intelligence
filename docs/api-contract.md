@@ -553,6 +553,7 @@ Metric rules:
 - `overdue_tasks` excludes completed and cancelled tasks.
 - `due_this_week_tasks` excludes completed and cancelled tasks and uses the next seven days.
 - `priority_opportunities` ranks open opportunities by weighted value, ICP fit score, task urgency, and inactivity.
+- `high_priority_opportunities` counts opportunities in the high score band or with the combined signals of meaningful weighted value, strong ICP fit, and urgent/inactive workflow risk.
 - `inactive_opportunities` counts open opportunities that stayed in their stage for at least 14 days and have no recent activity or open task.
 
 ## Minimum API Groups From Brief

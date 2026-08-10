@@ -25,6 +25,8 @@ export type Opportunity = {
   nextAction: string;
   nextActionDueAt: string;
   lostReason: string;
+  currentStageEnteredAt: string | null;
+  daysInCurrentStage: number;
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;

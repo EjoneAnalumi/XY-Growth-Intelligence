@@ -21,7 +21,6 @@ DEFAULT_PIPELINE_STAGES = [
     ("30000000-0000-4000-8000-000000000015", "On Hold", 150, 0, False, False),
 ]
 
-
 class InMemoryPipelineRepository:
     def __init__(self) -> None:
         self._opportunities: dict[str, dict] = {}
@@ -270,7 +269,7 @@ class InMemoryPipelineRepository:
                 [
                     opportunity
                     for opportunity in priority_opportunities
-                    if opportunity["priority_score"] >= 70
+                    if self._is_high_priority_summary(opportunity)
                 ]
             ),
             "inactive_opportunities": len(inactive_opportunities),
@@ -476,6 +475,21 @@ class InMemoryPipelineRepository:
             return 10
 
         return 0
+
+    def _is_high_priority_summary(self, opportunity: dict) -> bool:
+        if opportunity["priority_score"] >= 70:
+            return True
+
+        reason = opportunity["reason"]
+        return (
+            opportunity["weighted_value_usd"] >= 50000
+            and "strong ICP fit" in reason
+            and (
+                "follow-up due this week" in reason
+                or "overdue follow-up" in reason
+                or "inactive opportunity" in reason
+            )
+        )
 
     def _is_inactive_opportunity(
         self,

@@ -607,6 +607,7 @@ Validation rules:
 - Business Development and Read Only cannot run snapshot checks.
 - `.example` domains return deterministic mock DNS/TLS results for safe demos.
 - Non-`.example` domains use bounded DNS and TLS checks with configured timeout.
+- Frontend route `/security-scans` lets the user confirm scope, initiate a snapshot scan, inspect status/evidence, and filter findings by severity.
 
 ## Minimum API Groups From Brief
 

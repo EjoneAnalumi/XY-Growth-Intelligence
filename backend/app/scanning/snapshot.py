@@ -438,6 +438,28 @@ class SnapshotScanner:
         if check == "dmarc":
             policy = self._dmarc_policy(matching_records[0])
             details["policy"] = policy
+            if policy is None:
+                return SnapshotCheckResult(
+                    check="dmarc",
+                    status="observation",
+                    summary="Potential risk: DMARC record is missing the required p= policy.",
+                    finding=True,
+                    severity="medium",
+                    method="DNS TXT lookup",
+                    evidence=matching_records,
+                    details={**details, "policy_valid": False},
+                )
+            if policy not in {"none", "quarantine", "reject"}:
+                return SnapshotCheckResult(
+                    check="dmarc",
+                    status="observation",
+                    summary="Potential risk: DMARC record has an unsupported p= policy value.",
+                    finding=True,
+                    severity="medium",
+                    method="DNS TXT lookup",
+                    evidence=matching_records,
+                    details={**details, "policy_valid": False},
+                )
             if policy == "none":
                 return SnapshotCheckResult(
                     check="dmarc",
@@ -447,8 +469,10 @@ class SnapshotScanner:
                     severity="low",
                     method="DNS TXT lookup",
                     evidence=matching_records,
-                    details=details,
+                    details={**details, "policy_valid": True},
                 )
+
+            details["policy_valid"] = True
 
         return SnapshotCheckResult(
             check=check,

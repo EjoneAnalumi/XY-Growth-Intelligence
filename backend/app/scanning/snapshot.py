@@ -154,13 +154,16 @@ class SnapshotScanner:
             ), []
 
     def _resolve_addresses(self, domain: str, timeout_seconds: float) -> list[str]:
-        with ThreadPoolExecutor(max_workers=1) as executor:
+        executor = ThreadPoolExecutor(max_workers=1)
+        try:
             future = executor.submit(socket.getaddrinfo, domain, 443)
             try:
                 results = future.result(timeout=timeout_seconds)
             except FutureTimeoutError as exc:
                 future.cancel()
                 raise TimeoutError from exc
+        finally:
+            executor.shutdown(wait=False, cancel_futures=True)
 
         return sorted({result[4][0] for result in results})
 

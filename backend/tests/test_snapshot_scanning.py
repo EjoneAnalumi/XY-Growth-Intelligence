@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from app.main import app
 from app.scanning.domain import normalize_domain
@@ -111,6 +113,17 @@ def test_dns_check_rejects_non_public_resolved_addresses() -> None:
     assert dns_result.details["classification"] == "non_public_address"
 
 
+def test_dns_check_rejects_cgnat_resolved_address() -> None:
+    scanner = SnapshotScanner()
+
+    scanner._resolve_addresses = lambda domain, timeout_seconds: ["100.64.0.1"]
+    dns_result, addresses = scanner._check_dns("cgnat.example.test", timeout_seconds=1)
+
+    assert addresses == []
+    assert dns_result.status == "fail"
+    assert dns_result.details["classification"] == "non_public_address"
+
+
 def test_dns_timeout_is_classified_without_global_socket_timeout() -> None:
     scanner = SnapshotScanner()
 
@@ -123,6 +136,22 @@ def test_dns_timeout_is_classified_without_global_socket_timeout() -> None:
     assert addresses == []
     assert dns_result.status == "timeout"
     assert dns_result.details["timeout_seconds"] == 0.5
+
+
+def test_dns_resolution_returns_promptly_after_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    scanner = SnapshotScanner()
+
+    def slow_getaddrinfo(*args: object, **kwargs: object) -> list[object]:
+        time.sleep(0.3)
+        return []
+
+    monkeypatch.setattr("app.scanning.snapshot.socket.getaddrinfo", slow_getaddrinfo)
+    started_at = time.monotonic()
+    dns_result, addresses = scanner._check_dns("slow.example.test", timeout_seconds=0.05)
+
+    assert time.monotonic() - started_at < 0.15
+    assert addresses == []
+    assert dns_result.status == "timeout"
 
 
 def test_openapi_documents_snapshot_endpoint() -> None:

@@ -31,15 +31,7 @@ def normalize_domain(value: str) -> str:
 
 
 def is_public_ip_address(value: str) -> bool:
-    ip_address = ipaddress.ip_address(value)
-    return not (
-        ip_address.is_private
-        or ip_address.is_loopback
-        or ip_address.is_link_local
-        or ip_address.is_multicast
-        or ip_address.is_reserved
-        or ip_address.is_unspecified
-    )
+    return ipaddress.ip_address(value).is_global
 
 
 def _is_ip_address(value: str) -> bool:

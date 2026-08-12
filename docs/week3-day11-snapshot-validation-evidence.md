@@ -31,6 +31,10 @@ Day 11 Intern 1 requires:
   - Business Development and Read Only cannot run snapshot checks.
 - Added deterministic `.example` demo results for safe evidence.
 - Added bounded DNS and TLS checks for non-demo domains with timeout handling.
+- Added server-side live domain allowlist enforcement.
+- Added public-IP validation after DNS resolution.
+- Added TLS connection to a validated public IP while preserving hostname verification.
+- Added structured security/audit logs for scan start and completion.
 
 ## Demo Result
 
@@ -60,6 +64,9 @@ The `.example` path intentionally returns mock results so tests and demos do not
 - Snapshot checks require explicit approval.
 - Demo `.example` domains use mock results.
 - Live DNS/TLS checks are bounded by a request timeout.
+- Request approval alone is not enough for live checks; live domains must be in the server-side allowlist.
+- Private, local, link-local, reserved, multicast, and unspecified resolved IPs are rejected before TLS connection.
+- DNS/TLS failures are classified as structured failure/timeout results.
 
 ## Verification
 
@@ -76,6 +83,16 @@ Expected:
 - Snapshot validation tests pass.
 - Full backend test suite passes.
 - Ruff reports no issues.
+
+Latest local result:
+
+```text
+python -m pytest backend -q -p no:cacheprovider
+55 passed, 1 skipped
+
+python -m ruff check backend
+All checks passed!
+```
 
 ## Remaining TODO
 

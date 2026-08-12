@@ -608,6 +608,10 @@ Validation rules:
 - `.example` domains return deterministic mock DNS/TLS results for safe demos.
 - Non-`.example` domains use bounded DNS and TLS checks with configured timeout.
 - Frontend route `/security-scans` lets the user confirm scope, initiate a snapshot scan, inspect status/evidence, and filter findings by severity.
+- Non-`.example` domains must be present in the server-side live scan allowlist.
+- DNS results that resolve only to private, loopback, link-local, reserved, multicast, or unspecified addresses are rejected.
+- TLS connects to a validated public resolved IP while preserving hostname verification with SNI.
+- DNS and TLS failures are returned as structured check results instead of false positive findings.
 
 ## Minimum API Groups From Brief
 

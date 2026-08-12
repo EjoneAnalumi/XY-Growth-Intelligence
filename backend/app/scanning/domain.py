@@ -30,6 +30,10 @@ def normalize_domain(value: str) -> str:
     return candidate
 
 
+def is_public_ip_address(value: str) -> bool:
+    return ipaddress.ip_address(value).is_global
+
+
 def _is_ip_address(value: str) -> bool:
     try:
         ipaddress.ip_address(value)

@@ -556,6 +556,58 @@ Metric rules:
 - `high_priority_opportunities` counts opportunities in the high score band or with the combined signals of meaningful weighted value, strong ICP fit, and urgent/inactive workflow risk.
 - `inactive_opportunities` counts open opportunities that stayed in their stage for at least 14 days and have no recent activity or open task.
 
+### Security Snapshot
+
+```http
+POST /security-scans/snapshot
+Authorization: Bearer dev-technical-analyst
+Content-Type: application/json
+```
+
+Valid request:
+
+```json
+{
+  "domain": "https://demo.xy-cyber.example/snapshot",
+  "approved": true,
+  "approval_note": "Approved internal demo target.",
+  "timeout_seconds": 1
+}
+```
+
+Valid response shape:
+
+```json
+{
+  "domain": "demo.xy-cyber.example",
+  "approved": true,
+  "started_at": "2026-08-12T09:00:00Z",
+  "completed_at": "2026-08-12T09:00:00Z",
+  "duration_ms": 2,
+  "results": [
+    {
+      "check": "dns",
+      "status": "pass",
+      "summary": "Synthetic DNS result returned for demo safety.",
+      "details": {
+        "addresses": ["203.0.113.10"],
+        "record_type": "A"
+      }
+    }
+  ]
+}
+```
+
+Validation rules:
+
+- Request must include explicit approval.
+- Domain is normalized from URL/host input to lowercase hostname.
+- IP addresses, localhost, malformed hostnames, and empty domains are rejected.
+- Technical Analyst, Management, and Admin can run snapshot checks.
+- Business Development and Read Only cannot run snapshot checks.
+- `.example` domains return deterministic mock DNS/TLS results for safe demos.
+- Non-`.example` domains use bounded DNS and TLS checks with configured timeout.
+
 ## Minimum API Groups From Brief
 
 These groups are required later in the MVP:
@@ -615,3 +667,4 @@ These groups are required later in the MVP:
 - `GET/POST/PATCH/DELETE /notes`: implemented with local in-memory repository.
 - `GET /dashboard/summary`: implemented with weighted pipeline, stage duration, task, activity, and stage summary metrics.
 - Dashboard summary now includes priority and inactive-opportunity workflow metrics.
+- `POST /security-scans/snapshot`: implemented for approved demo DNS/TLS checks with timeout handling.

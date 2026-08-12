@@ -18,14 +18,27 @@ import { ReactNode, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { getMockSession, signOutMock } from "@/lib/auth";
+import type { MockRole } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-const navigation = [
+type NavigationItem = {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  roles?: MockRole[];
+};
+
+const navigation: NavigationItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/companies", label: "Companies", icon: Building2 },
   { href: "/contacts", label: "Contacts", icon: UsersRound },
   { href: "/opportunities", label: "Opportunities", icon: Target },
-  { href: "/security-scans", label: "Security Scans", icon: Radar },
+  {
+    href: "/security-scans",
+    label: "Security Scans",
+    icon: Radar,
+    roles: ["technical_analyst"]
+  },
   { href: "/reports", label: "Reports", icon: BarChart3 }
 ];
 
@@ -39,6 +52,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const session = getMockSession();
+  const visibleNavigation = navigation.filter(
+    (item) => !item.roles || (session && item.roles.includes(session.role))
+  );
 
   function handleSignOut() {
     signOutMock();
@@ -90,7 +106,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           )}
         >
           <nav className="space-y-1" aria-label="Main navigation">
-            {navigation.map((item) => {
+            {visibleNavigation.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
 

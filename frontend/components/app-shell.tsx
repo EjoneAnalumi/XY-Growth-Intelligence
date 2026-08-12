@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Radar,
   ShieldCheck,
   Target,
   UsersRound,
@@ -16,7 +17,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { signOutMock } from "@/lib/auth";
+import { getMockSession, signOutMock } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -24,13 +25,20 @@ const navigation = [
   { href: "/companies", label: "Companies", icon: Building2 },
   { href: "/contacts", label: "Contacts", icon: UsersRound },
   { href: "/opportunities", label: "Opportunities", icon: Target },
+  { href: "/security-scans", label: "Security Scans", icon: Radar },
   { href: "/reports", label: "Reports", icon: BarChart3 }
 ];
+
+const roleLabels = {
+  business_development: "Business Development",
+  technical_analyst: "Technical Analyst"
+};
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const session = getMockSession();
 
   function handleSignOut() {
     signOutMock();
@@ -53,7 +61,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <div className="hidden items-center gap-3 md:flex">
             <span className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
-              Business Development
+              {session ? roleLabels[session.role] : "Signed in"}
             </span>
             <Button type="button" variant="outline" onClick={handleSignOut}>
               <LogOut className="mr-2 size-4" aria-hidden="true" />

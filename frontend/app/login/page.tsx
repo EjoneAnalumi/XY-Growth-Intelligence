@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getCurrentUser } from "@/lib/api/users";
 import { signInMock, signOutMock } from "@/lib/auth";
+import type { MockRole } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("bd.demo@example.test");
   const [password, setPassword] = useState("demo-password");
+  const [role, setRole] = useState<MockRole>("business_development");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,7 +30,7 @@ export default function LoginPage() {
 
     try {
       setIsSubmitting(true);
-      signInMock(email);
+      signInMock(email, role);
       await getCurrentUser();
       router.replace("/dashboard");
     } catch {
@@ -81,6 +83,19 @@ export default function LoginPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role">Demo role</Label>
+              <select
+                id="role"
+                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                value={role}
+                onChange={(event) => setRole(event.target.value as MockRole)}
+              >
+                <option value="business_development">Business Development</option>
+                <option value="technical_analyst">Technical Analyst</option>
+              </select>
             </div>
 
             {error ? (

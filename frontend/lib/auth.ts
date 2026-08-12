@@ -1,9 +1,12 @@
 const sessionKey = "xy-growth-intelligence:mock-session";
 
+export type MockRole = "business_development" | "technical_analyst";
+export type MockToken = "dev-business-development" | "dev-technical-analyst";
+
 export type MockSession = {
   email: string;
-  role: "business_development";
-  token: "dev-business-development";
+  role: MockRole;
+  token: MockToken;
 };
 
 export function getMockSession(): MockSession | null {
@@ -25,12 +28,17 @@ export function getMockSession(): MockSession | null {
   }
 }
 
-export function signInMock(email: string): MockSession {
+export function signInMock(email: string, role: MockRole = "business_development"): MockSession {
   const session: MockSession = {
     email,
     role: "business_development",
     token: "dev-business-development"
   };
+
+  if (role === "technical_analyst") {
+    session.role = "technical_analyst";
+    session.token = "dev-technical-analyst";
+  }
 
   window.localStorage.setItem(sessionKey, JSON.stringify(session));
   return session;

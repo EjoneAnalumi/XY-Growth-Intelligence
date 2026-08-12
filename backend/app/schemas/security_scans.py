@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -36,8 +36,13 @@ class SnapshotRequest(BaseModel):
 
 class SnapshotCheckResult(BaseModel):
     check: str
-    status: str
+    status: Literal["pass", "fail", "observation", "error", "timeout", "skipped"]
     summary: str
+    finding: bool = False
+    severity: Literal["info", "low", "medium", "high"] = "info"
+    method: str = ""
+    evidence: list[str] = []
+    error_classification: str | None = None
     details: dict[str, str | int | float | bool | list[str] | None] = {}
 
 

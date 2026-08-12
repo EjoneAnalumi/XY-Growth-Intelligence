@@ -230,6 +230,36 @@ def test_dmarc_monitoring_policy_is_a_low_severity_observation() -> None:
     assert result.details["policy"] == "none"
 
 
+def test_dmarc_record_without_policy_is_not_a_pass() -> None:
+    scanner = SnapshotScanner()
+    scanner._resolve_txt_records = lambda query_name, timeout_seconds: [
+        "v=DMARC1; rua=mailto:reports@example.test"
+    ]
+
+    result = scanner._check_dmarc("approved.example", 1)
+
+    assert result.status == "observation"
+    assert result.finding is True
+    assert result.severity == "medium"
+    assert result.details["policy"] is None
+    assert result.details["policy_valid"] is False
+
+
+def test_dmarc_record_with_invalid_policy_is_not_a_pass() -> None:
+    scanner = SnapshotScanner()
+    scanner._resolve_txt_records = lambda query_name, timeout_seconds: [
+        "v=DMARC1; p=monitor; rua=mailto:reports@example.test"
+    ]
+
+    result = scanner._check_dmarc("approved.example", 1)
+
+    assert result.status == "observation"
+    assert result.finding is True
+    assert result.severity == "medium"
+    assert result.details["policy"] == "monitor"
+    assert result.details["policy_valid"] is False
+
+
 def test_spf_lookup_error_is_classified_without_creating_a_finding() -> None:
     scanner = SnapshotScanner()
 

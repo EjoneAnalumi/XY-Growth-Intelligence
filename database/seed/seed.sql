@@ -93,11 +93,11 @@ INSERT INTO public.contacts (
     ('20000000-0000-4000-8000-000000000050', '10000000-0000-4000-8000-000000000008', 'Lucy', 'Bailey', 'lucy@summit-legal.example', '+1-555-0150', 'Legal Assistant', 'Legal', 'Technical contact', 'low', 'unknown', ARRAY['email'], NOW(), NOW(), false)
 ON CONFLICT (id) DO UPDATE SET first_name = EXCLUDED.first_name, updated_at = NOW();
 
--- Synthetic Week 2 Day 7 seed expansion.
+-- Synthetic Week 2 seed expansion (brief shared Week 2 counts).
 -- Known active seed metrics:
 -- opportunities: 20 total, 17 open, 2 won, 1 lost
--- activities: 40 total
--- tasks: 25 total, with predictable overdue and due-this-week rows
+-- activities: 25 total
+-- tasks: 15 total, with predictable overdue and due-this-week rows
 
 INSERT INTO public.pipeline_stages (
     id, name, sort_order, default_probability, is_won, is_lost
@@ -196,7 +196,7 @@ SELECT
     'Seed activity ' || series,
     'Synthetic activity for dashboard metric verification.',
     NOW() - (series || ' days')::interval
-FROM generate_series(1, 40) AS series
+FROM generate_series(1, 25) AS series
 ON CONFLICT (id) DO UPDATE SET
     subject = EXCLUDED.subject,
     notes = EXCLUDED.notes,
@@ -212,21 +212,21 @@ SELECT
     'Seed task ' || series,
     'Synthetic task for pipeline follow-up tracking.',
     CASE
-        WHEN series <= 8 THEN NOW() - (series || ' days')::interval
-        WHEN series <= 18 THEN NOW() + ((series - 8) || ' days')::interval
+        WHEN series <= 5 THEN NOW() - (series || ' days')::interval
+        WHEN series <= 10 THEN NOW() + ((series - 5) || ' days')::interval
         ELSE NOW() + ((series + 7) || ' days')::interval
     END,
     (ARRAY['low', 'medium', 'high', 'urgent'])[((series - 1) % 4) + 1],
     CASE
-        WHEN series IN (4, 9, 14, 19, 24) THEN 'completed'
-        WHEN series IN (5, 10, 15, 20, 25) THEN 'in_progress'
+        WHEN series IN (4, 9, 14) THEN 'completed'
+        WHEN series IN (5, 10, 15) THEN 'in_progress'
         ELSE 'open'
     END,
     CASE
-        WHEN series IN (4, 9, 14, 19, 24) THEN NOW() - INTERVAL '1 day'
+        WHEN series IN (4, 9, 14) THEN NOW() - INTERVAL '1 day'
         ELSE NULL
     END
-FROM generate_series(1, 25) AS series
+FROM generate_series(1, 15) AS series
 ON CONFLICT (id) DO UPDATE SET
     title = EXCLUDED.title,
     due_at = EXCLUDED.due_at,

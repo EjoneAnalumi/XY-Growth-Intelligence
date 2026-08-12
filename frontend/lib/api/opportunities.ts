@@ -38,6 +38,8 @@ type OpportunityApiResponse = {
   next_action: string | null;
   next_action_due_at: string | null;
   lost_reason: string | null;
+  current_stage_entered_at: string | null;
+  days_in_current_stage: number;
   archived_at: string | null;
   created_at: string;
   updated_at: string;
@@ -94,6 +96,8 @@ function mapOpportunity(opportunity: OpportunityApiResponse): Opportunity {
     nextAction: opportunity.next_action ?? "",
     nextActionDueAt: opportunity.next_action_due_at ?? "",
     lostReason: opportunity.lost_reason ?? "",
+    currentStageEnteredAt: opportunity.current_stage_entered_at,
+    daysInCurrentStage: opportunity.days_in_current_stage,
     archivedAt: opportunity.archived_at,
     createdAt: opportunity.created_at,
     updatedAt: opportunity.updated_at,

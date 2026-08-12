@@ -1,5 +1,6 @@
 import time
 
+import dns.exception
 import pytest
 from app.main import app
 from app.scanning.domain import normalize_domain
@@ -73,8 +74,18 @@ def test_approved_demo_snapshot_returns_structured_results() -> None:
     assert body["domain"] == "demo.xy-cyber.example"
     assert body["approved"] is True
     assert body["duration_ms"] >= 0
-    assert [result["check"] for result in body["results"]] == ["approval", "dns", "tls"]
-    assert {result["status"] for result in body["results"]} == {"pass"}
+    assert [result["check"] for result in body["results"]] == [
+        "approval",
+        "dns",
+        "tls",
+        "http_headers",
+        "spf",
+        "dmarc",
+    ]
+    assert body["results"][3]["severity"] == "medium"
+    assert body["results"][3]["finding"] is True
+    assert body["results"][4]["finding"] is False
+    assert body["results"][5]["severity"] == "low"
     assert body["results"][1]["details"]["addresses"] == ["203.0.113.10"]
 
 
@@ -92,14 +103,14 @@ def test_non_demo_domain_requires_server_side_allowlist() -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert body["results"] == [
-        {
-            "check": "approval",
-            "status": "fail",
-            "summary": "Domain is not in the server-side approved live scan allowlist.",
-            "details": {"domain": "example.com"},
-        }
-    ]
+    assert len(body["results"]) == 1
+    result = body["results"][0]
+    assert result["check"] == "approval"
+    assert result["status"] == "fail"
+    assert result["finding"] is False
+    assert result["severity"] == "info"
+    assert result["error_classification"] == "target_not_allowlisted"
+    assert result["details"] == {"domain": "example.com"}
 
 
 def test_dns_check_rejects_non_public_resolved_addresses() -> None:
@@ -110,7 +121,8 @@ def test_dns_check_rejects_non_public_resolved_addresses() -> None:
 
     assert addresses == []
     assert dns_result.status == "fail"
-    assert dns_result.details["classification"] == "non_public_address"
+    assert dns_result.error_classification == "non_public_address"
+    assert dns_result.finding is False
 
 
 def test_dns_check_rejects_cgnat_resolved_address() -> None:
@@ -121,7 +133,7 @@ def test_dns_check_rejects_cgnat_resolved_address() -> None:
 
     assert addresses == []
     assert dns_result.status == "fail"
-    assert dns_result.details["classification"] == "non_public_address"
+    assert dns_result.error_classification == "non_public_address"
 
 
 def test_dns_timeout_is_classified_without_global_socket_timeout() -> None:
@@ -152,6 +164,85 @@ def test_dns_resolution_returns_promptly_after_timeout(monkeypatch: pytest.Monke
     assert time.monotonic() - started_at < 0.15
     assert addresses == []
     assert dns_result.status == "timeout"
+
+
+def test_missing_http_headers_is_a_severity_rated_observation() -> None:
+    scanner = SnapshotScanner()
+    scanner._fetch_https_headers = lambda domain, address, timeout_seconds: (
+        200,
+        {"x-content-type-options": "nosniff"},
+    )
+
+    result = scanner._check_http_headers("approved.example", ["203.0.113.10"], 1)
+
+    assert result.status == "observation"
+    assert result.finding is True
+    assert result.severity == "medium"
+    assert result.details["missing_headers"] == [
+        "content-security-policy",
+        "strict-transport-security",
+        "x-frame-options",
+        "referrer-policy",
+    ]
+
+
+def test_http_failure_is_classified_without_creating_a_finding() -> None:
+    scanner = SnapshotScanner()
+
+    def raise_connection_error(*args: object, **kwargs: object) -> tuple[int, dict[str, str]]:
+        raise OSError("connection refused")
+
+    scanner._fetch_https_headers = raise_connection_error
+    result = scanner._check_http_headers("approved.example", ["203.0.113.10"], 1)
+
+    assert result.status == "error"
+    assert result.finding is False
+    assert result.severity == "info"
+    assert result.error_classification == "http_request_failed"
+
+
+def test_multiple_spf_records_are_a_structured_observation() -> None:
+    scanner = SnapshotScanner()
+    scanner._resolve_txt_records = lambda query_name, timeout_seconds: [
+        "v=spf1 include:mail.example -all",
+        "v=spf1 include:other.example -all",
+    ]
+
+    result = scanner._check_spf("approved.example", 1)
+
+    assert result.status == "observation"
+    assert result.finding is True
+    assert result.severity == "medium"
+    assert result.details["record_count"] == 2
+
+
+def test_dmarc_monitoring_policy_is_a_low_severity_observation() -> None:
+    scanner = SnapshotScanner()
+    scanner._resolve_txt_records = lambda query_name, timeout_seconds: [
+        "v=DMARC1; p=none; rua=mailto:reports@example.test"
+    ]
+
+    result = scanner._check_dmarc("approved.example", 1)
+
+    assert result.status == "observation"
+    assert result.finding is True
+    assert result.severity == "low"
+    assert result.details["policy"] == "none"
+
+
+def test_spf_lookup_error_is_classified_without_creating_a_finding() -> None:
+    scanner = SnapshotScanner()
+
+    def raise_dns_error(*args: object, **kwargs: object) -> list[str]:
+        raise dns.exception.DNSException("resolver unavailable")
+
+    scanner._resolve_txt_records = raise_dns_error
+    result = scanner._check_spf("approved.example", 1)
+
+    assert result.status == "error"
+    assert result.finding is False
+    assert result.severity == "info"
+    assert result.error_classification == "dns_lookup_failed"
 
 
 def test_openapi_documents_snapshot_endpoint() -> None:

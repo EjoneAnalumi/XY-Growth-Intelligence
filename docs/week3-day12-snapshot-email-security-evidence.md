@@ -21,6 +21,7 @@ Day 12 Intern 1 only:
 - Added HTTP header observations for Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, and Referrer-Policy.
 - Added SPF and DMARC TXT lookups with bounded resolver timeout/lifetime using `dnspython`.
 - Added severity-rated observations for missing headers, missing SPF/DMARC records, multiple SPF records, and DMARC `p=none`.
+- Added severity-rated DMARC observations for a missing or unsupported `p=` policy value; only `none`, `quarantine`, and `reject` are accepted.
 - Classified timeouts, DNS failures, HTTP failures, non-final HTTP responses, and dependency skips as non-findings with `severity: info`.
 
 ## Security Notes
@@ -45,7 +46,7 @@ python -m ruff check .
 Output:
 
 ```text
-19 passed in 1.30s
+21 passed in 1.26s
 All checks passed!
 ```
 

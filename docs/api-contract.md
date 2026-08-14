@@ -589,6 +589,11 @@ Valid response shape:
       "check": "dns",
       "status": "pass",
       "summary": "Synthetic DNS result returned for demo safety.",
+      "finding": false,
+      "severity": "info",
+      "method": "deterministic mock",
+      "evidence": ["A 203.0.113.10"],
+      "error_classification": null,
       "details": {
         "addresses": ["203.0.113.10"],
         "record_type": "A"
@@ -612,6 +617,17 @@ Validation rules:
 - DNS results that resolve only to private, loopback, link-local, reserved, multicast, or unspecified addresses are rejected.
 - TLS connects to a validated public resolved IP while preserving hostname verification with SNI.
 - DNS and TLS failures are returned as structured check results instead of false positive findings.
+- HTTP header, SPF, and DMARC checks are included for approved live targets and as deterministic
+  mock results for `.example` domains.
+- Each result includes `finding`, `severity`, `method`, `evidence`, and optional
+  `error_classification` fields. A timeout, lookup failure, or HTTP request failure has
+  `finding: false` and `severity: info`; it must not be represented as a security finding.
+- Header observations cover Content-Security-Policy, Strict-Transport-Security,
+  X-Content-Type-Options, X-Frame-Options, and Referrer-Policy. Missing controls are
+  phrased as potential risks, not verified vulnerabilities.
+- SPF uses a DNS TXT lookup at the submitted domain; DMARC uses DNS TXT at
+  `_dmarc.{domain}`. Multiple SPF records, absent records, and monitoring-only
+  DMARC (`p=none`) are severity-rated observations when the lookup completes.
 
 ## Minimum API Groups From Brief
 

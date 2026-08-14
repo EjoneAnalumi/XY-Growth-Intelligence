@@ -1,76 +1,263 @@
 "use client";
 
-import { AlertCircle, FileSearch, LoaderCircle, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import {
+  AlertCircle,
+  Archive,
+  CheckCircle2,
+  Download,
+  FileText,
+  LoaderCircle,
+  RefreshCw,
+  Send,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CyberRiskReportPreview } from "@/components/reports/cyber-risk-report-preview";
 import { Button } from "@/components/ui/button";
+import { ApiError } from "@/lib/api/client";
+import {
+  approveReport,
+  archiveReport,
+  downloadReport,
+  generateDemoReport,
+  listReports,
+  Report,
+  submitReportForReview,
+} from "@/lib/api/reports";
+import { getMockSession } from "@/lib/auth";
 
-type PreviewState = "ready" | "loading" | "empty" | "error";
+type LoadState = "loading" | "ready" | "error";
 
-const previewStates: { value: PreviewState; label: string }[] = [
-  { value: "ready", label: "Ready" },
-  { value: "loading", label: "Loading" },
-  { value: "empty", label: "Empty" },
-  { value: "error", label: "Error" },
-];
+const statusStyles = {
+  draft: "border-muted bg-muted text-muted-foreground",
+  review: "border-orange-300 bg-orange-50 text-orange-800",
+  approved: "border-primary/30 bg-primary/10 text-primary",
+  archived: "border-muted bg-muted text-muted-foreground",
+};
 
 export default function ReportsPage() {
-  const [previewState, setPreviewState] = useState<PreviewState>("ready");
+  const [reports, setReports] = useState<Report[]>([]);
+  const [state, setState] = useState<LoadState>("loading");
+  const [message, setMessage] = useState<string | null>(null);
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const session = getMockSession();
+  const canGenerate = session?.role === "technical_analyst" || session?.role === "management";
+  const canApprove = session?.role === "management";
+  const latestReport = useMemo(() => reports[reports.length - 1] ?? null, [reports]);
+
+  useEffect(() => {
+    void refreshReports();
+  }, []);
+
+  async function refreshReports() {
+    try {
+      setState("loading");
+      setMessage(null);
+      const response = await listReports();
+      setReports(response.items);
+      setState("ready");
+    } catch (error) {
+      setState("error");
+      setMessage(error instanceof ApiError ? error.message : "Reports could not be loaded.");
+    }
+  }
+
+  async function runAction(actionName: string, action: () => Promise<Report | void>) {
+    try {
+      setBusyAction(actionName);
+      setMessage(null);
+      const result = await action();
+      if (result) {
+        setReports((current) => {
+          const exists = current.some((report) => report.id === result.id);
+          return exists
+            ? current.map((report) => (report.id === result.id ? result : report))
+            : [...current, result];
+        });
+      }
+    } catch (error) {
+      setMessage(error instanceof ApiError ? error.message : "Report action failed.");
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  function saveDownload(download: Awaited<ReturnType<typeof downloadReport>>) {
+    const binary = atob(download.contentBase64);
+    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+    const blob = new Blob([bytes], { type: download.contentType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = download.filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm font-medium text-primary">Reporting</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">Reports</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-          Review the branded HTML layout using structured, synthetic snapshot data. Approval,
-          archival, and download controls will be connected when the report workflow API is ready.
-        </p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-sm font-medium text-primary">Reporting</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">Reports</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+            Generate a synthetic PDF report, submit it for review, approve it with Management, and
+            download only after approval.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" className="gap-2" onClick={refreshReports}>
+            <RefreshCw className="size-4" aria-hidden="true" />
+            Refresh
+          </Button>
+          <Button
+            type="button"
+            className="gap-2"
+            disabled={!canGenerate || busyAction === "generate"}
+            onClick={() => runAction("generate", generateDemoReport)}
+          >
+            {busyAction === "generate" ? (
+              <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <FileText className="size-4" aria-hidden="true" />
+            )}
+            Generate PDF
+          </Button>
+        </div>
       </div>
 
-      <section className="rounded-md border bg-card p-4 shadow-sm sm:p-5" aria-labelledby="preview-controls">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 id="preview-controls" className="font-semibold">Preview state</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Use these UI states to verify the report experience before API integration.</p>
+      {message ? (
+        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {message}
+        </p>
+      ) : null}
+
+      {!canGenerate ? (
+        <p className="rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground">
+          This role can review report content but cannot generate, approve, archive, or download PDFs.
+        </p>
+      ) : null}
+
+      {state === "loading" ? (
+        <section className="flex min-h-48 items-center justify-center rounded-md border bg-card">
+          <LoaderCircle className="size-7 animate-spin text-primary" aria-hidden="true" />
+        </section>
+      ) : null}
+
+      {state === "error" ? (
+        <section className="rounded-md border border-destructive/30 bg-card p-6" role="alert">
+          <div className="flex items-center gap-2 font-semibold text-destructive">
+            <AlertCircle className="size-5" aria-hidden="true" />
+            Reports could not be loaded
           </div>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Preview state selector">
-            {previewStates.map((state) => (
-              <Button key={state.value} type="button" variant={previewState === state.value ? "default" : "outline"} size="sm" onClick={() => setPreviewState(state.value)}>
-                {state.label}
-              </Button>
-            ))}
-          </div>
+        </section>
+      ) : null}
+
+      {state === "ready" ? (
+        <section className="grid gap-4">
+          {reports.length === 0 ? (
+            <div className="rounded-md border bg-card p-6 text-sm text-muted-foreground">
+              No generated reports yet. Use a Technical Analyst or Management demo role to generate
+              the synthetic PDF report.
+            </div>
+          ) : null}
+
+          {reports.map((report) => (
+            <article key={report.id} className="rounded-md border bg-card p-4 shadow-sm">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="font-semibold">{report.title}</h2>
+                    <span
+                      className={`rounded-full border px-2.5 py-1 text-xs font-semibold uppercase ${statusStyles[report.status]}`}
+                    >
+                      {report.status}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {report.companyName} - {report.domain}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Stored at {report.storageBucket}/{report.storagePath}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={report.status !== "draft" || !canGenerate || busyAction === report.id}
+                    onClick={() =>
+                      runAction(report.id, () => submitReportForReview(report.id))
+                    }
+                  >
+                    <Send className="size-4" aria-hidden="true" />
+                    Review
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="gap-2"
+                    disabled={report.status !== "review" || !canApprove || busyAction === report.id}
+                    onClick={() => runAction(report.id, () => approveReport(report.id))}
+                  >
+                    <CheckCircle2 className="size-4" aria-hidden="true" />
+                    Approve
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={report.status !== "approved" || !canApprove || busyAction === report.id}
+                    onClick={() =>
+                      runAction(report.id, async () => {
+                        saveDownload(await downloadReport(report.id));
+                      })
+                    }
+                  >
+                    <Download className="size-4" aria-hidden="true" />
+                    Download
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={report.status === "archived" || !canApprove || busyAction === report.id}
+                    onClick={() => runAction(report.id, () => archiveReport(report.id))}
+                  >
+                    <Archive className="size-4" aria-hidden="true" />
+                    Archive
+                  </Button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </section>
+      ) : null}
+
+      <section aria-labelledby="latest-preview" className="space-y-3">
+        <div>
+          <h2 id="latest-preview" className="text-lg font-semibold">
+            Report preview
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {latestReport
+              ? `Latest generated report: ${latestReport.title}`
+              : "Static branded preview shown until a report is generated."}
+          </p>
         </div>
+        <CyberRiskReportPreview />
+        {latestReport ? (
+          <p className="rounded-md border bg-card px-3 py-2 text-xs text-muted-foreground">
+            Backend generated and stored the PDF source for this report at{" "}
+            {latestReport.storageBucket}/{latestReport.storagePath}.
+          </p>
+        ) : null}
       </section>
-
-      {previewState === "ready" ? <CyberRiskReportPreview /> : null}
-
-      {previewState === "loading" ? (
-        <section className="flex min-h-80 flex-col items-center justify-center rounded-md border bg-card px-6 text-center shadow-sm" aria-live="polite">
-          <LoaderCircle className="size-8 animate-spin text-primary" aria-hidden="true" />
-          <h2 className="mt-4 text-lg font-semibold">Preparing report preview</h2>
-          <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">Structured scan results, company context, and recommendations are being assembled for review.</p>
-        </section>
-      ) : null}
-
-      {previewState === "empty" ? (
-        <section className="flex min-h-80 flex-col items-center justify-center rounded-md border bg-card px-6 text-center shadow-sm">
-          <div className="flex size-11 items-center justify-center rounded-md bg-muted text-primary"><FileSearch className="size-6" aria-hidden="true" /></div>
-          <h2 className="mt-4 text-lg font-semibold">No report draft is available</h2>
-          <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">Generate an approved mock snapshot first. A future report workflow will assemble the preview from its structured evidence.</p>
-        </section>
-      ) : null}
-
-      {previewState === "error" ? (
-        <section className="flex min-h-80 flex-col items-center justify-center rounded-md border border-destructive/30 bg-card px-6 text-center shadow-sm" role="alert">
-          <div className="flex size-11 items-center justify-center rounded-md bg-destructive/10 text-destructive"><AlertCircle className="size-6" aria-hidden="true" /></div>
-          <h2 className="mt-4 text-lg font-semibold">Report preview could not be prepared</h2>
-          <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">The preview could not load structured report data. No report has been approved, shared, or downloaded.</p>
-          <Button type="button" variant="outline" className="mt-5 gap-2" onClick={() => setPreviewState("loading")}><RefreshCw className="size-4" aria-hidden="true" /> Try again</Button>
-        </section>
-      ) : null}
     </div>
   );
 }

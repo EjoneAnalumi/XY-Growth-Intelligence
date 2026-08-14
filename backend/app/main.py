@@ -9,6 +9,7 @@ from app.api.health import router as health_router
 from app.api.notes import router as notes_router
 from app.api.opportunities import router as opportunities_router
 from app.api.pipeline_stages import router as pipeline_stages_router
+from app.api.reports import router as reports_router
 from app.api.security_scans import router as security_scans_router
 from app.api.tasks import router as tasks_router
 from app.api.users import router as users_router
@@ -43,3 +44,4 @@ app.include_router(tasks_router)
 app.include_router(notes_router)
 app.include_router(dashboard_router)
 app.include_router(security_scans_router)
+app.include_router(reports_router)

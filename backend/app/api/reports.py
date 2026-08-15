@@ -14,6 +14,8 @@ from app.schemas.reports import (
 from app.schemas.users import CurrentUser
 from app.services.report_repository import (
     ReportPersistenceError,
+    ReportScanIneligibleError,
+    ReportScanNotFoundError,
     SupabaseReportRepository,
     get_report_repository,
 )
@@ -27,12 +29,28 @@ GeneratorUser = Annotated[
     Depends(require_roles("admin", "management", "technical_analyst")),
 ]
 ApproverUser = Annotated[CurrentUser, Depends(require_roles("admin", "management"))]
-Repository = Annotated[SupabaseReportRepository, Depends(get_report_repository)]
+
+
+def get_configured_report_repository() -> SupabaseReportRepository:
+    try:
+        return get_report_repository()
+    except ReportPersistenceError as exc:
+        raise HTTPException(
+            status_code=503, detail="Report service is temporarily unavailable."
+        ) from exc
+
+
+Repository = Annotated[SupabaseReportRepository, Depends(get_configured_report_repository)]
 
 
 @router.get("", response_model=ReportListResponse)
 def list_reports(repository: Repository, current_user: ReaderUser) -> ReportListResponse:
-    reports = repository.list_reports()
+    try:
+        reports = repository.list_reports()
+    except ReportPersistenceError as exc:
+        raise HTTPException(
+            status_code=503, detail="Report service is temporarily unavailable."
+        ) from exc
     return ReportListResponse(items=reports, total=len(reports))
 
 
@@ -49,6 +67,12 @@ def generate_report(
 ) -> ReportResponse:
     try:
         report = repository.generate_report(payload, current_user)
+    except ReportScanNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Snapshot was not found.") from exc
+    except ReportScanIneligibleError as exc:
+        raise HTTPException(
+            status_code=409, detail="Snapshot is not approved and complete."
+        ) from exc
     except ReportPersistenceError as exc:
         raise HTTPException(
             status_code=503, detail="Report service is temporarily unavailable."

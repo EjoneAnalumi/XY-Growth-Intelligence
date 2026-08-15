@@ -12,21 +12,13 @@ class ReportGenerateRequest(BaseModel):
         json_schema_extra={
             "examples": [
                 {
-                    "company_id": "10000000-0000-4000-8000-000000000001",
-                    "company_name": "Northstar Commerce Group",
-                    "domain": "demo.xy-cyber.example",
-                    "scan_summary": (
-                        "Approved demo snapshot with SPF pass, DMARC monitoring, and missing CSP."
-                    ),
+                    "security_scan_id": "30000000-0000-4000-8000-000000000001",
                 }
             ]
         }
     )
 
-    company_id: UUID
-    company_name: Annotated[str, Field(min_length=1, max_length=160)]
-    domain: Annotated[str, Field(min_length=1, max_length=253)]
-    scan_summary: Annotated[str, Field(min_length=10, max_length=1000)]
+    security_scan_id: UUID
 
 
 class ReportStatusUpdate(BaseModel):
@@ -36,6 +28,9 @@ class ReportStatusUpdate(BaseModel):
 class ReportResponse(BaseModel):
     id: UUID
     company_id: UUID
+    # Day 13 rows predate snapshot linkage. New generation requests still require this value.
+    security_scan_id: UUID | None = None
+    is_legacy: bool = False
     company_name: str
     domain: str
     title: str

@@ -22,6 +22,14 @@ class ReportPersistenceError(RuntimeError):
     """Safe operational error for unavailable report persistence services."""
 
 
+class ReportScanNotFoundError(RuntimeError):
+    """The referenced snapshot does not exist."""
+
+
+class ReportScanIneligibleError(RuntimeError):
+    """The referenced snapshot is not approved and complete."""
+
+
 class SupabaseReportRepository:
     def __init__(self, settings: Settings) -> None:
         if not settings.database_url:
@@ -42,8 +50,16 @@ class SupabaseReportRepository:
     ) -> dict[str, Any]:
         self._require_role(current_user, {"admin", "management", "technical_analyst"})
         report_id = uuid4()
-        title = f"Cyber Risk Snapshot - {payload.company_name}"
-        html = assemble_report_html(payload)
+        context = self._scan_context(str(payload.security_scan_id))
+        findings = self._scan_findings(str(payload.security_scan_id))
+        title = f"Cyber Risk Snapshot - {context['company_name']}"
+        html = assemble_report_html(
+            company_name=context["company_name"],
+            domain=context["domain"],
+            scan_summary=context["scan_summary"],
+            completed_at=context["completed_at"].strftime("%d-%m-%Y %H:%M UTC"),
+            findings=findings,
+        )
         pdf = render_pdf_bytes(title, html)
         object_path = f"{report_id}/{uuid4()}.pdf"
         self._upload(object_path, pdf)
@@ -57,13 +73,15 @@ class SupabaseReportRepository:
                 cursor.execute(
                     """
                     INSERT INTO public.reports (
-                        id, company_id, title, status, storage_bucket, storage_path,
+                        id, company_id, security_scan_id, title, status, storage_bucket,
+                        storage_path,
                         html_preview, created_by
-                    ) VALUES (%s, %s, %s, 'draft', %s, %s, %s, %s)
+                    ) VALUES (%s, %s, %s, %s, 'draft', %s, %s, %s, %s)
                     """,
                     (
                         report_id,
-                        payload.company_id,
+                        context["company_id"],
+                        payload.security_scan_id,
                         title,
                         REPORT_STORAGE_BUCKET,
                         object_path,
@@ -152,6 +170,46 @@ class SupabaseReportRepository:
         except psycopg.Error as exc:
             raise ReportPersistenceError("Report database is unavailable.") from exc
 
+    def _scan_context(self, scan_id: str) -> dict[str, Any]:
+        with self._connection() as connection, connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(
+                """
+                SELECT s.id, s.company_id, s.domain, s.approved, s.status, s.completed_at,
+                    c.name AS company_name,
+                    COALESCE(
+                        string_agg(f.summary, '; ' ORDER BY f.severity DESC, f.check_name)
+                            FILTER (WHERE f.finding),
+                        'No potential risks were observed in this snapshot.'
+                    )
+                        AS scan_summary
+                FROM public.security_scans s
+                JOIN public.companies c ON c.id = s.company_id
+                LEFT JOIN public.security_findings f ON f.security_scan_id = s.id
+                WHERE s.id = %s
+                GROUP BY s.id, c.name
+                """,
+                (scan_id,),
+            )
+            context = cursor.fetchone()
+        if context is None:
+            raise ReportScanNotFoundError("Snapshot was not found.")
+        if context["status"] != "completed" or not context["approved"]:
+            raise ReportScanIneligibleError("Snapshot is not approved and complete.")
+        return context
+
+    def _scan_findings(self, scan_id: str) -> list[dict[str, Any]]:
+        with self._connection() as connection, connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(
+                """
+                SELECT check_name, status, severity, method, summary, finding, evidence
+                FROM public.security_findings
+                WHERE security_scan_id = %s
+                ORDER BY check_name
+                """,
+                (scan_id,),
+            )
+            return cursor.fetchall()
+
     def _headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.service_key}", "apikey": self.service_key}
 
@@ -220,6 +278,8 @@ class SupabaseReportRepository:
         return {
             "id": row["id"],
             "company_id": row["company_id"],
+            "security_scan_id": row["security_scan_id"],
+            "is_legacy": row["security_scan_id"] is None,
             "company_name": row["company_name"],
             "domain": row["domain"] or "",
             "title": row["title"],

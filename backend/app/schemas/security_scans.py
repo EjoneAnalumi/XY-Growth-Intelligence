@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Annotated, Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -19,6 +20,7 @@ class SnapshotRequest(BaseModel):
     )
 
     domain: Annotated[str, Field(min_length=1, max_length=253)]
+    company_id: UUID
     approved: bool
     approval_note: Annotated[str, Field(min_length=5, max_length=500)]
     timeout_seconds: Annotated[float, Field(ge=0.5, le=10)] = 3
@@ -47,6 +49,7 @@ class SnapshotCheckResult(BaseModel):
 
 
 class SnapshotResponse(BaseModel):
+    id: UUID | None = None
     domain: str
     approved: bool
     started_at: datetime

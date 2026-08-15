@@ -20,7 +20,7 @@ import {
   approveReport,
   archiveReport,
   downloadReport,
-  generateDemoReport,
+  generateReport,
   listReports,
   Report,
   submitReportForReview,
@@ -43,12 +43,19 @@ export default function ReportsPage() {
   const [state, setState] = useState<LoadState>("loading");
   const [message, setMessage] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [selectedScanId, setSelectedScanId] = useState<string | null>(null);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const session = getMockSession();
   const canGenerate = ["admin", "technical_analyst", "management"].includes(session?.role ?? "");
   const canApprove = ["admin", "management"].includes(session?.role ?? "");
   const latestReport = useMemo(() => reports[reports.length - 1] ?? null, [reports]);
+  const selectedReport = useMemo(
+    () => reports.find((report) => report.id === selectedReportId) ?? latestReport,
+    [latestReport, reports, selectedReportId],
+  );
 
   useEffect(() => {
+    setSelectedScanId(new URLSearchParams(window.location.search).get("security_scan_id"));
     void refreshReports();
   }, []);
 
@@ -58,6 +65,7 @@ export default function ReportsPage() {
       setMessage(null);
       const response = await listReports();
       setReports(response.items);
+      setSelectedReportId((current) => current ?? response.items.at(-1)?.id ?? null);
       setState("ready");
     } catch (error) {
       setState("error");
@@ -71,6 +79,7 @@ export default function ReportsPage() {
       setMessage(null);
       const result = await action();
       if (result) {
+        setSelectedReportId(result.id);
         setReports((current) => {
           const exists = current.some((report) => report.id === result.id);
           return exists
@@ -116,15 +125,17 @@ export default function ReportsPage() {
           <Button
             type="button"
             className="gap-2"
-            disabled={!canGenerate || busyAction === "generate"}
-            onClick={() => runAction("generate", generateDemoReport)}
+            disabled={!canGenerate || !selectedScanId || busyAction === "generate"}
+            onClick={() =>
+              selectedScanId ? runAction("generate", () => generateReport(selectedScanId)) : undefined
+            }
           >
             {busyAction === "generate" ? (
               <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
             ) : (
               <FileText className="size-4" aria-hidden="true" />
             )}
-            Generate PDF
+            Generate from snapshot
           </Button>
         </div>
       </div>
@@ -160,8 +171,7 @@ export default function ReportsPage() {
         <section className="grid gap-4">
           {reports.length === 0 ? (
             <div className="rounded-md border bg-card p-6 text-sm text-muted-foreground">
-              No generated reports yet. Use a Technical Analyst or Management demo role to generate
-              the synthetic PDF report.
+              No generated reports yet. Run an approved synthetic snapshot first, then create its report.
             </div>
           ) : null}
 
@@ -176,6 +186,11 @@ export default function ReportsPage() {
                     >
                       {report.status}
                     </span>
+                    {report.isLegacy ? (
+                      <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold uppercase text-amber-800">
+                        Legacy — no snapshot link
+                      </span>
+                    ) : null}
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
                     {report.companyName} - {report.domain}
@@ -186,6 +201,14 @@ export default function ReportsPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedReportId(report.id)}
+                  >
+                    Preview
+                  </Button>
                   <Button
                     type="button"
                     variant="outline"
@@ -263,16 +286,18 @@ export default function ReportsPage() {
             Report preview
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {latestReport
-              ? `Latest generated report: ${latestReport.title}`
-              : "Static branded preview shown until a report is generated."}
+            {selectedReport
+              ? selectedReport.isLegacy
+                ? `Legacy report preview: ${selectedReport.title}. This report is not linked to a Day 14 snapshot.`
+                : `Server-generated snapshot preview: ${selectedReport.title}`
+              : "Generate a report from an approved snapshot to preview it."}
           </p>
         </div>
-        <CyberRiskReportPreview />
-        {latestReport ? (
+        <CyberRiskReportPreview htmlPreview={selectedReport?.htmlPreview ?? null} />
+        {selectedReport ? (
           <p className="rounded-md border bg-card px-3 py-2 text-xs text-muted-foreground">
             Backend generated and stored the PDF source for this report at{" "}
-            {latestReport.storageBucket}/{latestReport.storagePath}.
+            {selectedReport.storageBucket}/{selectedReport.storagePath}.
           </p>
         ) : null}
       </section>

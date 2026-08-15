@@ -12,7 +12,11 @@ from app.schemas.reports import (
     ReportStatusUpdate,
 )
 from app.schemas.users import CurrentUser
-from app.services.report_repository import InMemoryReportRepository, get_report_repository
+from app.services.report_repository import (
+    ReportPersistenceError,
+    SupabaseReportRepository,
+    get_report_repository,
+)
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 logger = logging.getLogger(__name__)
@@ -23,7 +27,7 @@ GeneratorUser = Annotated[
     Depends(require_roles("admin", "management", "technical_analyst")),
 ]
 ApproverUser = Annotated[CurrentUser, Depends(require_roles("admin", "management"))]
-Repository = Annotated[InMemoryReportRepository, Depends(get_report_repository)]
+Repository = Annotated[SupabaseReportRepository, Depends(get_report_repository)]
 
 
 @router.get("", response_model=ReportListResponse)
@@ -43,7 +47,12 @@ def generate_report(
     repository: Repository,
     current_user: GeneratorUser,
 ) -> ReportResponse:
-    report = repository.generate_report(payload, current_user)
+    try:
+        report = repository.generate_report(payload, current_user)
+    except ReportPersistenceError as exc:
+        raise HTTPException(
+            status_code=503, detail="Report service is temporarily unavailable."
+        ) from exc
     logger.info(
         "report_generated",
         extra={
@@ -62,7 +71,12 @@ def submit_report_for_review(
     repository: Repository,
     current_user: GeneratorUser,
 ) -> ReportResponse:
-    report = repository.submit_for_review(report_id, current_user)
+    try:
+        report = repository.submit_for_review(report_id, current_user)
+    except ReportPersistenceError as exc:
+        raise HTTPException(
+            status_code=503, detail="Report service is temporarily unavailable."
+        ) from exc
     if report is None:
         raise HTTPException(status_code=400, detail="Report must be draft before review.")
 
@@ -76,10 +90,33 @@ def approve_report(
     repository: Repository,
     current_user: ApproverUser,
 ) -> ReportResponse:
-    report = repository.approve_report(report_id, current_user)
+    try:
+        report = repository.approve_report(report_id, current_user)
+    except ReportPersistenceError as exc:
+        raise HTTPException(
+            status_code=503, detail="Report service is temporarily unavailable."
+        ) from exc
     if report is None:
         raise HTTPException(status_code=400, detail="Report must be in review before approval.")
 
+    return report
+
+
+@router.post("/{report_id}/share", response_model=ReportResponse)
+def share_report(
+    report_id: str,
+    payload: ReportStatusUpdate,
+    repository: Repository,
+    current_user: ApproverUser,
+) -> ReportResponse:
+    try:
+        report = repository.share_report(report_id, current_user)
+    except ReportPersistenceError as exc:
+        raise HTTPException(
+            status_code=503, detail="Report service is temporarily unavailable."
+        ) from exc
+    if report is None:
+        raise HTTPException(status_code=400, detail="Report must be approved before sharing.")
     return report
 
 
@@ -90,7 +127,12 @@ def archive_report(
     repository: Repository,
     current_user: ApproverUser,
 ) -> ReportResponse:
-    report = repository.archive_report(report_id, current_user)
+    try:
+        report = repository.archive_report(report_id, current_user)
+    except ReportPersistenceError as exc:
+        raise HTTPException(
+            status_code=503, detail="Report service is temporarily unavailable."
+        ) from exc
     if report is None:
         raise HTTPException(status_code=400, detail="Report cannot be archived.")
 
@@ -103,7 +145,12 @@ def download_report(
     repository: Repository,
     current_user: ApproverUser,
 ) -> ReportDownloadResponse:
-    download = repository.download_report(report_id)
+    try:
+        download = repository.download_report(report_id, current_user)
+    except ReportPersistenceError as exc:
+        raise HTTPException(
+            status_code=503, detail="Report service is temporarily unavailable."
+        ) from exc
     if download is None:
         raise HTTPException(status_code=404, detail="Approved report PDF was not found.")
 

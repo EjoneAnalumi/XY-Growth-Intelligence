@@ -1,6 +1,6 @@
 import { apiRequest } from "@/lib/api/client";
 
-export type ReportStatus = "draft" | "review" | "approved" | "archived";
+export type ReportStatus = "draft" | "review" | "approved" | "shared" | "archived";
 
 export type Report = {
   id: string;
@@ -17,6 +17,7 @@ export type Report = {
   updatedAt: string;
   reviewedAt: string | null;
   approvedAt: string | null;
+  sharedAt: string | null;
   archivedAt: string | null;
 };
 
@@ -35,6 +36,7 @@ type ReportApiResponse = {
   updated_at: string;
   reviewed_at: string | null;
   approved_at: string | null;
+  shared_at: string | null;
   archived_at: string | null;
 };
 
@@ -114,6 +116,15 @@ export async function archiveReport(reportId: string) {
   );
 }
 
+export async function shareReport(reportId: string) {
+  return mapReport(
+    await apiRequest<ReportApiResponse>(`/reports/${reportId}/share`, {
+      method: "POST",
+      body: JSON.stringify({ note: "Shared internally after approval." }),
+    })
+  );
+}
+
 export async function downloadReport(reportId: string): Promise<ReportDownload> {
   const response = await apiRequest<ReportDownloadApiResponse>(`/reports/${reportId}/download`);
   return {
@@ -143,6 +154,7 @@ function mapReport(report: ReportApiResponse): Report {
     updatedAt: report.updated_at,
     reviewedAt: report.reviewed_at,
     approvedAt: report.approved_at,
+    sharedAt: report.shared_at,
     archivedAt: report.archived_at,
   };
 }

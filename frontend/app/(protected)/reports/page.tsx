@@ -9,6 +9,7 @@ import {
   LoaderCircle,
   RefreshCw,
   Send,
+  Share2,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -23,6 +24,7 @@ import {
   listReports,
   Report,
   submitReportForReview,
+  shareReport,
 } from "@/lib/api/reports";
 import { getMockSession } from "@/lib/auth";
 
@@ -32,6 +34,7 @@ const statusStyles = {
   draft: "border-muted bg-muted text-muted-foreground",
   review: "border-orange-300 bg-orange-50 text-orange-800",
   approved: "border-primary/30 bg-primary/10 text-primary",
+  shared: "border-sky-300 bg-sky-50 text-sky-800",
   archived: "border-muted bg-muted text-muted-foreground",
 };
 
@@ -41,8 +44,8 @@ export default function ReportsPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const session = getMockSession();
-  const canGenerate = session?.role === "technical_analyst" || session?.role === "management";
-  const canApprove = session?.role === "management";
+  const canGenerate = ["admin", "technical_analyst", "management"].includes(session?.role ?? "");
+  const canApprove = ["admin", "management"].includes(session?.role ?? "");
   const latestReport = useMemo(() => reports[reports.length - 1] ?? null, [reports]);
 
   useEffect(() => {
@@ -198,6 +201,17 @@ export default function ReportsPage() {
                   </Button>
                   <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={report.status !== "approved" || !canApprove || busyAction === report.id}
+                    onClick={() => runAction(report.id, () => shareReport(report.id))}
+                  >
+                    <Share2 className="size-4" aria-hidden="true" />
+                    Share internally
+                  </Button>
+                  <Button
+                    type="button"
                     size="sm"
                     className="gap-2"
                     disabled={report.status !== "review" || !canApprove || busyAction === report.id}
@@ -226,8 +240,12 @@ export default function ReportsPage() {
                     variant="outline"
                     size="sm"
                     className="gap-2"
-                    disabled={report.status === "archived" || !canApprove || busyAction === report.id}
-                    onClick={() => runAction(report.id, () => archiveReport(report.id))}
+                    disabled={report.status !== "shared" || !canApprove || busyAction === report.id}
+                    onClick={() => {
+                      if (window.confirm("Archive this shared report? It will no longer be downloadable.")) {
+                        void runAction(report.id, () => archiveReport(report.id));
+                      }
+                    }}
                   >
                     <Archive className="size-4" aria-hidden="true" />
                     Archive

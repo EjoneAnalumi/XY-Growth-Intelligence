@@ -1,7 +1,8 @@
 const sessionKey = "xy-growth-intelligence:mock-session";
 
-export type MockRole = "business_development" | "technical_analyst" | "management";
+export type MockRole = "admin" | "business_development" | "technical_analyst" | "management";
 export type MockToken =
+  | "dev-admin"
   | "dev-business-development"
   | "dev-technical-analyst"
   | "dev-management";
@@ -41,6 +42,11 @@ export function signInMock(email: string, role: MockRole = "business_development
   if (role === "technical_analyst") {
     session.role = "technical_analyst";
     session.token = "dev-technical-analyst";
+  }
+
+  if (role === "admin") {
+    session.role = "admin";
+    session.token = "dev-admin";
   }
 
   if (role === "management") {

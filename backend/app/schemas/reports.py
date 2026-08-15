@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-ReportStatus = Literal["draft", "review", "approved", "archived"]
+ReportStatus = Literal["draft", "review", "approved", "shared", "archived"]
 
 
 class ReportGenerateRequest(BaseModel):
@@ -40,18 +40,20 @@ class ReportResponse(BaseModel):
     domain: str
     title: str
     status: ReportStatus
-    storage_bucket: str
-    storage_path: str
+    storage_bucket: str | None = None
+    storage_path: str | None = None
     download_url: str | None = None
     html_preview: str
     created_by: UUID | None = None
     reviewed_by: UUID | None = None
     approved_by: UUID | None = None
+    shared_by: UUID | None = None
     archived_by: UUID | None = None
     created_at: datetime
     updated_at: datetime
     reviewed_at: datetime | None = None
     approved_at: datetime | None = None
+    shared_at: datetime | None = None
     archived_at: datetime | None = None
 
 

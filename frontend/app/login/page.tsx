@@ -93,8 +93,10 @@ export default function LoginPage() {
                 value={role}
                 onChange={(event) => setRole(event.target.value as MockRole)}
               >
+                <option value="admin">Admin</option>
                 <option value="business_development">Business Development</option>
                 <option value="technical_analyst">Technical Analyst</option>
+                <option value="management">Management</option>
               </select>
             </div>
 

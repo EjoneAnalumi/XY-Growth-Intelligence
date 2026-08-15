@@ -629,6 +629,82 @@ Validation rules:
   `_dmarc.{domain}`. Multiple SPF records, absent records, and monitoring-only
   DMARC (`p=none`) are severity-rated observations when the lookup completes.
 
+## Reports
+
+### GET /reports
+
+Lists report records visible to the authenticated user.
+
+### POST /reports/generate
+
+Generates a synthetic HTML report context, creates PDF bytes, uploads them to the private
+Supabase `reports` bucket, persists `reports` and linked `report_files` rows, and returns a
+draft report record.
+
+Allowed roles: `admin`, `management`, `technical_analyst`.
+
+Example request:
+
+```json
+{
+  "company_id": "10000000-0000-4000-8000-000000000001",
+  "company_name": "Northstar Commerce Group",
+  "domain": "demo.xy-cyber.example",
+  "scan_summary": "Approved demo snapshot with SPF pass, DMARC monitoring, and missing CSP."
+}
+```
+
+Example response:
+
+```json
+{
+  "id": "90000000-0000-4000-8000-000000000001",
+  "company_id": "10000000-0000-4000-8000-000000000001",
+  "company_name": "Northstar Commerce Group",
+  "domain": "demo.xy-cyber.example",
+  "title": "Cyber Risk Snapshot - Northstar Commerce Group",
+  "status": "draft",
+  "storage_bucket": "reports",
+  "storage_path": "90000000-0000-4000-8000-000000000001/uuid.pdf",
+  "download_url": null
+}
+```
+
+### POST /reports/{report_id}/review
+
+Moves a draft report to review.
+
+Allowed roles: `admin`, `management`, `technical_analyst`.
+
+### POST /reports/{report_id}/approve
+
+Moves a review report to approved and exposes its download URL.
+
+Allowed roles: `admin`, `management`.
+
+### POST /reports/{report_id}/share
+
+Moves an approved report to `shared` for internal workflow tracking. This endpoint does not send
+email or share externally.
+
+Allowed roles: `admin`, `management`.
+
+### POST /reports/{report_id}/archive
+
+Archives a report and removes its download URL.
+
+Allowed roles: `admin`, `management`.
+
+### GET /reports/{report_id}/download
+
+Returns the approved PDF payload as base64 with filename, content type, storage bucket, and
+storage path.
+
+Allowed roles: `admin`, `management`.
+
+Reports must be approved before download. Draft, review, shared, and archived reports return a
+safe error instead of file content.
+
 ## Minimum API Groups From Brief
 
 These groups are required later in the MVP:
@@ -645,10 +721,14 @@ These groups are required later in the MVP:
 - `/companies/{id}/recommendations`
 - `/companies/{id}/security-scans`
 - `/security-scans/{id}/findings`
-- `/reports`
-- `/reports/{id}/generate`
-- `/reports/{id}/approve`
-- `/reports/{id}/download`
+- `GET /reports`: implemented with Supabase PostgreSQL persistence.
+- `POST /reports/generate`: implemented with HTML assembly, PDF creation, private Supabase
+  Storage upload, and linked `report_files` metadata.
+- `POST /reports/{id}/review`: implemented.
+- `POST /reports/{id}/approve`: implemented for Admin/Management.
+- `POST /reports/{id}/share`: implemented for Admin/Management.
+- `POST /reports/{id}/archive`: implemented for Admin/Management.
+- `GET /reports/{id}/download`: implemented for approved reports and Admin/Management.
 - `/dashboard/summary`
 - `/dashboard/pipeline`
 - `/dashboard/forecast`
@@ -689,3 +769,5 @@ These groups are required later in the MVP:
 - `GET /dashboard/summary`: implemented with weighted pipeline, stage duration, task, activity, and stage summary metrics.
 - Dashboard summary now includes priority and inactive-opportunity workflow metrics.
 - `POST /security-scans/snapshot`: implemented for approved demo DNS/TLS checks with timeout handling.
+- `GET/POST /reports`: implemented for durable generation, review, approval, internal sharing,
+  archive, and approved-only download workflow.

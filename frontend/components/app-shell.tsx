@@ -43,8 +43,10 @@ const navigation: NavigationItem[] = [
 ];
 
 const roleLabels = {
+  admin: "Admin",
   business_development: "Business Development",
-  technical_analyst: "Technical Analyst"
+  technical_analyst: "Technical Analyst",
+  management: "Management"
 };
 
 export function AppShell({ children }: { children: ReactNode }) {

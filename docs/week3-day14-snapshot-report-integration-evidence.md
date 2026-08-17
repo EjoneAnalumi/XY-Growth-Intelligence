@@ -18,6 +18,7 @@ Complete the safe synthetic snapshot-to-report flow: persist approved snapshot e
 - The scan page creates a report from the persisted snapshot ID. The reports page enables generation only with that ID.
 - The reports page previews the selected server-generated report HTML in a sandboxed iframe; it no longer contains static company or finding data.
 - Unknown snapshot IDs return `404`; snapshots that are not approved and completed return `409`. Storage and database operational failures continue to return `503`.
+- Added a safe local in-memory fallback for the snapshot-to-report flow when Supabase runtime variables are not configured. The Supabase path is still used when `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` are present.
 
 ## Security Notes
 
@@ -25,6 +26,7 @@ Complete the safe synthetic snapshot-to-report flow: persist approved snapshot e
 - Stored snapshot evidence prevents report inputs from being forged in the browser.
 - Technical Analyst, Management, and Admin may scan and generate/submit reports. Only Management and Admin may approve, download approved reports, share internally, or archive them.
 - No automatic external sharing, credentials, service-role keys, real customer data, or real prospect data were added.
+- The service role key is read only from local environment variables. It is not committed and is not exposed to the frontend.
 
 ## Verification
 
@@ -45,11 +47,12 @@ npm.cmd run build
 
 Results:
 
-- Targeted Day 14 snapshot/report tests with local Supabase integration: `29 passed`.
-- Full backend suite with local Supabase integration: `79 passed`.
+- Targeted Day 14 snapshot/report tests with local fallback: `26 passed, 3 skipped`.
+- Full backend suite with local fallback: `69 passed, 10 skipped`.
 - Ruff: passed.
 - Frontend typecheck, lint, and production build: passed.
 
 ## Remaining TODO
 
-- No Day 14 MVP TODOs remain. Future scope should remain limited to the planned CSV and handover work.
+- Run the Supabase-backed integration tests in a local Supabase environment before the Week 3 gate demo.
+- Future scope should remain limited to the planned CSV and handover work.

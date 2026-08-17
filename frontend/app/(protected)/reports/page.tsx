@@ -188,7 +188,7 @@ export default function ReportsPage() {
                     </span>
                     {report.isLegacy ? (
                       <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold uppercase text-amber-800">
-                        Legacy — no snapshot link
+                        Legacy - no snapshot link
                       </span>
                     ) : null}
                   </div>

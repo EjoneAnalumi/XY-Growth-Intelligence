@@ -9,13 +9,16 @@ import psycopg
 import pytest
 from app.core.config import get_settings
 from app.main import app
+from app.services.report_repository import in_memory_report_repository
+from app.services.snapshot_repository import in_memory_snapshot_repository
 from fastapi.testclient import TestClient
 from pypdf import PdfReader
 
-pytestmark = pytest.mark.skipif(
-    not all(
-        os.getenv(name) for name in ("DATABASE_URL", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY")
-    ),
+SUPABASE_CONFIGURED = all(
+    os.getenv(name) for name in ("DATABASE_URL", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY")
+)
+requires_supabase = pytest.mark.skipif(
+    not SUPABASE_CONFIGURED,
     reason="Report persistence integration requires local Supabase environment variables.",
 )
 
@@ -25,6 +28,12 @@ MANAGEMENT = {"Authorization": "Bearer dev-management"}
 ADMIN = {"Authorization": "Bearer dev-admin"}
 BD = {"Authorization": "Bearer dev-business-development"}
 READ_ONLY = {"Authorization": "Bearer dev-read-only"}
+
+
+def setup_function() -> None:
+    if not SUPABASE_CONFIGURED:
+        in_memory_snapshot_repository.reset()
+        in_memory_report_repository.reset()
 
 
 def _payload() -> dict:
@@ -48,6 +57,7 @@ def _generate() -> dict:
     return response.json()
 
 
+@requires_supabase
 def test_persists_report_file_and_private_pdf_object() -> None:
     report = _generate()
     with psycopg.connect(os.environ["DATABASE_URL"]) as connection, connection.cursor() as cursor:
@@ -147,6 +157,7 @@ def test_workflow_download_and_role_denials() -> None:
     )
 
 
+@requires_supabase
 def test_direct_database_status_manipulation_is_denied() -> None:
     report = _generate()
     with (
@@ -176,24 +187,33 @@ def test_report_generation_rejects_unknown_or_ineligible_snapshot() -> None:
     assert unknown.json() == {"detail": "Snapshot was not found."}
 
     ineligible_scan_id = "30000000-0000-4000-8000-000000000099"
-    with psycopg.connect(os.environ["DATABASE_URL"]) as connection, connection.cursor() as cursor:
-        cursor.execute(
-            """
-            INSERT INTO public.security_scans (
-                id, company_id, initiated_by, domain, approval_note, approved, status,
-                started_at, completed_at, duration_ms
-            ) VALUES (%s, %s, %s, %s, %s, false, 'running', now(), now(), 0)
-            ON CONFLICT (id) DO UPDATE SET approved = false, status = 'running'
-            """,
-            (
-                ineligible_scan_id,
-                "10000000-0000-4000-8000-000000000001",
-                "00000000-0000-4000-8000-000000000004",
-                "northstar-robotics.example",
-                "Synthetic scan is not ready for reporting.",
-            ),
+    if SUPABASE_CONFIGURED:
+        with (
+            psycopg.connect(os.environ["DATABASE_URL"]) as connection,
+            connection.cursor() as cursor,
+        ):
+            cursor.execute(
+                """
+                INSERT INTO public.security_scans (
+                    id, company_id, initiated_by, domain, approval_note, approved, status,
+                    started_at, completed_at, duration_ms
+                ) VALUES (%s, %s, %s, %s, %s, false, 'running', now(), now(), 0)
+                ON CONFLICT (id) DO UPDATE SET approved = false, status = 'running'
+                """,
+                (
+                    ineligible_scan_id,
+                    "10000000-0000-4000-8000-000000000001",
+                    "00000000-0000-4000-8000-000000000004",
+                    "northstar-robotics.example",
+                    "Synthetic scan is not ready for reporting.",
+                ),
+            )
+            connection.commit()
+    else:
+        in_memory_snapshot_repository.add_ineligible_scan(
+            ineligible_scan_id,
+            "10000000-0000-4000-8000-000000000001",
         )
-        connection.commit()
     ineligible = client.post(
         "/reports/generate", headers=ANALYST, json={"security_scan_id": ineligible_scan_id}
     )
@@ -201,6 +221,7 @@ def test_report_generation_rejects_unknown_or_ineligible_snapshot() -> None:
     assert ineligible.json() == {"detail": "Snapshot is not approved and complete."}
 
 
+@requires_supabase
 def test_list_reports_returns_legacy_report_without_snapshot_link() -> None:
     legacy_report_id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
     with psycopg.connect(os.environ["DATABASE_URL"]) as connection, connection.cursor() as cursor:
@@ -248,10 +269,12 @@ def test_report_generation_requires_security_scan_id() -> None:
     assert response.json()["detail"][0]["loc"] == ["body", "security_scan_id"]
 
 
-def test_list_reports_returns_503_when_report_service_is_not_configured(
+def test_list_reports_uses_safe_local_fallback_when_report_service_is_not_configured(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.delenv("DATABASE_URL")
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_SERVICE_ROLE_KEY", raising=False)
     get_settings.cache_clear()
     try:
         response = client.get("/reports", headers=ANALYST)
@@ -259,8 +282,8 @@ def test_list_reports_returns_503_when_report_service_is_not_configured(
         monkeypatch.undo()
         get_settings.cache_clear()
 
-    assert response.status_code == 503
-    assert response.json() == {"detail": "Report service is temporarily unavailable."}
+    assert response.status_code == 200
+    assert response.json() == {"items": [], "total": 0}
 
 
 def test_openapi_documents_report_endpoints() -> None:

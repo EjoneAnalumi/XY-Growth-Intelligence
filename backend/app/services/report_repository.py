@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from base64 import b64encode
 from contextlib import closing
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -14,6 +15,7 @@ from app.reporting.assembly import assemble_report_html
 from app.reporting.pdf import render_pdf_bytes
 from app.schemas.reports import ReportGenerateRequest
 from app.schemas.users import CurrentUser
+from app.services.snapshot_repository import in_memory_snapshot_repository
 
 REPORT_STORAGE_BUCKET = "reports"
 
@@ -28,6 +30,165 @@ class ReportScanNotFoundError(RuntimeError):
 
 class ReportScanIneligibleError(RuntimeError):
     """The referenced snapshot is not approved and complete."""
+
+
+class InMemoryReportRepository:
+    def __init__(self) -> None:
+        self._reports: dict[str, dict[str, Any]] = {}
+        self._files: dict[str, bytes] = {}
+
+    def reset(self) -> None:
+        self._reports.clear()
+        self._files.clear()
+
+    def list_reports(self) -> list[dict[str, Any]]:
+        return sorted(self._reports.values(), key=lambda report: report["created_at"])
+
+    def generate_report(
+        self, payload: ReportGenerateRequest, current_user: CurrentUser
+    ) -> dict[str, Any]:
+        self._require_role(current_user, {"admin", "management", "technical_analyst"})
+        context = in_memory_snapshot_repository.scan_context(str(payload.security_scan_id))
+        if context is None:
+            raise ReportScanNotFoundError("Snapshot was not found.")
+        if context["status"] != "completed" or not context["approved"]:
+            raise ReportScanIneligibleError("Snapshot is not approved and complete.")
+
+        report_id = str(uuid4())
+        findings = in_memory_snapshot_repository.scan_findings(str(payload.security_scan_id))
+        title = f"Cyber Risk Snapshot - {context['company_name']}"
+        completed_at = context["completed_at"].strftime("%d-%m-%Y %H:%M UTC")
+        html = assemble_report_html(
+            company_name=context["company_name"],
+            domain=context["domain"],
+            scan_summary=context["scan_summary"],
+            completed_at=completed_at,
+            findings=findings,
+        )
+        pdf = render_pdf_bytes(title, html)
+        object_path = f"{report_id}/{uuid4()}.pdf"
+        self._files[object_path] = pdf
+        now = datetime.now(UTC)
+        report = {
+            "id": report_id,
+            "company_id": context["company_id"],
+            "security_scan_id": str(payload.security_scan_id),
+            "is_legacy": False,
+            "company_name": context["company_name"],
+            "domain": context["domain"],
+            "title": title,
+            "status": "draft",
+            "storage_bucket": REPORT_STORAGE_BUCKET,
+            "storage_path": object_path,
+            "download_url": None,
+            "html_preview": html,
+            "created_by": current_user.id,
+            "reviewed_by": None,
+            "approved_by": None,
+            "shared_by": None,
+            "archived_by": None,
+            "created_at": now,
+            "updated_at": now,
+            "reviewed_at": None,
+            "approved_at": None,
+            "shared_at": None,
+            "archived_at": None,
+        }
+        self._reports[report_id] = report
+        return report
+
+    def submit_for_review(self, report_id: str, current_user: CurrentUser) -> dict[str, Any] | None:
+        return self._transition(
+            report_id,
+            "review",
+            current_user,
+            {"admin", "management", "technical_analyst"},
+            {"draft": "review"},
+        )
+
+    def approve_report(self, report_id: str, current_user: CurrentUser) -> dict[str, Any] | None:
+        return self._transition(
+            report_id,
+            "approved",
+            current_user,
+            {"admin", "management"},
+            {"review": "approved"},
+        )
+
+    def share_report(self, report_id: str, current_user: CurrentUser) -> dict[str, Any] | None:
+        return self._transition(
+            report_id,
+            "shared",
+            current_user,
+            {"admin", "management"},
+            {"approved": "shared"},
+        )
+
+    def archive_report(self, report_id: str, current_user: CurrentUser) -> dict[str, Any] | None:
+        return self._transition(
+            report_id,
+            "archived",
+            current_user,
+            {"admin", "management"},
+            {"shared": "archived"},
+        )
+
+    def download_report(self, report_id: str, current_user: CurrentUser) -> dict[str, Any] | None:
+        self._require_role(current_user, {"admin", "management"})
+        report = self._reports.get(report_id)
+        if report is None or report["status"] != "approved":
+            return None
+        pdf = self._files.get(report["storage_path"])
+        if pdf is None:
+            return None
+        return {
+            "id": report_id,
+            "filename": f"{report['title'].replace(' ', '_')}.pdf",
+            "content_type": "application/pdf",
+            "storage_bucket": report["storage_bucket"],
+            "storage_path": report["storage_path"],
+            "size_bytes": len(pdf),
+            "content_base64": b64encode(pdf).decode("ascii"),
+        }
+
+    def _transition(
+        self,
+        report_id: str,
+        target_status: str,
+        current_user: CurrentUser,
+        allowed_roles: set[str],
+        allowed_transition: dict[str, str],
+    ) -> dict[str, Any] | None:
+        self._require_role(current_user, allowed_roles)
+        report = self._reports.get(report_id)
+        if report is None or allowed_transition.get(report["status"]) != target_status:
+            return None
+
+        now = datetime.now(UTC)
+        report["status"] = target_status
+        report["updated_at"] = now
+        if target_status == "review":
+            report["reviewed_by"] = current_user.id
+            report["reviewed_at"] = now
+        elif target_status == "approved":
+            report["approved_by"] = current_user.id
+            report["approved_at"] = now
+            report["download_url"] = f"/reports/{report_id}/download"
+        elif target_status == "shared":
+            report["shared_by"] = current_user.id
+            report["shared_at"] = now
+            report["download_url"] = None
+        elif target_status == "archived":
+            report["archived_by"] = current_user.id
+            report["archived_at"] = now
+            report["download_url"] = None
+
+        return report
+
+    @staticmethod
+    def _require_role(current_user: CurrentUser, allowed_roles: set[str]) -> None:
+        if current_user.role not in allowed_roles:
+            raise PermissionError("User does not have permission to perform this action.")
 
 
 class SupabaseReportRepository:
@@ -304,5 +465,12 @@ class SupabaseReportRepository:
         }
 
 
-def get_report_repository() -> SupabaseReportRepository:
-    return SupabaseReportRepository(get_settings())
+in_memory_report_repository = InMemoryReportRepository()
+
+
+def get_report_repository() -> SupabaseReportRepository | InMemoryReportRepository:
+    settings = get_settings()
+    if settings.database_url and settings.supabase_url and settings.supabase_service_role_key:
+        return SupabaseReportRepository(settings)
+
+    return in_memory_report_repository

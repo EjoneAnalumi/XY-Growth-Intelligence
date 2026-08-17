@@ -58,6 +58,7 @@ def render_pdf_bytes(title: str, html: str) -> bytes:
 
 
 def _pdf_lines(value: str) -> list[str]:
+    value = re.sub(r"<(?:style|script)[^>]*>.*?</(?:style|script)>", "", value, flags=re.I | re.S)
     text = re.sub(r"</(?:article|h[1-4]|li|p|ul)>", "\n", value, flags=re.IGNORECASE)
     text = re.sub(r"<[^>]+>", "", text)
     lines = []

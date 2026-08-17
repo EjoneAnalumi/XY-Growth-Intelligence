@@ -113,6 +113,9 @@ def test_persists_report_file_and_private_pdf_object() -> None:
 def test_workflow_download_and_role_denials() -> None:
     report = _generate()
     report_id = report["id"]
+    assert "XY CYBER Growth Intelligence" in report["html_preview"]
+    assert 'class="cover"' in report["html_preview"]
+    assert "penetration test" in report["html_preview"]
     for headers in (BD, READ_ONLY):
         assert (
             client.post("/reports/generate", headers=headers, json=_payload()).status_code
@@ -142,6 +145,7 @@ def test_workflow_download_and_role_denials() -> None:
     pdf_text = "".join(page.extract_text() or "" for page in reader.pages)
     assert len(reader.pages) >= 1
     assert "Northstar Robotics Labs" in pdf_text
+    assert "box-shadow" not in pdf_text
     for check in ("approval", "dns", "tls", "http_headers", "spf", "dmarc"):
         assert check in pdf_text
 

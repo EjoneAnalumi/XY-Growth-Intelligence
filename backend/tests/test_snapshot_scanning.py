@@ -5,12 +5,26 @@ import pytest
 from app.main import app
 from app.scanning.domain import normalize_domain
 from app.scanning.snapshot import SnapshotScanner
+from app.services.snapshot_repository import get_snapshot_repository
 from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
 analyst_headers = {"Authorization": "Bearer dev-technical-analyst"}
 writer_headers = {"Authorization": "Bearer dev-business-development"}
+company_id = "10000000-0000-4000-8000-000000000001"
+
+
+class FakeSnapshotRepository:
+    def persist(self, company_id, approval_note, scan, current_user):
+        return {**scan.model_dump(), "id": "30000000-0000-4000-8000-000000000001"}
+
+
+@pytest.fixture(autouse=True)
+def snapshot_repository_override():
+    app.dependency_overrides[get_snapshot_repository] = lambda: FakeSnapshotRepository()
+    yield
+    app.dependency_overrides.clear()
 
 
 def test_normalize_domain_strips_scheme_path_and_case() -> None:
@@ -34,6 +48,7 @@ def test_snapshot_requires_explicit_approval() -> None:
         headers=analyst_headers,
         json={
             "domain": "demo.xy-cyber.example",
+            "company_id": company_id,
             "approved": False,
             "approval_note": "Missing approval.",
         },
@@ -49,6 +64,7 @@ def test_snapshot_rejects_business_development_role() -> None:
         headers=writer_headers,
         json={
             "domain": "demo.xy-cyber.example",
+            "company_id": company_id,
             "approved": True,
             "approval_note": "Approved internal demo target.",
         },
@@ -63,6 +79,7 @@ def test_approved_demo_snapshot_returns_structured_results() -> None:
         headers=analyst_headers,
         json={
             "domain": "https://Demo.XY-Cyber.Example/snapshot",
+            "company_id": company_id,
             "approved": True,
             "approval_note": "Approved internal demo target.",
             "timeout_seconds": 1,
@@ -72,6 +89,7 @@ def test_approved_demo_snapshot_returns_structured_results() -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["domain"] == "demo.xy-cyber.example"
+    assert body["id"] == "30000000-0000-4000-8000-000000000001"
     assert body["approved"] is True
     assert body["duration_ms"] >= 0
     assert [result["check"] for result in body["results"]] == [
@@ -95,6 +113,7 @@ def test_non_demo_domain_requires_server_side_allowlist() -> None:
         headers=analyst_headers,
         json={
             "domain": "example.com",
+            "company_id": company_id,
             "approved": True,
             "approval_note": "Approved in request only.",
             "timeout_seconds": 1,

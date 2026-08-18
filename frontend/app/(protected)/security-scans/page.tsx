@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Clock, Filter, Radar, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, CheckCircle2, Clock, FileText, Filter, Radar, ShieldCheck } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,8 @@ function detailsToLines(details: SnapshotScan["results"][number]["details"]) {
 
 export default function SecurityScansPage() {
   const [values, setValues] = useState<SnapshotRequestValues>({
-    domain: "https://demo.xy-cyber.example/snapshot",
+    companyId: "10000000-0000-4000-8000-000000000001",
+    domain: "https://northstar-robotics.example/snapshot",
     approved: true,
     approvalNote: "Approved internal demo target.",
     timeoutSeconds: "1",
@@ -80,6 +82,7 @@ export default function SecurityScansPage() {
       setStatus("running");
       setScan(
         await runSnapshotScan({
+          companyId: values.companyId,
           domain: values.domain.trim(),
           approved: values.approved,
           approvalNote: values.approvalNote.trim(),
@@ -117,6 +120,17 @@ export default function SecurityScansPage() {
                 Use only approved demo or authorized public targets.
               </p>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="company-id">Synthetic company ID</Label>
+            <Input
+              id="company-id"
+              value={values.companyId}
+              onChange={(event) =>
+                setValues((current) => ({ ...current, companyId: event.target.value }))
+              }
+            />
           </div>
 
           <div className="space-y-2">
@@ -234,6 +248,14 @@ export default function SecurityScansPage() {
               </p>
             )}
           </div>
+          {scan ? (
+            <Button asChild className="mt-4 w-full gap-2">
+              <Link href={`/reports?security_scan_id=${scan.id}`}>
+                <FileText className="size-4" aria-hidden="true" />
+                Create report from this snapshot
+              </Link>
+            </Button>
+          ) : null}
         </section>
       </section>
 

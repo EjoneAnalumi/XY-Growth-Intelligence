@@ -8,6 +8,7 @@ FastAPI backend for protected business logic in the XY CYBER Growth Intelligence
 - Environment configuration helper
 - Structured JSON logging setup
 - Basic pytest coverage
+- Local snapshot-to-report fallback for development without Supabase runtime credentials
 
 ## Run Locally
 
@@ -29,6 +30,18 @@ Expected response:
 ```json
 {"status": "ok"}
 ```
+
+Snapshot/report integration uses the tracked Supabase migrations when these environment variables
+are configured:
+
+```text
+DATABASE_URL
+SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
+```
+
+If they are not configured, the backend uses an in-memory fallback so the approved demo
+snapshot-to-report flow can still be tested locally without committing secrets.
 
 ## Near-Term TODO
 

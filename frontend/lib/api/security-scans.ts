@@ -5,10 +5,16 @@ type SnapshotCheckApiResponse = {
   check: string;
   status: string;
   summary: string;
+  finding: boolean;
+  severity: ScanSeverity;
+  method: string;
+  evidence: string[];
+  error_classification: string | null;
   details: Record<string, string | number | boolean | string[] | null>;
 };
 
 type SnapshotApiResponse = {
+  id: string;
   domain: string;
   approved: boolean;
   started_at: string;
@@ -17,24 +23,9 @@ type SnapshotApiResponse = {
   results: SnapshotCheckApiResponse[];
 };
 
-function severityForStatus(status: string): ScanSeverity {
-  if (status === "fail") {
-    return "high";
-  }
-
-  if (status === "timeout") {
-    return "medium";
-  }
-
-  if (status === "warning") {
-    return "low";
-  }
-
-  return "info";
-}
-
 function mapSnapshotScan(scan: SnapshotApiResponse): SnapshotScan {
   return {
+    id: scan.id,
     domain: scan.domain,
     approved: scan.approved,
     startedAt: scan.started_at,
@@ -44,13 +35,18 @@ function mapSnapshotScan(scan: SnapshotApiResponse): SnapshotScan {
       check: result.check,
       status: result.status,
       summary: result.summary,
-      severity: severityForStatus(result.status),
+      severity: result.severity,
+      finding: result.finding,
+      method: result.method,
+      evidence: result.evidence,
+      errorClassification: result.error_classification,
       details: result.details,
     })),
   };
 }
 
 export async function runSnapshotScan(values: {
+  companyId: string;
   domain: string;
   approved: boolean;
   approvalNote: string;
@@ -60,6 +56,7 @@ export async function runSnapshotScan(values: {
     method: "POST",
     body: JSON.stringify({
       domain: values.domain,
+      company_id: values.companyId,
       approved: values.approved,
       approval_note: values.approvalNote,
       timeout_seconds: values.timeoutSeconds,

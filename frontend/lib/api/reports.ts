@@ -5,6 +5,8 @@ export type ReportStatus = "draft" | "review" | "approved" | "shared" | "archive
 export type Report = {
   id: string;
   companyId: string;
+  securityScanId: string | null;
+  isLegacy: boolean;
   companyName: string;
   domain: string;
   title: string;
@@ -24,6 +26,8 @@ export type Report = {
 type ReportApiResponse = {
   id: string;
   company_id: string;
+  security_scan_id: string | null;
+  is_legacy: boolean;
   company_name: string;
   domain: string;
   title: string;
@@ -65,13 +69,6 @@ type ReportDownloadApiResponse = {
   content_base64: string;
 };
 
-const demoReportPayload = {
-  company_id: "10000000-0000-4000-8000-000000000001",
-  company_name: "Northstar Commerce Group",
-  domain: "demo.xy-cyber.example",
-  scan_summary: "Approved demo snapshot with SPF pass, DMARC monitoring, and missing CSP.",
-};
-
 export async function listReports() {
   const response = await apiRequest<ReportListApiResponse>("/reports");
   return {
@@ -80,11 +77,11 @@ export async function listReports() {
   };
 }
 
-export async function generateDemoReport() {
+export async function generateReport(securityScanId: string) {
   return mapReport(
     await apiRequest<ReportApiResponse>("/reports/generate", {
       method: "POST",
-      body: JSON.stringify(demoReportPayload),
+      body: JSON.stringify({ security_scan_id: securityScanId }),
     })
   );
 }
@@ -142,6 +139,8 @@ function mapReport(report: ReportApiResponse): Report {
   return {
     id: report.id,
     companyId: report.company_id,
+    securityScanId: report.security_scan_id,
+    isLegacy: report.is_legacy,
     companyName: report.company_name,
     domain: report.domain,
     title: report.title,

@@ -6,10 +6,15 @@ export type SnapshotCheckResult = {
   status: string;
   summary: string;
   severity: ScanSeverity;
+  finding: boolean;
+  method: string;
+  evidence: string[];
+  errorClassification: string | null;
   details: Record<string, string | number | boolean | string[] | null>;
 };
 
 export type SnapshotScan = {
+  id: string;
   domain: string;
   approved: boolean;
   startedAt: string;
@@ -19,6 +24,7 @@ export type SnapshotScan = {
 };
 
 export type SnapshotRequestValues = {
+  companyId: string;
   domain: string;
   approved: boolean;
   approvalNote: string;

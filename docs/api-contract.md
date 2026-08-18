@@ -637,9 +637,9 @@ Lists report records visible to the authenticated user.
 
 ### POST /reports/generate
 
-Generates a synthetic HTML report context, creates PDF bytes, uploads them to the private
-Supabase `reports` bucket, persists `reports` and linked `report_files` rows, and returns a
-draft report record.
+Generates a synthetic HTML report from a completed approved snapshot, creates PDF bytes, uploads them
+to the private Supabase `reports` bucket, persists linked report metadata, and returns a draft report.
+Company, domain, summary, and evidence date are derived server-side from stored snapshot evidence.
 
 Allowed roles: `admin`, `management`, `technical_analyst`.
 
@@ -647,10 +647,7 @@ Example request:
 
 ```json
 {
-  "company_id": "10000000-0000-4000-8000-000000000001",
-  "company_name": "Northstar Commerce Group",
-  "domain": "demo.xy-cyber.example",
-  "scan_summary": "Approved demo snapshot with SPF pass, DMARC monitoring, and missing CSP."
+  "security_scan_id": "30000000-0000-4000-8000-000000000001"
 }
 ```
 

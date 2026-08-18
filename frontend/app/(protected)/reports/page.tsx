@@ -26,6 +26,7 @@ import {
   submitReportForReview,
   shareReport,
 } from "@/lib/api/reports";
+import { runSnapshotScan } from "@/lib/api/security-scans";
 import { getMockSession } from "@/lib/auth";
 
 type LoadState = "loading" | "ready" | "error";
@@ -36,6 +37,14 @@ const statusStyles = {
   approved: "border-primary/30 bg-primary/10 text-primary",
   shared: "border-sky-300 bg-sky-50 text-sky-800",
   archived: "border-muted bg-muted text-muted-foreground",
+};
+
+const demoSnapshotRequest = {
+  companyId: "10000000-0000-4000-8000-000000000001",
+  domain: "https://northstar-robotics.example/snapshot",
+  approved: true,
+  approvalNote: "Approved internal synthetic demo target.",
+  timeoutSeconds: 1,
 };
 
 export default function ReportsPage() {
@@ -94,6 +103,16 @@ export default function ReportsPage() {
     }
   }
 
+  async function generateSnapshotReport() {
+    if (selectedScanId) {
+      return generateReport(selectedScanId);
+    }
+
+    const scan = await runSnapshotScan(demoSnapshotRequest);
+    setSelectedScanId(scan.id);
+    return generateReport(scan.id);
+  }
+
   function saveDownload(download: Awaited<ReturnType<typeof downloadReport>>) {
     const binary = atob(download.contentBase64);
     const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
@@ -125,17 +144,15 @@ export default function ReportsPage() {
           <Button
             type="button"
             className="gap-2"
-            disabled={!canGenerate || !selectedScanId || busyAction === "generate"}
-            onClick={() =>
-              selectedScanId ? runAction("generate", () => generateReport(selectedScanId)) : undefined
-            }
+            disabled={!canGenerate || busyAction === "generate"}
+            onClick={() => runAction("generate", generateSnapshotReport)}
           >
             {busyAction === "generate" ? (
               <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
             ) : (
               <FileText className="size-4" aria-hidden="true" />
             )}
-            Generate from snapshot
+            {selectedScanId ? "Generate from snapshot" : "Generate demo report"}
           </Button>
         </div>
       </div>
@@ -171,7 +188,8 @@ export default function ReportsPage() {
         <section className="grid gap-4">
           {reports.length === 0 ? (
             <div className="rounded-md border bg-card p-6 text-sm text-muted-foreground">
-              No generated reports yet. Run an approved synthetic snapshot first, then create its report.
+              No generated reports yet. Generate a demo report here, or run an approved synthetic
+              snapshot first and create its report from the scan page.
             </div>
           ) : null}
 

@@ -5,8 +5,10 @@ import logging
 from pathlib import Path
 
 import pytest
-from app.core.logging import JsonFormatter
+from app.core.errors import register_error_handlers
+from app.core.logging import JsonFormatter, register_request_logging
 from app.main import app
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 client = TestClient(app)
@@ -42,6 +44,25 @@ def test_api_errors_use_a_stable_envelope(
     assert result.json() == {"detail": detail, "error": {"code": code, "message": detail}}
 
 
+@pytest.mark.parametrize(
+    ("method", "path", "status_code", "detail"),
+    [
+        ("GET", "/does-not-exist", 404, "Not Found"),
+        ("POST", "/health", 405, "Method Not Allowed"),
+    ],
+)
+def test_framework_http_errors_use_the_stable_envelope(
+    method: str, path: str, status_code: int, detail: str
+) -> None:
+    response = client.request(method, path)
+
+    assert response.status_code == status_code
+    assert response.json() == {
+        "detail": detail,
+        "error": {"code": "not_found" if status_code == 404 else "http_error", "message": detail},
+    }
+
+
 def test_validation_errors_keep_machine_readable_details() -> None:
     response = client.post("/companies", headers=READER, json={})
 
@@ -71,6 +92,40 @@ def test_request_completion_logs_structured_metadata(caplog: pytest.LogCaptureFi
     assert record.path == "/health"
     assert record.status_code == 200
     assert isinstance(record.duration_ms, float)
+
+
+def test_unexpected_errors_are_sanitized_and_logged_without_sensitive_data(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    error_app = FastAPI()
+    register_request_logging(error_app)
+    register_error_handlers(error_app)
+
+    def raise_unexpected_error() -> None:
+        raise RuntimeError("database password: sensitive-value")
+
+    error_app.add_api_route("/_test/unexpected-error", raise_unexpected_error, methods=["GET"])
+    error_client = TestClient(error_app, raise_server_exceptions=False)
+    with caplog.at_level(logging.INFO):
+        response = error_client.get(
+            "/_test/unexpected-error", headers={"Authorization": "Bearer sensitive-token"}
+        )
+
+    assert response.status_code == 500
+    assert response.json() == {
+        "detail": "Internal server error.",
+        "error": {"code": "http_error", "message": "Internal server error."},
+    }
+    unhandled = next(
+        record for record in caplog.records if record.message == "unhandled_request_exception"
+    )
+    completion = next(record for record in caplog.records if record.message == "request_completed")
+    assert unhandled.event == "unhandled_request_exception"
+    assert unhandled.status_code == 500
+    assert completion.event == "request_completed"
+    assert completion.status_code == 500
+    assert "sensitive-value" not in caplog.text
+    assert "sensitive-token" not in caplog.text
 
 
 def test_json_log_formatter_keeps_request_fields() -> None:

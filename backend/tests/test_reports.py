@@ -14,13 +14,9 @@ from app.services.snapshot_repository import in_memory_snapshot_repository
 from fastapi.testclient import TestClient
 from pypdf import PdfReader
 
-SUPABASE_CONFIGURED = all(
-    os.getenv(name) for name in ("DATABASE_URL", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY")
-)
-requires_supabase = pytest.mark.skipif(
-    not SUPABASE_CONFIGURED,
-    reason="Report persistence integration requires local Supabase environment variables.",
-)
+SUPABASE_ENVIRONMENT_VARIABLES = ("DATABASE_URL", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_CONFIGURED = all(os.getenv(name) for name in SUPABASE_ENVIRONMENT_VARIABLES)
+requires_supabase = pytest.mark.usefixtures("supabase_report_environment")
 
 client = TestClient(app)
 ANALYST = {"Authorization": "Bearer dev-technical-analyst"}
@@ -28,6 +24,31 @@ MANAGEMENT = {"Authorization": "Bearer dev-management"}
 ADMIN = {"Authorization": "Bearer dev-admin"}
 BD = {"Authorization": "Bearer dev-business-development"}
 READ_ONLY = {"Authorization": "Bearer dev-read-only"}
+
+
+@pytest.fixture(scope="module")
+def supabase_report_environment() -> None:
+    present = [name for name in SUPABASE_ENVIRONMENT_VARIABLES if os.getenv(name)]
+    if not present:
+        pytest.skip(
+            "Report persistence integration requires a configured local Supabase environment."
+        )
+    missing = [name for name in SUPABASE_ENVIRONMENT_VARIABLES if not os.getenv(name)]
+    if missing:
+        pytest.fail(
+            f"Supabase report integration is partially configured; missing: {', '.join(missing)}"
+        )
+    try:
+        with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT to_regclass('public.reports'), to_regclass('public.report_files'), "
+                    "to_regclass('public.security_scans')"
+                )
+                if any(table is None for table in cursor.fetchone()):
+                    pytest.fail("Required report integration tables are missing after migrations")
+    except psycopg.Error as exc:
+        pytest.fail(f"Supabase report integration database connection failed: {exc}")
 
 
 def setup_function() -> None:
@@ -103,7 +124,7 @@ def test_persists_report_file_and_private_pdf_object() -> None:
     assert "Method: deterministic mock" in pdf_text
     assert "v=DMARC1; p=none" in pdf_text
     assert "Methodology and limitations" in pdf_text
-    assert "not a penetration test" in pdf_text.lower()
+    assert "not a penetration test" in " ".join(pdf_text.lower().split())
     anonymous_response = httpx.get(
         f"{os.environ['SUPABASE_URL']}/storage/v1/object/reports/{report['storage_path']}"
     )

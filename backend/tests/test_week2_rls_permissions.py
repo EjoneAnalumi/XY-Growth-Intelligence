@@ -7,17 +7,17 @@ Skipped automatically when the database is unreachable.
 from __future__ import annotations
 
 import os
+import socket
 from collections.abc import Iterator
+from urllib.parse import urlparse
 from uuid import uuid4
 
 import pytest
 
 psycopg = pytest.importorskip("psycopg")
 
-DATABASE_URL = os.getenv(
-    "SUPABASE_DB_URL",
-    "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
-)
+CONFIGURED_DATABASE_URL = os.getenv("SUPABASE_DB_URL")
+DATABASE_URL = CONFIGURED_DATABASE_URL or "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
 
 ADMIN_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
 BD_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1"
@@ -26,10 +26,18 @@ TA_ID = "dddddddd-dddd-4ddd-8ddd-ddddddddddd1"
 
 
 def _connect():
+    if CONFIGURED_DATABASE_URL is None:
+        parsed_url = urlparse(DATABASE_URL)
+        try:
+            address = (parsed_url.hostname, parsed_url.port or 5432)
+            with socket.create_connection(address, timeout=5):
+                pass
+        except OSError as exc:  # pragma: no cover - environment dependent
+            pytest.skip(f"Local Supabase database is unavailable: {exc}")
     try:
         return psycopg.connect(DATABASE_URL, autocommit=False, connect_timeout=5)
     except Exception as exc:  # pragma: no cover - environment dependent
-        pytest.skip(f"Local Supabase database unavailable: {exc}")
+        pytest.fail(f"Supabase database connection failed: {exc}")
 
 
 @pytest.fixture(scope="module")
@@ -44,7 +52,7 @@ def db() -> Iterator:
             if icp_rules is None or opportunities is None:
                 connection.rollback()
                 connection.close()
-                pytest.skip("Required Week 2 tables missing after migrations")
+                pytest.fail("Required Week 2 tables missing after migrations")
 
             for user_id, email, role, full_name in [
                 (ADMIN_ID, "admin-rls@example.com", "admin", "Admin RLS"),

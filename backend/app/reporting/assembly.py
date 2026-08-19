@@ -122,7 +122,7 @@ def assemble_report_html(
             *finding_sections,
             "</section>",
             '<section class="section disclaimer">',
-            "<h2>Methodology And Limitations</h2>",
+            "<h2>Methodology and limitations</h2>",
             "<p>Scope was limited to approved synthetic demo evidence. This report is not a "
             "penetration test, assurance statement, or confirmation of compromise. Observations "
             "require technical validation before external use.</p>",

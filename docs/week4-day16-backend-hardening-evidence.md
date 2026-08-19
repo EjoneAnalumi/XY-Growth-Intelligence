@@ -1,7 +1,7 @@
 # Week 4 Day 16 Backend Hardening Evidence
 
-Date: 19-08-2026  
-Branch: `feature/day16-backend-hardening`  
+Date: 19-08-2026
+Branch: `feature/day16-backend-hardening`
 Owner: Intern 1 - Backend and Data
 
 ## Scope

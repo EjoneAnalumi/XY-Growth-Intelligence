@@ -35,6 +35,8 @@ class CompanyCreate(BaseModel):
     cloud_usage: list[str] = []
     regulatory_context: list[str] = []
     lead_source: Annotated[str | None, Field(max_length=120)] = None
+    last_activity_at: datetime | None = None
+    next_action_due_at: datetime | None = None
     lifecycle_stage: Annotated[
         str,
         Field(pattern="^(prospect|qualified|customer|archived)$"),
@@ -57,3 +59,13 @@ class CompanyResponse(CompanyCreate):
 class CompanyListResponse(BaseModel):
     items: list[CompanyResponse]
     total: int
+
+
+class CompanyImportResponse(BaseModel):
+    created: int
+
+
+class CsvValidationIssue(BaseModel):
+    row: int | None = None
+    field: str | None = None
+    code: str

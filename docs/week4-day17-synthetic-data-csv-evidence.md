@@ -21,7 +21,7 @@ From `backend/`:
 
 ```text
 python -m pytest tests/test_company_csv.py
-3 passed
+4 passed
 
 python -m ruff check .
 All checks passed.

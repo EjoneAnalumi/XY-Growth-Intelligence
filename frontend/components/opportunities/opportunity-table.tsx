@@ -29,6 +29,7 @@ export default function OpportunityTable({
     <div className="overflow-hidden rounded-md border bg-card shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[920px] border-collapse text-sm">
+          <caption className="sr-only">Opportunities pipeline table</caption>
           <thead className="bg-muted text-left text-xs font-medium uppercase text-muted-foreground">
             <tr>
               <th className="px-4 py-3">Opportunity</th>

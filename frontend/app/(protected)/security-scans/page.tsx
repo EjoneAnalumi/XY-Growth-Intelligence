@@ -183,8 +183,8 @@ export default function SecurityScansPage() {
             </label>
           </div>
 
-          {error ? (
-            <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+      {error ? (
+        <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
             </p>
           ) : null}
@@ -269,7 +269,11 @@ export default function SecurityScansPage() {
           </div>
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
+            <label htmlFor="scan-severity-filter" className="sr-only">
+              Filter findings by severity
+            </label>
             <select
+              id="scan-severity-filter"
               className="h-9 rounded-md border bg-background px-3 text-sm"
               value={severityFilter}
               onChange={(event) =>

@@ -3,11 +3,12 @@
 import { ArrowLeft, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import ActivityTaskPanel from "@/components/opportunities/activity-task-panel";
 import OpportunityForm from "@/components/opportunities/opportunity-form";
 import { Button } from "@/components/ui/button";
+import { ErrorState, LoadingState } from "@/components/ui/async-state";
 import { useCompanies } from "@/hooks/use-companies";
 import { useContacts } from "@/hooks/use-contacts";
 import { usePipelineStages } from "@/hooks/use-pipeline-stages";
@@ -42,27 +43,27 @@ export default function OpportunityDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadOpportunity() {
-      try {
-        setLoading(true);
-        setError(null);
-        const [opportunityResponse, historyResponse] = await Promise.all([
-          getOpportunity(opportunityId),
-          getOpportunityStageHistory(opportunityId),
-        ]);
+  const loadOpportunity = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [opportunityResponse, historyResponse] = await Promise.all([
+        getOpportunity(opportunityId),
+        getOpportunityStageHistory(opportunityId),
+      ]);
 
-        setOpportunity(opportunityResponse);
-        setStageHistory(historyResponse);
-      } catch (caughtError) {
-        setError(caughtError instanceof Error ? caughtError.message : "Failed to load opportunity");
-      } finally {
-        setLoading(false);
-      }
+      setOpportunity(opportunityResponse);
+      setStageHistory(historyResponse);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Failed to load opportunity");
+    } finally {
+      setLoading(false);
     }
-
-    loadOpportunity();
   }, [opportunityId]);
+
+  useEffect(() => {
+    void loadOpportunity();
+  }, [loadOpportunity]);
 
   const companyById = useMemo(
     () => new Map(companies.map((company) => [company.id, company.name])),
@@ -96,7 +97,7 @@ export default function OpportunityDetailPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading opportunity...</p>;
+    return <LoadingState title="Loading opportunity..." />;
   }
 
   if (error || !opportunity) {
@@ -108,9 +109,11 @@ export default function OpportunityDetailPage() {
             Opportunities
           </Link>
         </Button>
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error ?? "Opportunity not found."}
-        </p>
+        <ErrorState
+          title="Opportunity could not be loaded"
+          description={error ?? "Opportunity not found."}
+          onRetry={loadOpportunity}
+        />
       </div>
     );
   }
@@ -168,7 +171,7 @@ export default function OpportunityDetailPage() {
       ) : null}
 
       {submitError ? (
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {submitError}
         </p>
       ) : null}

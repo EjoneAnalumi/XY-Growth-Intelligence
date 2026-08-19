@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/async-state";
 import { useDashboardSummary } from "@/hooks/use-dashboard-summary";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
@@ -74,13 +75,11 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      {error ? (
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
+      {error ? <ErrorState title="Dashboard could not be loaded" description={error} onRetry={refreshSummary} /> : null}
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {loading ? <LoadingState title="Loading dashboard metrics..." /> : null}
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Dashboard metrics">
         {kpis.map((item) => {
           const Icon = item.icon;
 
@@ -118,9 +117,7 @@ export default function DashboardPage() {
           </div>
 
           {!loading && summary?.priorityOpportunities.length === 0 ? (
-            <p className="mt-4 rounded-md border bg-background px-4 py-3 text-sm text-muted-foreground">
-              No active priority opportunities yet.
-            </p>
+            <div className="mt-4"><EmptyState title="No priority opportunities yet" description="Priority opportunities will appear when pipeline activity is available." /></div>
           ) : null}
 
           <div className="mt-5 space-y-3">

@@ -80,7 +80,7 @@ export default function OpportunityKanban({
   return (
     <div className="space-y-3">
       {error ? (
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
       ) : null}
@@ -155,6 +155,7 @@ export default function OpportunityKanban({
                           <select
                             className="h-9 w-full rounded-md border bg-background px-2 text-xs"
                             value={draft.stageId}
+                            aria-label={`Move ${opportunity.name} to another stage`}
                             onChange={(event) =>
                               updateDraft(opportunity.id, "stageId", event.target.value)
                             }
@@ -171,6 +172,7 @@ export default function OpportunityKanban({
                           <input
                             className="h-9 w-full rounded-md border bg-background px-2 text-xs"
                             value={draft.note}
+                            aria-label={`Movement note for ${opportunity.name}`}
                             onChange={(event) =>
                               updateDraft(opportunity.id, "note", event.target.value)
                             }

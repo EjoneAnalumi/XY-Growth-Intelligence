@@ -14,12 +14,15 @@ from app.api.security_scans import router as security_scans_router
 from app.api.tasks import router as tasks_router
 from app.api.users import router as users_router
 from app.core.config import get_settings
-from app.core.logging import configure_logging
+from app.core.errors import register_error_handlers
+from app.core.logging import configure_logging, register_request_logging
 
 settings = get_settings()
 configure_logging(settings.log_level)
 
 app = FastAPI(title=settings.app_name)
+register_request_logging(app)
+register_error_handlers(app)
 
 
 app.add_middleware(

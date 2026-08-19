@@ -27,7 +27,7 @@ TA_ID = "dddddddd-dddd-4ddd-8ddd-ddddddddddd1"
 
 def _connect():
     try:
-        return psycopg.connect(DATABASE_URL, autocommit=False)
+        return psycopg.connect(DATABASE_URL, autocommit=False, connect_timeout=5)
     except Exception as exc:  # pragma: no cover - environment dependent
         pytest.skip(f"Local Supabase database unavailable: {exc}")
 

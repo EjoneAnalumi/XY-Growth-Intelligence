@@ -76,7 +76,8 @@ def test_get_company_returns_not_found() -> None:
     )
 
     assert response.status_code == 404
-    assert response.json() == {"detail": "Company not found."}
+    assert response.json()["error"]["code"] == "not_found"
+    assert response.json()["detail"] == "Company not found."
 
 
 def test_list_companies_requires_authentication() -> None:
@@ -139,7 +140,8 @@ def test_create_contact_returns_not_found_for_unknown_company() -> None:
     )
 
     assert response.status_code == 404
-    assert response.json() == {"detail": "Company not found."}
+    assert response.json()["error"]["code"] == "not_found"
+    assert response.json()["detail"] == "Company not found."
 
 
 def test_create_contact_rejects_read_only_role() -> None:

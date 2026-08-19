@@ -55,7 +55,8 @@ def test_snapshot_requires_explicit_approval() -> None:
     )
 
     assert response.status_code == 400
-    assert response.json() == {"detail": "Snapshot checks require explicit approval."}
+    assert response.json()["error"]["code"] == "bad_request"
+    assert response.json()["detail"] == "Snapshot checks require explicit approval."
 
 
 def test_snapshot_rejects_business_development_role() -> None:

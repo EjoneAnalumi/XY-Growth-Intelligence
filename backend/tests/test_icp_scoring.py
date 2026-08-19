@@ -97,7 +97,8 @@ def test_calculate_icp_returns_not_found_for_unknown_company() -> None:
     )
 
     assert response.status_code == 404
-    assert response.json() == {"detail": "Company not found."}
+    assert response.json()["error"]["code"] == "not_found"
+    assert response.json()["detail"] == "Company not found."
 
 
 def test_openapi_documents_icp_scoring_endpoint() -> None:

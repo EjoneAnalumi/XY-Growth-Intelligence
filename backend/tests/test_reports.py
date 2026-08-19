@@ -188,7 +188,10 @@ def test_report_generation_rejects_unknown_or_ineligible_snapshot() -> None:
         json={"security_scan_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"},
     )
     assert unknown.status_code == 404
-    assert unknown.json() == {"detail": "Snapshot was not found."}
+    assert unknown.json() == {
+        "detail": "Snapshot was not found.",
+        "error": {"code": "not_found", "message": "Snapshot was not found."},
+    }
 
     ineligible_scan_id = "30000000-0000-4000-8000-000000000099"
     if SUPABASE_CONFIGURED:
@@ -222,7 +225,13 @@ def test_report_generation_rejects_unknown_or_ineligible_snapshot() -> None:
         "/reports/generate", headers=ANALYST, json={"security_scan_id": ineligible_scan_id}
     )
     assert ineligible.status_code == 409
-    assert ineligible.json() == {"detail": "Snapshot is not approved and complete."}
+    assert ineligible.json() == {
+        "detail": "Snapshot is not approved and complete.",
+        "error": {
+            "code": "conflict",
+            "message": "Snapshot is not approved and complete.",
+        },
+    }
 
 
 @requires_supabase
@@ -270,7 +279,8 @@ def test_list_reports_returns_legacy_report_without_snapshot_link() -> None:
 def test_report_generation_requires_security_scan_id() -> None:
     response = client.post("/reports/generate", headers=ANALYST, json={})
     assert response.status_code == 422
-    assert response.json()["detail"][0]["loc"] == ["body", "security_scan_id"]
+    assert response.json()["error"]["code"] == "validation_error"
+    assert response.json()["error"]["details"][0]["loc"] == ["body", "security_scan_id"]
 
 
 def test_list_reports_uses_safe_local_fallback_when_report_service_is_not_configured(

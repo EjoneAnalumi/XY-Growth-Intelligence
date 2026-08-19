@@ -109,7 +109,8 @@ def test_create_opportunity_rejects_unknown_stage() -> None:
     )
 
     assert response.status_code == 404
-    assert response.json() == {"detail": "Pipeline stage not found."}
+    assert response.json()["error"]["code"] == "not_found"
+    assert response.json()["detail"] == "Pipeline stage not found."
 
 
 def test_read_only_user_cannot_create_opportunity() -> None:

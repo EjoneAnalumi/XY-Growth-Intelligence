@@ -65,9 +65,15 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background">
+      <a
+        href="#main-content"
+        className="sr-only fixed left-4 top-4 z-50 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground focus:not-sr-only"
+      >
+        Skip to main content
+      </a>
       <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
         <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/dashboard" className="flex items-center gap-3">
+          <Link href="/dashboard" className="flex items-center gap-3" aria-label="XY CYBER dashboard">
             <div className="flex size-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <ShieldCheck className="size-5" aria-hidden="true" />
             </div>
@@ -91,8 +97,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             type="button"
             variant="outline"
             size="icon"
-            className="md:hidden"
+            className="lg:hidden"
             aria-label="Toggle navigation"
+            aria-controls="main-navigation"
+            aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((value) => !value)}
           >
             {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -102,6 +110,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="lg:grid lg:grid-cols-[260px_1fr]">
         <aside
+          id="main-navigation"
           className={cn(
             "border-b bg-card px-4 py-4 lg:sticky lg:top-16 lg:block lg:h-[calc(100vh-4rem)] lg:border-b-0 lg:border-r lg:px-5",
             mobileOpen ? "block" : "hidden"
@@ -123,6 +132,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
+                  aria-current={isActive ? "page" : undefined}
                 >
                   <Icon className="size-4" aria-hidden="true" />
                   {item.label}
@@ -131,7 +141,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </nav>
 
-          <div className="mt-4 border-t pt-4 md:hidden">
+          <div className="mt-4 border-t pt-4 lg:hidden">
             <Button type="button" variant="outline" className="w-full" onClick={handleSignOut}>
               <LogOut className="mr-2 size-4" aria-hidden="true" />
               Sign out
@@ -139,7 +149,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </aside>
 
-        <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main id="main-content" className="min-w-0 px-4 py-6 sm:px-6 lg:px-8" tabIndex={-1}>
+          {children}
+        </main>
       </div>
     </div>
   );

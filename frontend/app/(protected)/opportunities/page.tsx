@@ -7,6 +7,7 @@ import OpportunityForm from "@/components/opportunities/opportunity-form";
 import OpportunityKanban from "@/components/opportunities/opportunity-kanban";
 import OpportunityTable from "@/components/opportunities/opportunity-table";
 import { Button } from "@/components/ui/button";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/async-state";
 import { useCompanies } from "@/hooks/use-companies";
 import { useContacts } from "@/hooks/use-contacts";
 import { useOpportunities } from "@/hooks/use-opportunities";
@@ -15,10 +16,10 @@ import { createOpportunity, moveOpportunityStage } from "@/lib/api/opportunities
 import type { Opportunity, OpportunityFormValues } from "@/types/opportunity";
 
 export default function OpportunitiesPage() {
-  const { companies, loading: companiesLoading, error: companiesError } = useCompanies();
+  const { companies, loading: companiesLoading, error: companiesError, refreshCompanies } = useCompanies();
   const { contacts } = useContacts();
-  const { stages, loading: stagesLoading, error: stagesError } = usePipelineStages();
-  const { opportunities, loading, error, setOpportunities } = useOpportunities();
+  const { stages, loading: stagesLoading, error: stagesError, refreshStages } = usePipelineStages();
+  const { opportunities, loading, error, setOpportunities, refreshOpportunities } = useOpportunities();
   const [showForm, setShowForm] = useState(false);
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -82,9 +83,14 @@ export default function OpportunitiesPage() {
       ) : null}
 
       {setupError ? (
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {setupError}
-        </p>
+        <ErrorState
+          title="Opportunity setup could not be loaded"
+          description={setupError}
+          onRetry={() => {
+            void refreshCompanies();
+            void refreshStages();
+          }}
+        />
       ) : null}
 
       {showForm ? (
@@ -98,7 +104,7 @@ export default function OpportunitiesPage() {
       ) : null}
 
       {submitError ? (
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {submitError}
         </p>
       ) : null}
@@ -137,14 +143,12 @@ export default function OpportunitiesPage() {
           </div>
         </div>
 
-        {loading ? <p className="text-sm text-muted-foreground">Loading opportunities...</p> : null}
+        {loading ? <LoadingState title="Loading opportunities..." /> : null}
 
-        {error ? <p className="text-sm text-red-500">{error}</p> : null}
+        {error ? <ErrorState title="Opportunities could not be loaded" description={error} onRetry={refreshOpportunities} /> : null}
 
         {!loading && !error && opportunities.length === 0 ? (
-          <p className="rounded-md border bg-card px-4 py-5 text-sm text-muted-foreground">
-            No opportunities found.
-          </p>
+          <EmptyState title="No opportunities yet" description="Create an opportunity to begin tracking pipeline progress." />
         ) : null}
 
         {!loading && !error && opportunities.length > 0 && viewMode === "kanban" ? (

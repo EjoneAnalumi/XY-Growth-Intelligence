@@ -1,9 +1,10 @@
 "use client";
 
 import { CalendarPlus, MessageSquarePlus } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ErrorState, LoadingState } from "@/components/ui/async-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createActivity, getActivities } from "@/lib/api/activities";
@@ -73,25 +74,25 @@ export default function ActivityTaskPanel({
     status: "open",
   });
 
-  useEffect(() => {
-    async function loadRecords() {
-      try {
-        setLoading(true);
-        setError(null);
-        const [activityResponse, taskResponse] = await Promise.all([getActivities(), getTasks()]);
-        setActivities(
-          activityResponse.filter((activity) => activity.opportunityId === opportunity.id),
-        );
-        setTasks(taskResponse.filter((task) => task.opportunityId === opportunity.id));
-      } catch (caughtError) {
-        setError(caughtError instanceof Error ? caughtError.message : "Failed to load follow-up work.");
-      } finally {
-        setLoading(false);
-      }
+  const loadRecords = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [activityResponse, taskResponse] = await Promise.all([getActivities(), getTasks()]);
+      setActivities(
+        activityResponse.filter((activity) => activity.opportunityId === opportunity.id),
+      );
+      setTasks(taskResponse.filter((task) => task.opportunityId === opportunity.id));
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Failed to load follow-up work.");
+    } finally {
+      setLoading(false);
     }
-
-    loadRecords();
   }, [opportunity.id]);
+
+  useEffect(() => {
+    void loadRecords();
+  }, [loadRecords]);
 
   const companyName = useMemo(
     () =>
@@ -169,10 +170,15 @@ export default function ActivityTaskPanel({
       </div>
 
       {error ? (
-        <p className="mt-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
+        <ErrorState
+          className="mt-4"
+          title="Activities and tasks could not be loaded"
+          description={error}
+          onRetry={loadRecords}
+        />
       ) : null}
+
+      {loading ? <LoadingState title="Loading activities and tasks..." className="mt-4" /> : null}
 
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
         <form onSubmit={handleActivitySubmit} className="space-y-4 rounded-md border bg-background p-4">
@@ -181,7 +187,7 @@ export default function ActivityTaskPanel({
             <h3 className="text-sm font-semibold">New Activity</h3>
           </div>
 
-          {activityError ? <p className="text-sm text-destructive">{activityError}</p> : null}
+          {activityError ? <p role="alert" className="text-sm text-destructive">{activityError}</p> : null}
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
@@ -252,7 +258,7 @@ export default function ActivityTaskPanel({
             <h3 className="text-sm font-semibold">New Task</h3>
           </div>
 
-          {taskError ? <p className="text-sm text-destructive">{taskError}</p> : null}
+          {taskError ? <p role="alert" className="text-sm text-destructive">{taskError}</p> : null}
 
           <div className="space-y-2">
             <Label htmlFor="task-title">Title</Label>
@@ -321,7 +327,6 @@ export default function ActivityTaskPanel({
       <div className="mt-5 grid gap-4 xl:grid-cols-2">
         <div className="rounded-md border bg-background p-4">
           <h3 className="text-sm font-semibold">Recent Activities</h3>
-          {loading ? <p className="mt-3 text-sm text-muted-foreground">Loading activities...</p> : null}
           {!loading && activities.length === 0 ? (
             <p className="mt-3 text-sm text-muted-foreground">No activities recorded yet.</p>
           ) : null}
@@ -340,7 +345,6 @@ export default function ActivityTaskPanel({
 
         <div className="rounded-md border bg-background p-4">
           <h3 className="text-sm font-semibold">Open Tasks</h3>
-          {loading ? <p className="mt-3 text-sm text-muted-foreground">Loading tasks...</p> : null}
           {!loading && openTasks.length === 0 ? (
             <p className="mt-3 text-sm text-muted-foreground">No tasks scheduled yet.</p>
           ) : null}

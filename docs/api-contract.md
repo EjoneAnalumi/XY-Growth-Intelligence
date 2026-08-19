@@ -740,6 +740,26 @@ These groups are required later in the MVP:
 - Critical calculations have automated tests with known inputs and outputs.
 - OpenAPI documentation should include readable example payloads.
 
+### Error response contract
+
+All handled API errors return a stable, user-safe envelope. `detail` remains the display-safe
+message for existing clients; `error.code` is the machine-readable category. Validation failures
+also include FastAPI field details in `error.details`.
+
+```json
+{
+  "detail": "Company not found.",
+  "error": {
+    "code": "not_found",
+    "message": "Company not found."
+  }
+}
+```
+
+Known categories include `bad_request`, `unauthorized`, `forbidden`, `not_found`, `conflict`,
+`validation_error`, `not_implemented`, and `service_unavailable`. Unexpected server failures use
+the same envelope with the safe message `Internal server error.` and are logged server-side.
+
 ## TODO: Week 1 Contracts
 
 - `GET /users/me`

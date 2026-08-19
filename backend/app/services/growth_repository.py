@@ -26,6 +26,21 @@ class InMemoryGrowthRepository:
     def count_companies(self) -> int:
         return len(self._companies)
 
+    def find_company_duplicates(self, companies: list[CompanyCreate]) -> list[str]:
+        existing_names = {company.name.casefold() for company in self._companies.values()}
+        existing_domains = {
+            company.domain.casefold()
+            for company in self._companies.values()
+            if company.domain is not None
+        }
+        duplicates: list[str] = []
+        for company in companies:
+            if company.name.casefold() in existing_names:
+                duplicates.append("name")
+            if company.domain is not None and company.domain.casefold() in existing_domains:
+                duplicates.append("domain")
+        return sorted(set(duplicates))
+
     def get_company_fit_scores(self) -> dict[str, int | None]:
         return {
             str(company.id): company.fit_score

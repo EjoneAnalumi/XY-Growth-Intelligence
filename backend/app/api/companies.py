@@ -13,7 +13,12 @@ from app.schemas.companies import (
 from app.schemas.icp import IcpScoreResponse
 from app.schemas.users import CurrentUser
 from app.scoring.icp import IcpScoringEngine
-from app.services.company_csv import export_company_csv, parse_company_csv
+from app.services.company_csv import CompanyCsvError, export_company_csv, parse_company_csv
+from app.services.company_csv_repository import (
+    CompanyCsvDuplicateError,
+    CompanyCsvPersistenceError,
+    get_postgres_company_csv_repository,
+)
 from app.services.growth_repository import InMemoryGrowthRepository, get_growth_repository
 
 router = APIRouter(prefix="/companies", tags=["companies"])
@@ -83,21 +88,63 @@ def import_companies(
 ) -> CompanyImportResponse:
     try:
         companies = parse_company_csv(csv_payload)
-    except ValueError as exc:
+    except CompanyCsvError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": exc.code,
+                "issues": [issue.model_dump(exclude_none=True) for issue in exc.issues],
+            },
         ) from exc
-    for company in companies:
-        repository.create_company(company, current_user)
-    return CompanyImportResponse(created=len(companies))
+    postgres_repository = get_postgres_company_csv_repository()
+    duplicate_fields = (
+        repository.find_company_duplicates(companies) if postgres_repository is None else []
+    )
+    if duplicate_fields:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "duplicate_company",
+                "fields": duplicate_fields,
+            },
+        )
+    try:
+        if postgres_repository is not None:
+            created = postgres_repository.import_companies(companies, current_user)
+        else:
+            for company in companies:
+                repository.create_company(company, current_user)
+            created = len(companies)
+    except CompanyCsvDuplicateError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"code": "duplicate_company", "fields": exc.fields},
+        ) from exc
+    except CompanyCsvPersistenceError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="CSV import is temporarily unavailable.",
+        ) from exc
+    return CompanyImportResponse(created=created)
 
 
 @router.get("/export", response_class=Response)
 def export_companies(repository: Repository, current_user: ReaderUser) -> Response:
-    companies = [
-        CompanyCreate.model_validate(company.model_dump())
-        for company in repository.list_companies(100000, 0)
-    ]
+    postgres_repository = get_postgres_company_csv_repository()
+    try:
+        companies = (
+            postgres_repository.export_companies()
+            if postgres_repository is not None
+            else [
+                CompanyCreate.model_validate(company.model_dump())
+                for company in repository.list_companies(100000, 0)
+            ]
+        )
+    except CompanyCsvPersistenceError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="CSV export is temporarily unavailable.",
+        ) from exc
     return Response(
         content=export_company_csv(companies),
         media_type="text/csv",

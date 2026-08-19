@@ -1,4 +1,7 @@
-from fastapi import FastAPI
+import logging
+from time import perf_counter
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.activities import router as activities_router
@@ -14,12 +17,34 @@ from app.api.security_scans import router as security_scans_router
 from app.api.tasks import router as tasks_router
 from app.api.users import router as users_router
 from app.core.config import get_settings
+from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 
 settings = get_settings()
 configure_logging(settings.log_level)
 
 app = FastAPI(title=settings.app_name)
+logger = logging.getLogger(__name__)
+
+
+@app.middleware("http")
+async def log_request_completion(request: Request, call_next):
+    started_at = perf_counter()
+    response = await call_next(request)
+    logger.info(
+        "request_completed",
+        extra={
+            "event": "request_completed",
+            "method": request.method,
+            "path": request.url.path,
+            "status_code": response.status_code,
+            "duration_ms": round((perf_counter() - started_at) * 1000, 2),
+        },
+    )
+    return response
+
+
+register_error_handlers(app)
 
 
 app.add_middleware(

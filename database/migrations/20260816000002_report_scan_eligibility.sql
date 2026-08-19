@@ -1,3 +1,4 @@
+-- Permit persisted scan lifecycle states so report generation can reject ineligible snapshots safely.
 
 ALTER TABLE public.security_scans
     DROP CONSTRAINT IF EXISTS security_scans_approved_check;

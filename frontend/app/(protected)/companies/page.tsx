@@ -5,6 +5,7 @@ import { Building2, Plus } from "lucide-react";
 
 import IcpScorePanel from "@/components/companies/icp-score-panel";
 import CompanyCard from "@/components/companies/company-card";
+import CompanyCsvActions from "@/components/companies/company-csv-actions";
 import CompanyForm from "@/components/companies/company-form";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/async-state";
@@ -59,6 +60,8 @@ export default function CompaniesPage() {
           {submitError}
         </p>
       ) : null}
+
+      <CompanyCsvActions onImportComplete={refreshCompanies} />
 
       <IcpScorePanel companies={companies} />
 

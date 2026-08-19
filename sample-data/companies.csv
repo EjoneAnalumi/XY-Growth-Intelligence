@@ -1,0 +1,31 @@
+name,domain,industry,headquarters_country,employee_count,cloud_usage,regulatory_context,tags,status,lifecycle_stage
+Northstar Robotics Labs,northstar-robotics.example,Manufacturing Technology,United States,420,AWS|Azure,SOC 2,robotics|cloud,qualified,qualified
+Blue Harbor Finance,blueharbor-finance.example,Financial Services,United States,260,Azure,PCI DSS|SOX,finance|regulated,prospect,prospect
+Greenfield Health Systems,greenfield-health.example,Healthcare,United States,850,AWS|Google Cloud,HIPAA,healthcare|compliance,qualified,qualified
+Atlas Grid Utilities,atlas-grid.example,Energy,United States,620,Azure,NERC CIP,energy|critical-infrastructure,prospect,prospect
+Silverline Retail Group,silverline-retail.example,Retail,United States,310,AWS,PCI DSS,retail|payments,prospect,prospect
+Cobalt Cloud Services,cobalt-cloud.example,Cloud Services,United States,145,AWS|Kubernetes,SOC 2|ISO 27001,saas|cloud,qualified,qualified
+Pioneer Logistics Network,pioneer-logistics.example,Logistics,United States,530,Azure,SOC 2,logistics|supply-chain,prospect,prospect
+Summit Legal Partners,summit-legal.example,Legal Services,United States,95,Microsoft 365,Client confidentiality,legal|privacy,prospect,prospect
+Meridian BioMaterials,meridian-biomaterials.example,Biotechnology,United States,210,Google Cloud|AWS,FDA validation|ISO 27001,biotech|research,qualified,qualified
+Vector Learning Platforms,vector-learning.example,Education Technology,United States,180,AWS,FERPA,edtech|saas,prospect,prospect
+Apex Cyberspace,apex-cyber.example,Cloud Services,United States,120,AWS,SOC 2,cyber,prospect,prospect
+Beacon Media,beacon-media.example,Retail,United States,60,GCP,GDPR,media,prospect,prospect
+Citadel Defense,citadel.example,Energy,United States,700,Azure,ITAR,defense,qualified,qualified
+Delta Quantum Tech,delta-q.example,Manufacturing Technology,United States,130,AWS,ISO 27001,quantum,prospect,prospect
+Echo Health,echo-health.example,Healthcare,United States,340,AWS,HIPAA,health,qualified,qualified
+Fox Fintech,fox-fin.example,Financial Services,United States,190,Azure,PCI DSS,fintech,prospect,prospect
+Genesis Genomics,genesis-g.example,Biotechnology,United States,400,GCP,FDA validation,genetics,qualified,qualified
+Horizon Logistics,horizon-log.example,Logistics,United States,900,AWS,SOC 2,shipping,prospect,prospect
+Ironclad Legal,ironclad-law.example,Legal Services,United States,80,Microsoft 365,Client confidentiality,corporate-law,prospect,prospect
+Jupiter EdTech,jupiter-ed.example,Education Technology,United States,160,AWS,FERPA,lms,prospect,prospect
+Krypton Labs,krypton.example,Manufacturing Technology,United States,45,AWS,ISO 27001,hardware,prospect,prospect
+Lexington Wealth,lex-wealth.example,Financial Services,United States,220,Azure,SOX,wealth-mgmt,qualified,qualified
+Matrix BioTech,matrix-bio.example,Biotechnology,United States,110,GCP,FDA validation,pharma,prospect,prospect
+Nova Energy,nova-energy.example,Energy,United States,550,Azure,NERC CIP,solar,prospect,prospect
+Omni Retail,omni-retail.example,Retail,United States,980,AWS,PCI DSS,e-commerce,qualified,qualified
+Pulse Cloud Solutions,pulse-cloud.example,Cloud Services,United States,85,AWS|Kubernetes,SOC 2,devops,prospect,prospect
+Quantum Freight,quantum-freight.example,Logistics,United States,410,Azure,SOC 2,freight,prospect,prospect
+Redwood Legal Group,redwood-legal.example,Legal Services,United States,300,Microsoft 365,Client confidentiality,compliance-law,qualified,qualified
+Stellar Health Tech,stellar-health.example,Healthcare,United States,170,AWS|GCP,HIPAA,telehealth,prospect,prospect
+Titanium Systems,titanium-sys.example,Manufacturing Technology,United States,750,Azure,ISO 27001,automation,qualified,qualified

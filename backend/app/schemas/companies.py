@@ -57,3 +57,7 @@ class CompanyResponse(CompanyCreate):
 class CompanyListResponse(BaseModel):
     items: list[CompanyResponse]
     total: int
+
+
+class CompanyImportResponse(BaseModel):
+    created: int

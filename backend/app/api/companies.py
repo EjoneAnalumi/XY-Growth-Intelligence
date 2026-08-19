@@ -1,13 +1,19 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response, status
 
 from app.core.auth import get_current_user, require_roles
-from app.schemas.companies import CompanyCreate, CompanyListResponse, CompanyResponse
+from app.schemas.companies import (
+    CompanyCreate,
+    CompanyImportResponse,
+    CompanyListResponse,
+    CompanyResponse,
+)
 from app.schemas.icp import IcpScoreResponse
 from app.schemas.users import CurrentUser
 from app.scoring.icp import IcpScoringEngine
+from app.services.company_csv import export_company_csv, parse_company_csv
 from app.services.growth_repository import InMemoryGrowthRepository, get_growth_repository
 
 router = APIRouter(prefix="/companies", tags=["companies"])
@@ -67,6 +73,36 @@ def create_company(
     repository: Repository,
 ) -> CompanyResponse:
     return repository.create_company(payload, current_user)
+
+
+@router.post("/import", response_model=CompanyImportResponse, status_code=status.HTTP_201_CREATED)
+def import_companies(
+    csv_payload: Annotated[bytes, Body(media_type="text/csv")],
+    current_user: WriterUser,
+    repository: Repository,
+) -> CompanyImportResponse:
+    try:
+        companies = parse_company_csv(csv_payload)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
+    for company in companies:
+        repository.create_company(company, current_user)
+    return CompanyImportResponse(created=len(companies))
+
+
+@router.get("/export", response_class=Response)
+def export_companies(repository: Repository, current_user: ReaderUser) -> Response:
+    companies = [
+        CompanyCreate.model_validate(company.model_dump())
+        for company in repository.list_companies(100000, 0)
+    ]
+    return Response(
+        content=export_company_csv(companies),
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="companies.csv"'},
+    )
 
 
 @router.get("/{company_id}", response_model=CompanyResponse)

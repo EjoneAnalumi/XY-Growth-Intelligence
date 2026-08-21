@@ -4,11 +4,13 @@ const defaultApiBaseUrl = "http://localhost:8000";
 
 export class ApiError extends Error {
   status: number;
+  details?: unknown;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, details?: unknown) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -37,7 +39,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     const message =
       typeof body?.detail === "string" ? body.detail : `API request failed with ${response.status}.`;
 
-    throw new ApiError(message, response.status);
+    throw new ApiError(message, response.status, body?.error?.details);
   }
 
   return response.json() as Promise<T>;

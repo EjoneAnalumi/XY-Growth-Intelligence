@@ -4,6 +4,11 @@ services:
       context: ./backend
     env_file:
       - .env
+    environment:
+      # Supabase is published on the host by the local CLI. Inside this
+      # container, localhost would point back to the backend container.
+      DATABASE_URL: postgresql://postgres:postgres@host.docker.internal:54322/postgres
+      SUPABASE_URL: http://host.docker.internal:54321
     ports:
       - "8000:8000"
     volumes:

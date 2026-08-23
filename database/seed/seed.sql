@@ -96,8 +96,8 @@ ON CONFLICT (id) DO UPDATE SET first_name = EXCLUDED.first_name, updated_at = NO
 -- Synthetic Week 2 seed expansion (brief shared Week 2 counts).
 -- Known active seed metrics:
 -- opportunities: 20 total, 17 open, 2 won, 1 lost
--- activities: 25 total
--- tasks: 15 total, with predictable overdue and due-this-week rows
+-- activities: 40 total
+-- tasks: 25 total, with predictable overdue and due-this-week rows
 
 INSERT INTO public.pipeline_stages (
     id, name, sort_order, default_probability, is_won, is_lost
@@ -196,7 +196,7 @@ SELECT
     'Seed activity ' || series,
     'Synthetic activity for dashboard metric verification.',
     NOW() - (series || ' days')::interval
-FROM generate_series(1, 25) AS series
+FROM generate_series(1, 40) AS series
 ON CONFLICT (id) DO UPDATE SET
     subject = EXCLUDED.subject,
     notes = EXCLUDED.notes,
@@ -226,7 +226,7 @@ SELECT
         WHEN series IN (4, 9, 14) THEN NOW() - INTERVAL '1 day'
         ELSE NULL
     END
-FROM generate_series(1, 15) AS series
+FROM generate_series(1, 25) AS series
 ON CONFLICT (id) DO UPDATE SET
     title = EXCLUDED.title,
     due_at = EXCLUDED.due_at,

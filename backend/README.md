@@ -1,53 +1,33 @@
 # Backend
 
-FastAPI backend for protected business logic in the XY CYBER Growth Intelligence MVP.
+FastAPI backend for the XY CYBER Growth Intelligence MVP.
 
-## Current Implementation
+Use the root [README](../README.md) for the complete clean-install, Supabase, Docker, environment, and shutdown procedure.
 
-- `GET /health`
-- Environment configuration helper
-- Structured JSON logging setup
-- Basic pytest coverage
-- Local snapshot-to-report fallback for development without Supabase runtime credentials
+## Local checks
 
-## Run Locally
+Create the shared virtual environment from the repository root, then run:
 
-```bash
-python -m pip install -r requirements-dev.txt
-python -m pytest
-python -m ruff check .
-python -m uvicorn app.main:app --reload
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements-dev.txt
+.\.venv\Scripts\python.exe -m pytest
+.\.venv\Scripts\python.exe -m ruff check backend
 ```
 
-Open:
+Start FastAPI directly:
 
-```text
-http://localhost:8000/health
+```powershell
+Set-Location backend
+..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Expected response:
+- Health: http://127.0.0.1:8000/health
+- OpenAPI UI: http://127.0.0.1:8000/docs
 
-```json
-{"status": "ok"}
-```
+## Runtime boundaries
 
-Snapshot/report integration uses the tracked Supabase migrations when these environment variables
-are configured:
-
-```text
-DATABASE_URL
-SUPABASE_URL
-SUPABASE_SERVICE_ROLE_KEY
-```
-
-If they are not configured, the backend uses an in-memory fallback so the approved demo
-snapshot-to-report flow can still be tested locally without committing secrets.
-
-## Near-Term TODO
-
-- Supabase Auth token verification.
-- User profile and role lookup.
-- Company/contact API endpoints.
-- Permission checks for writes.
-- Consistent error response helpers.
-- API examples in `docs/api-contract.md`.
+- Local bearer-token authentication and role checks are implemented; Supabase Auth JWT verification is not yet connected.
+- Core CRM and pipeline repositories remain in memory, so new records do not survive a backend restart.
+- PostgreSQL-backed behavior currently covers selected company CSV, snapshot, and report paths.
+- `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` enable relevant local integrations. Keep the service-role key server-side and never expose it through `NEXT_PUBLIC_*` variables.
+- The backend container reaches host-published Supabase services through `host.docker.internal`; direct host execution uses `127.0.0.1`.

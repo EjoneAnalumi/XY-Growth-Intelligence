@@ -1,7 +1,10 @@
 import csv
 from io import StringIO
+from os import getenv
 from pathlib import Path
 
+import psycopg
+import pytest
 from app.main import app
 from app.services.company_csv import CANONICAL_COLUMNS, parse_company_csv
 from app.services.growth_repository import repository
@@ -10,9 +13,13 @@ from fastapi.testclient import TestClient
 client = TestClient(app)
 WRITER = {"Authorization": "Bearer dev-business-development"}
 READER = {"Authorization": "Bearer dev-read-only"}
+CONFIGURED_DATABASE_URL = getenv("DATABASE_URL")
 
 
-def setup_function() -> None:
+@pytest.fixture(autouse=True)
+def isolate_csv_unit_repository(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep unit cases deterministic when the wider suite enables PostgreSQL."""
+    monkeypatch.delenv("DATABASE_URL", raising=False)
     repository.reset()
 
 
@@ -139,3 +146,35 @@ def test_company_csv_handles_utf8_quoting_nulls_numbers_and_dates() -> None:
     assert rows[0]["employee_count"] == "0"
     assert rows[0]["annual_revenue_usd"] == "0.0"
     assert rows[0]["next_action_due_at"] == ""
+
+
+@pytest.mark.skipif(CONFIGURED_DATABASE_URL is None, reason="local PostgreSQL is not configured")
+def test_company_csv_postgres_round_trip_is_isolated(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert CONFIGURED_DATABASE_URL is not None
+    monkeypatch.setenv("DATABASE_URL", CONFIGURED_DATABASE_URL)
+    domain = "csv-integration.example"
+
+    def delete_fixture() -> None:
+        with psycopg.connect(CONFIGURED_DATABASE_URL) as connection, connection.cursor() as cursor:
+            cursor.execute("delete from public.companies where domain = %s", (domain,))
+
+    delete_fixture()
+    try:
+        imported = client.post(
+            "/companies/import",
+            headers={**WRITER, "Content-Type": "text/csv"},
+            content=(
+                b"name,domain,industry,employee_count\n"
+                b"CSV Integration Fixture,csv-integration.example,Technology,42\n"
+            ),
+        )
+        assert imported.status_code == 201
+        assert imported.json() == {"created": 1}
+
+        exported = client.get("/companies/export", headers=READER)
+        rows = list(csv.DictReader(StringIO(exported.content.decode("utf-8-sig"))))
+        fixture = next(row for row in rows if row["domain"] == domain)
+        assert fixture["name"] == "CSV Integration Fixture"
+        assert fixture["employee_count"] == "42"
+    finally:
+        delete_fixture()

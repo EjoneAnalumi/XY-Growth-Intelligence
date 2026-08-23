@@ -102,9 +102,9 @@ Result:
 
 - All nine tracked migrations applied successfully
 - `database/seed/seed.sql` completed successfully
-- Verified counts: 30 companies, 50 contacts, 20 opportunities, 25 activities, and 15 tasks
-- Companies, contacts, and opportunities meet the brief minimums
-- Activities and tasks do not meet the final brief minimums of 40 and 25
+- The initial reset exposed shortfalls of 25 activities and 15 tasks
+- The deterministic generators were expanded and the final reset verified 30 companies, 50 contacts, 20 opportunities, 40 activities, and 25 tasks
+- All five entity counts now meet the brief minimums
 
 On the test Windows/Docker environment, Auth and Mailpit processes started but Docker retained unhealthy health metadata. The standard start therefore timed out. The CLI-supported `--ignore-health-check` option left the local stack available for status/reset verification. This workaround is local-only and does not waive hosted acceptance checks.
 
@@ -114,19 +114,21 @@ The first image pull also exposed cached wrong-architecture/corrupt Mailpit and 
 
 Local generated credentials were loaded into process memory and were not written to tracked files.
 
-Result from the full suite with `DATABASE_URL` enabled:
+The initial full-suite run exposed four CSV unit tests that accidentally selected PostgreSQL and assumed an empty companies table. The tests now explicitly isolate their intended in-memory unit repository, and a dedicated PostgreSQL CSV round-trip case creates and removes only its uniquely identified fixture.
 
-- 92 passed
-- 4 CSV tests failed because they assume an empty companies table while the clean reset correctly starts with 30 seeded companies
-- Ruff passed
-
-Targeted integration command:
+Targeted integration command used before the final full gate:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest backend\tests\test_reports.py backend\tests\test_week2_rls_permissions.py
 ```
 
-Result: 15 passed in 5.89 seconds. The report-storage and RLS integration groups therefore pass when run against the clean local Supabase database without the unrelated CSV test-state collision.
+Result: 15 passed in 5.89 seconds.
+
+Final full Supabase-enabled result:
+
+- 97 passed in 11.45 seconds
+- Ruff passed
+- One non-functional pytest cache-permission warning occurred in the managed sandbox
 
 ## Security notes
 
@@ -138,13 +140,11 @@ Result: 15 passed in 5.89 seconds. The report-storage and RLS integration groups
 
 ## Remaining TODOs and risks
 
-- High: expand synthetic seed data from 25 to at least 40 activities and from 15 to at least 25 tasks.
 - High: replace in-memory core CRM/pipeline repositories with authorized Supabase PostgreSQL persistence so records survive restart/logout and are correctly isolated for different users.
 - High: replace the local mock session with Supabase Auth and verify role-aware login, logout, reset, and backend JWT authorization.
-- Medium: isolate PostgreSQL-backed CSV tests from the normal seeded dataset so the entire test suite can run with `DATABASE_URL` enabled.
 - Medium: investigate the 15 npm dependency audit findings through a separate, reviewed dependency-hardening task.
 - Medium: resolve or upstream the Windows Docker Auth/Mailpit health-check incompatibility rather than relying permanently on `--ignore-health-check`.
 
 ## Completion status
 
-Day 18 documentation and clean-start work is complete when the final commands below pass and the branch is pushed. Final MVP acceptance remains incomplete because the persistence/auth work and two synthetic-data minimums are outstanding.
+Day 18 clean installation, documentation, seed minimums, and the full local database test gate are complete. Final MVP acceptance remains incomplete because durable core persistence and Supabase Auth are separate outstanding product tasks.

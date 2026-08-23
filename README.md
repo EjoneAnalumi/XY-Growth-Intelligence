@@ -161,7 +161,7 @@ $env:SUPABASE_SERVICE_ROLE_KEY='<local SERVICE_ROLE_KEY>'
 .\.venv\Scripts\python.exe -m pytest backend\tests\test_reports.py backend\tests\test_week2_rls_permissions.py
 ```
 
-Do not paste the values into tracked scripts. Running the entire suite with `DATABASE_URL` enabled currently exposes a known CSV test-isolation issue because those tests expect an empty companies table while the clean reset correctly seeds 30 companies.
+Do not paste the values into tracked scripts. CSV unit cases explicitly use their in-memory repository, while a separate isolated CSV integration case verifies PostgreSQL import/export without deleting or depending on the normal seeded companies.
 
 ## Troubleshooting
 

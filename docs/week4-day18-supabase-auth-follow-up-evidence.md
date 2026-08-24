@@ -12,6 +12,8 @@ This is a separate follow-up, not Day 19. It replaces the mock role selector wit
 - Real email/password Supabase sessions with access-token refresh and logout.
 - Forgot-password, reset-password, and invitation-acceptance pages.
 - Admin-only staff invitations, role assignment, activation/deactivation, and user directory.
+- Admin user management now supports editing staff names and email addresses and permanently deleting accounts. Self-deactivation, self-demotion, and self-deletion are rejected by FastAPI.
+- Onboarding remains invitation-only; the temporary-password option was removed.
 - Database provisioning trigger creates every invited profile as Read Only before Admin assignment.
 - FastAPI validates the bearer session through Supabase Auth, rejects expired tokens, and loads the active database profile and role.
 - Notes display writer names; activities and tasks display their creator; opportunities display creator/updater; stage history displays the staff member who moved it.
@@ -20,7 +22,7 @@ This is a separate follow-up, not Day 19. It replaces the mock role selector wit
 
 ## Verification
 
-- `python -m pytest backend`: 98 passed, 5 skipped (Supabase integration tests gated by environment variables).
+- `python -m pytest backend`: 100 passed, 5 skipped (Supabase integration tests gated by environment variables).
 - `python -m ruff check backend`: all checks passed.
 - `npm.cmd run typecheck`: passed.
 - `npm.cmd run lint`: passed with no warnings or errors.
@@ -28,6 +30,7 @@ This is a separate follow-up, not Day 19. It replaces the mock role selector wit
 - `npm.cmd test -- --run`: 5 files and 15 tests passed in the completed run. A final repeat reached Vitest startup but hung in the Windows/esbuild process and was stopped; no test failure was reported.
 - Local Supabase issued a real Business Development session; FastAPI returned the stored role/name and 9 visible synthetic profiles.
 - Admin invitation API created a temporary synthetic Read Only user; the test user was deleted immediately afterward.
+- A synthetic user CRUD verification successfully created an invitation, edited the name/email/role, returned 204 on deletion, and confirmed the account disappeared.
 - Login, forgot-password, reset-password, invitation-acceptance, and Users routes returned HTTP 200.
 
 ## Security

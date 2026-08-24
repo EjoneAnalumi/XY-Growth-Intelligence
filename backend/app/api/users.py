@@ -9,6 +9,7 @@ from app.schemas.users import (
     AuditLogListResponse,
     CurrentUser,
     InvitationResponse,
+    UserAdminUpdate,
     UserInvitationCreate,
     UserListResponse,
     UserProfile,
@@ -65,22 +66,14 @@ def invite_user(
 ) -> InvitationResponse:
     if not all((settings.supabase_url, settings.supabase_service_role_key, settings.database_url)):
         raise HTTPException(status_code=503, detail="Supabase invitations are not configured.")
-    if payload.temporary_password:
-        auth_path = "/auth/v1/admin/users"
-        body: dict[str, object] = {
-            "email": payload.email,
-            "password": payload.temporary_password,
-            "email_confirm": True,
-            "user_metadata": {"full_name": payload.full_name},
-        }
-        params = None
-    else:
-        auth_path = "/auth/v1/invite"
-        body = {"email": payload.email, "data": {"full_name": payload.full_name}}
-        params = {"redirect_to": payload.redirect_to} if payload.redirect_to else None
+    body: dict[str, object] = {
+        "email": payload.email,
+        "data": {"full_name": payload.full_name},
+    }
+    params = {"redirect_to": payload.redirect_to} if payload.redirect_to else None
     try:
         response = httpx.post(
-            f"{settings.supabase_url}{auth_path}",
+            f"{settings.supabase_url}/auth/v1/invite",
             headers={
                 "apikey": settings.supabase_service_role_key,
                 "Authorization": f"Bearer {settings.supabase_service_role_key}",
@@ -116,7 +109,7 @@ def invite_user(
 @router.patch("/{user_id}", response_model=UserProfile)
 def update_user(
     user_id: str,
-    payload: UserRoleUpdate,
+    payload: UserAdminUpdate,
     current_user: Annotated[CurrentUser, Depends(require_roles("admin"))],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> UserProfile:
@@ -128,7 +121,58 @@ def update_user(
             status_code=422,
             detail="Administrators cannot remove their own administrator access.",
         )
-    profile = UserRepository(settings.database_url).update_profile(user_id, payload)
+    repository = UserRepository(settings.database_url)
+    if payload.email:
+        try:
+            response = httpx.put(
+                f"{settings.supabase_url}/auth/v1/admin/users/{user_id}",
+                headers={
+                    "apikey": settings.supabase_service_role_key,
+                    "Authorization": f"Bearer {settings.supabase_service_role_key}",
+                },
+                json={"email": payload.email, "email_confirm": True},
+                timeout=10,
+            )
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail="Supabase user update failed.") from exc
+        if response.status_code >= 400:
+            raise HTTPException(status_code=502, detail="Supabase could not update the user email.")
+    profile_payload = UserRoleUpdate.model_validate(
+        payload.model_dump(exclude={"email"}, exclude_unset=True)
+    )
+    profile = repository.update_profile(user_id, profile_payload)
     if profile is None:
         raise HTTPException(status_code=404, detail="User not found.")
+    repository.record_audit(current_user.id, user_id, "updated")
     return profile
+
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(
+    user_id: str,
+    current_user: Annotated[CurrentUser, Depends(require_roles("admin"))],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> None:
+    if user_id == current_user.id:
+        raise HTTPException(status_code=422, detail="Administrators cannot delete themselves.")
+    if not all((settings.supabase_url, settings.supabase_service_role_key, settings.database_url)):
+        raise HTTPException(
+            status_code=503,
+            detail="Supabase user administration is not configured.",
+        )
+    try:
+        response = httpx.delete(
+            f"{settings.supabase_url}/auth/v1/admin/users/{user_id}",
+            headers={
+                "apikey": settings.supabase_service_role_key,
+                "Authorization": f"Bearer {settings.supabase_service_role_key}",
+            },
+            timeout=10,
+        )
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail="Supabase user deletion failed.") from exc
+    if response.status_code == 404:
+        raise HTTPException(status_code=404, detail="User not found.")
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail="Supabase could not delete the user.")
+    UserRepository(settings.database_url).record_audit(current_user.id, user_id, "deleted")

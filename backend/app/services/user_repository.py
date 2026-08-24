@@ -83,3 +83,12 @@ class UserRepository:
                 )
                 for row in cursor.fetchall()
             ]
+
+    def record_audit(self, actor_id: str, entity_id: str, action: str) -> None:
+        with self._connection() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "insert into public.audit_logs (user_id, entity_type, entity_id, action) "
+                "values (%s, 'users', %s, %s)",
+                (actor_id, entity_id, action),
+            )
+            connection.commit()

@@ -49,12 +49,16 @@ class UserInvitationCreate(BaseModel):
     full_name: str = Field(min_length=2, max_length=200)
     role: UserRole = "read_only"
     redirect_to: str | None = None
-    temporary_password: str | None = Field(default=None, min_length=10, max_length=128)
 
 
 class UserRoleUpdate(BaseModel):
     role: UserRole | None = None
     active: bool | None = None
+    full_name: str | None = Field(default=None, min_length=2, max_length=200)
+
+
+class UserAdminUpdate(UserRoleUpdate):
+    email: str | None = Field(default=None, pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 
 class InvitationResponse(BaseModel):

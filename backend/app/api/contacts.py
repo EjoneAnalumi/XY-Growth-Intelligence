@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 
 from app.core.auth import get_current_user, require_roles
-from app.schemas.contacts import ContactCreate, ContactListResponse, ContactResponse
+from app.schemas.contacts import ContactCreate, ContactListResponse, ContactResponse, ContactUpdate
 from app.schemas.users import CurrentUser
 from app.services.growth_repository import InMemoryGrowthRepository, get_growth_repository
 
@@ -91,4 +91,31 @@ def get_contact(
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found.")
 
+    return contact
+
+
+@router.patch("/{contact_id}", response_model=ContactResponse)
+def update_contact(
+    contact_id: UUID,
+    payload: ContactUpdate,
+    repository: Repository,
+    current_user: WriterUser,
+) -> ContactResponse:
+    contact = repository.update_contact(
+        contact_id, payload.model_dump(exclude_unset=True), current_user
+    )
+    if contact is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found.")
+    return contact
+
+
+@router.delete("/{contact_id}", response_model=ContactResponse)
+def archive_contact(
+    contact_id: UUID,
+    repository: Repository,
+    current_user: WriterUser,
+) -> ContactResponse:
+    contact = repository.archive_contact(contact_id, current_user)
+    if contact is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found.")
     return contact

@@ -52,6 +52,18 @@ class ContactResponse(ContactCreate):
     updated_at: datetime
 
 
+class ContactUpdate(BaseModel):
+    company_id: UUID | None = None
+    first_name: Annotated[str | None, Field(min_length=1, max_length=100)] = None
+    last_name: Annotated[str | None, Field(min_length=1, max_length=100)] = None
+    email: Annotated[
+        str | None,
+        Field(pattern=r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", max_length=255),
+    ] = None
+    title: Annotated[str | None, Field(max_length=160)] = None
+    is_primary: bool | None = None
+
+
 class ContactListResponse(BaseModel):
     items: list[ContactResponse]
     total: int

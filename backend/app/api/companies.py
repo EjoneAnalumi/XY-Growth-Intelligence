@@ -9,6 +9,7 @@ from app.schemas.companies import (
     CompanyImportResponse,
     CompanyListResponse,
     CompanyResponse,
+    CompanyUpdate,
 )
 from app.schemas.icp import IcpScoreResponse
 from app.schemas.users import CurrentUser
@@ -163,6 +164,33 @@ def get_company(
     if company is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found.")
 
+    return company
+
+
+@router.patch("/{company_id}", response_model=CompanyResponse)
+def update_company(
+    company_id: UUID,
+    payload: CompanyUpdate,
+    repository: Repository,
+    current_user: WriterUser,
+) -> CompanyResponse:
+    company = repository.update_company(
+        company_id, payload.model_dump(exclude_unset=True), current_user
+    )
+    if company is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found.")
+    return company
+
+
+@router.delete("/{company_id}", response_model=CompanyResponse)
+def archive_company(
+    company_id: UUID,
+    repository: Repository,
+    current_user: WriterUser,
+) -> CompanyResponse:
+    company = repository.archive_company(company_id, current_user)
+    if company is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found.")
     return company
 
 

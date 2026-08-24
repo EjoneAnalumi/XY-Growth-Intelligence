@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from os import getenv
 from uuid import UUID, uuid4
 
 from app.schemas.users import CurrentUser
@@ -556,5 +557,10 @@ class InMemoryPipelineRepository:
 pipeline_repository = InMemoryPipelineRepository()
 
 
-def get_pipeline_repository() -> InMemoryPipelineRepository:
+def get_pipeline_repository():
+    database_url = getenv("DATABASE_URL")
+    if database_url:
+        from app.services.postgres_pipeline_repository import PostgresPipelineRepository
+
+        return PostgresPipelineRepository(database_url)
     return pipeline_repository

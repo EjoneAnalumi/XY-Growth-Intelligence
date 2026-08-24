@@ -176,14 +176,17 @@ class PostgresGrowthRepository:
             return None
         with self._connection() as connection, connection.cursor() as cursor:
             cursor.execute(
-                "insert into public.icp_scores (company_id, score, max_score, tier, explanations, "
+                "insert into public.icp_score_results "
+                "(company_id, score, max_score, tier, explanations, "
                 "calculated_by) values (%s,%s,%s,%s,%s,%s) returning *",
                 (
                     company_id,
                     score.score,
                     score.max_score,
                     score.tier,
-                    psycopg.types.json.Jsonb(score.explanations),
+                    psycopg.types.json.Jsonb(
+                        [explanation.model_dump(mode="json") for explanation in score.explanations]
+                    ),
                     current_user.id,
                 ),
             )
@@ -198,7 +201,7 @@ class PostgresGrowthRepository:
     def get_latest_icp_score(self, company_id: UUID):
         with self._connection() as connection, connection.cursor() as cursor:
             cursor.execute(
-                "select * from public.icp_scores where company_id=%s "
+                "select * from public.icp_score_results where company_id=%s "
                 "order by calculated_at desc limit 1",
                 (company_id,),
             )

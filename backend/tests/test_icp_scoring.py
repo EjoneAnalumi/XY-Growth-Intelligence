@@ -1,3 +1,4 @@
+import json
 from uuid import UUID
 
 from app.main import app
@@ -51,6 +52,9 @@ def test_icp_scoring_engine_is_deterministic_for_same_company_input() -> None:
     assert second_score.score == first_score.score
     assert second_score.tier == first_score.tier
     assert second_score.explanations == first_score.explanations
+
+    explanations = [item.model_dump(mode="json") for item in first_score.explanations]
+    assert json.loads(json.dumps(explanations)) == explanations
 
 
 def test_calculate_icp_stores_score_explanations_and_updates_company_fit_score() -> None:

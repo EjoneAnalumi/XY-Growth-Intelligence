@@ -9,12 +9,12 @@ Implemented flows include company/contact management, opportunity pipeline views
 Important current limitations:
 
 - Login uses the documented local demo session; Supabase Auth is not connected to the frontend/backend runtime yet.
-- Core companies, contacts, opportunities, activities, tasks, and notes still use in-memory runtime repositories. Browser refresh works while the backend remains running, but a backend restart loses newly entered core CRM records.
-- PostgreSQL persistence exists for selected CSV, snapshot, and report paths only.
+- When `DATABASE_URL` is configured, companies, contacts, opportunities, activities, tasks, and notes use the Supabase PostgreSQL database and survive browser logout and backend restart. Unit tests without a database URL retain an isolated in-memory repository.
+- CSV, snapshot, and report paths also use PostgreSQL persistence.
 - Docker Compose starts the backend only. Run the frontend separately with npm.
 - Use synthetic data only. Never place hosted credentials, production keys, or real customer/prospect data in this repository.
 
-Durable multi-user persistence and Supabase Auth are the next required MVP work. They are not optional enhancements.
+Real Supabase Auth remains required production work. The current demo login selects a local role, so it does not provide real user identity, password validation, or per-user sessions even though staff CRM records are now durable and shared.
 
 ## Prerequisites
 

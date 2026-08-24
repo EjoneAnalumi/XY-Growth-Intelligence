@@ -27,6 +27,7 @@ Set-Location backend
 ## Runtime boundaries
 
 - Local bearer-token authentication and role checks are implemented; Supabase Auth JWT verification is not yet connected.
+- With `DATABASE_URL` set, core CRM and pipeline repositories persist to Supabase PostgreSQL. Without it, tests use isolated in-memory repositories.
 - Core CRM and pipeline repositories remain in memory, so new records do not survive a backend restart.
 - PostgreSQL-backed behavior currently covers selected company CSV, snapshot, and report paths.
 - `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` enable relevant local integrations. Keep the service-role key server-side and never expose it through `NEXT_PUBLIC_*` variables.

@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from os import getenv
 from uuid import UUID, uuid4
 
 from app.schemas.companies import CompanyCreate, CompanyResponse
@@ -42,10 +43,7 @@ class InMemoryGrowthRepository:
         return sorted(set(duplicates))
 
     def get_company_fit_scores(self) -> dict[str, int | None]:
-        return {
-            str(company.id): company.fit_score
-            for company in self._companies.values()
-        }
+        return {str(company.id): company.fit_score for company in self._companies.values()}
 
     def create_company(self, payload: CompanyCreate, current_user: CurrentUser) -> CompanyResponse:
         now = datetime.now(UTC)
@@ -64,6 +62,28 @@ class InMemoryGrowthRepository:
 
     def get_company(self, company_id: UUID) -> CompanyResponse | None:
         return self._companies.get(company_id)
+
+    def update_company(self, company_id: UUID, payload: dict, current_user: CurrentUser):
+        company = self.get_company(company_id)
+        if company is None:
+            return None
+        updated = company.model_copy(
+            update={**payload, "updated_by": UUID(current_user.id), "updated_at": datetime.now(UTC)}
+        )
+        self._companies[company_id] = updated
+        return updated
+
+    def archive_company(self, company_id: UUID, current_user: CurrentUser):
+        company = self._companies.pop(company_id, None)
+        if company is None:
+            return None
+        for contact_id in [
+            key for key, item in self._contacts.items() if item.company_id == company_id
+        ]:
+            self._contacts.pop(contact_id)
+        return company.model_copy(
+            update={"status": "inactive", "updated_by": UUID(current_user.id)}
+        )
 
     def list_contacts(
         self,
@@ -110,6 +130,25 @@ class InMemoryGrowthRepository:
     def get_contact(self, contact_id: UUID) -> ContactResponse | None:
         return self._contacts.get(contact_id)
 
+    def update_contact(self, contact_id: UUID, payload: dict, current_user: CurrentUser):
+        contact = self.get_contact(contact_id)
+        if contact is None:
+            return None
+        company_id = payload.get("company_id", contact.company_id)
+        if company_id not in self._companies:
+            return None
+        updated = contact.model_copy(
+            update={**payload, "updated_by": UUID(current_user.id), "updated_at": datetime.now(UTC)}
+        )
+        self._contacts[contact_id] = updated
+        return updated
+
+    def archive_contact(self, contact_id: UUID, current_user: CurrentUser):
+        contact = self._contacts.pop(contact_id, None)
+        if contact is None:
+            return None
+        return contact.model_copy(update={"updated_by": UUID(current_user.id)})
+
     def save_icp_score(
         self,
         company_id: UUID,
@@ -148,5 +187,10 @@ class InMemoryGrowthRepository:
 repository = InMemoryGrowthRepository()
 
 
-def get_growth_repository() -> InMemoryGrowthRepository:
+def get_growth_repository():
+    database_url = getenv("DATABASE_URL")
+    if database_url:
+        from app.services.postgres_growth_repository import PostgresGrowthRepository
+
+        return PostgresGrowthRepository(database_url)
     return repository

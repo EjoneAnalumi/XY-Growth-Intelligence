@@ -61,3 +61,17 @@ export async function createActivity(values: ActivityFormValues): Promise<Activi
 
   return mapActivity(response);
 }
+
+export async function updateActivity(
+  id: string,
+  values: Pick<ActivityFormValues, "subject" | "notes">,
+): Promise<Activity> {
+  return mapActivity(await apiRequest<ActivityApiResponse>(`/activities/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ subject: values.subject, notes: values.notes || null }),
+  }));
+}
+
+export async function archiveActivity(id: string): Promise<void> {
+  await apiRequest(`/activities/${id}`, { method: "DELETE" });
+}

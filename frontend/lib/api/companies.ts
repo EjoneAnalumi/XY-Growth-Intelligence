@@ -47,6 +47,23 @@ export async function createCompany(payload: CompanyFormValues): Promise<Company
   return mapCompany(response);
 }
 
+export async function updateCompany(id: string, payload: CompanyFormValues): Promise<Company> {
+  const response = await apiRequest<CompanyApiResponse>(`/companies/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      name: payload.name,
+      domain: payload.domain,
+      industry: payload.industry,
+      headquarters_country: payload.country,
+    }),
+  });
+  return mapCompany(response);
+}
+
+export async function archiveCompany(id: string): Promise<void> {
+  await apiRequest(`/companies/${id}`, { method: "DELETE" });
+}
+
 export type CompanyCsvExport = {
   blob: Blob;
   filename: string;

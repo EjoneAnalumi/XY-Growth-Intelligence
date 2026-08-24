@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/async-state";
 import { useCompanies } from "@/hooks/use-companies";
 import { useContacts } from "@/hooks/use-contacts";
-import { createContact } from "@/lib/api/contacts";
+import { archiveContact, createContact, updateContact } from "@/lib/api/contacts";
 import type { Contact, ContactFormValues } from "@/types/company";
 
 export default function ContactsPage() {
@@ -17,6 +17,7 @@ export default function ContactsPage() {
   const { companies } = useCompanies();
   const [showForm, setShowForm] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Contact | null>(null);
 
   async function handleAdd(contact: ContactFormValues) {
     try {
@@ -29,6 +30,27 @@ export default function ContactsPage() {
       setSubmitError(
         caughtError instanceof Error ? caughtError.message : "Failed to create contact."
       );
+    }
+  }
+
+  async function handleUpdate(values: ContactFormValues) {
+    if (!editing) return;
+    try {
+      const updated = await updateContact(editing.id, values);
+      setContacts((items) => items.map((item) => item.id === updated.id ? updated : item));
+      setEditing(null);
+    } catch (caughtError) {
+      setSubmitError(caughtError instanceof Error ? caughtError.message : "Failed to update contact.");
+    }
+  }
+
+  async function handleArchive(contact: Contact) {
+    if (!window.confirm(`Archive ${contact.firstName} ${contact.lastName}?`)) return;
+    try {
+      await archiveContact(contact.id);
+      setContacts((items) => items.filter((item) => item.id !== contact.id));
+    } catch (caughtError) {
+      setSubmitError(caughtError instanceof Error ? caughtError.message : "Failed to archive contact.");
     }
   }
 
@@ -54,6 +76,15 @@ export default function ContactsPage() {
       </div>
 
       {showForm ? <ContactForm companies={companies} onAdd={handleAdd} /> : null}
+      {editing ? (
+        <ContactForm
+          key={editing.id}
+          companies={companies}
+          title={`Edit ${editing.firstName} ${editing.lastName}`}
+          initialValues={{ companyId: editing.companyId, firstName: editing.firstName, lastName: editing.lastName, email: editing.email, role: editing.role }}
+          onAdd={handleUpdate}
+        />
+      ) : null}
 
       {submitError ? (
         <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -91,6 +122,8 @@ export default function ContactsPage() {
                 email={contact.email}
                 role={contact.role}
                 companyName={companyById.get(contact.companyId)}
+                onEdit={() => { setEditing(contact); setShowForm(false); }}
+                onArchive={() => handleArchive(contact)}
               />
             ))}
           </div>

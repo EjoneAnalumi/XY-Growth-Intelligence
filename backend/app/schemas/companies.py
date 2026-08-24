@@ -50,10 +50,20 @@ class CompanyCreate(BaseModel):
 class CompanyResponse(CompanyCreate):
     id: UUID
     fit_score: int | None = None
-    created_by: UUID
-    updated_by: UUID
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class CompanyUpdate(BaseModel):
+    name: Annotated[str | None, Field(min_length=1, max_length=200)] = None
+    domain: Annotated[str | None, Field(max_length=255)] = None
+    industry: Annotated[str | None, Field(max_length=120)] = None
+    headquarters_country: Annotated[str | None, Field(max_length=120)] = None
+    status: Annotated[
+        str | None, Field(pattern="^(prospect|qualified|customer|partner|inactive)$")
+    ] = None
 
 
 class CompanyListResponse(BaseModel):

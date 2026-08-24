@@ -1,6 +1,8 @@
 from uuid import UUID
 
 from app.main import app
+from app.schemas.companies import CompanyResponse
+from app.schemas.contacts import ContactResponse
 from app.services.growth_repository import repository
 from fastapi.testclient import TestClient
 
@@ -11,6 +13,35 @@ read_only_headers = {"Authorization": "Bearer dev-read-only"}
 
 def setup_function() -> None:
     repository.reset()
+
+
+def test_seed_compatible_responses_allow_null_audit_owners() -> None:
+    company = CompanyResponse.model_validate(
+        {
+            "id": "10000000-0000-4000-8000-000000000001",
+            "name": "Synthetic Seed Company",
+            "created_by": None,
+            "updated_by": None,
+            "created_at": "2026-08-24T00:00:00Z",
+            "updated_at": "2026-08-24T00:00:00Z",
+        }
+    )
+    contact = ContactResponse.model_validate(
+        {
+            "id": "20000000-0000-4000-8000-000000000001",
+            "company_id": company.id,
+            "first_name": "Synthetic",
+            "last_name": "Contact",
+            "owner_id": None,
+            "created_by": None,
+            "updated_by": None,
+            "created_at": "2026-08-24T00:00:00Z",
+            "updated_at": "2026-08-24T00:00:00Z",
+        }
+    )
+
+    assert company.created_by is None
+    assert contact.owner_id is None
 
 
 def test_create_company_with_valid_payload() -> None:
@@ -78,6 +109,23 @@ def test_get_company_returns_not_found() -> None:
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "not_found"
     assert response.json()["detail"] == "Company not found."
+
+
+def test_update_and_archive_company() -> None:
+    company = client.post(
+        "/companies", headers=writer_headers, json={"name": "Before"}
+    ).json()
+    updated = client.patch(
+        f"/companies/{company['id']}",
+        headers=writer_headers,
+        json={"name": "After", "industry": "Synthetic Services"},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["name"] == "After"
+
+    archived = client.delete(f"/companies/{company['id']}", headers=writer_headers)
+    assert archived.status_code == 200
+    assert client.get(f"/companies/{company['id']}", headers=writer_headers).status_code == 404
 
 
 def test_list_companies_requires_authentication() -> None:
@@ -196,6 +244,32 @@ def test_list_contacts_supports_company_filter_and_pagination() -> None:
     assert response.json()["items"][0]["first_name"] == "Jon"
 
 
+def test_update_and_archive_contact() -> None:
+    company = client.post(
+        "/companies", headers=writer_headers, json={"name": "Contact Company"}
+    ).json()
+    contact = client.post(
+        "/contacts",
+        headers=writer_headers,
+        json={
+            "company_id": company["id"],
+            "first_name": "Before",
+            "last_name": "Tester",
+        },
+    ).json()
+    updated = client.patch(
+        f"/contacts/{contact['id']}",
+        headers=writer_headers,
+        json={"first_name": "After", "title": "Decision Maker"},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["first_name"] == "After"
+
+    archived = client.delete(f"/contacts/{contact['id']}", headers=writer_headers)
+    assert archived.status_code == 200
+    assert client.get(f"/contacts/{contact['id']}", headers=writer_headers).status_code == 404
+
+
 def test_openapi_documents_company_and_contact_endpoints() -> None:
     response = client.get("/openapi.json")
 
@@ -206,8 +280,12 @@ def test_openapi_documents_company_and_contact_endpoints() -> None:
     assert "post" in paths["/companies"]
     assert "/companies/{company_id}" in paths
     assert "get" in paths["/companies/{company_id}"]
+    assert "patch" in paths["/companies/{company_id}"]
+    assert "delete" in paths["/companies/{company_id}"]
     assert "/contacts" in paths
     assert "get" in paths["/contacts"]
     assert "post" in paths["/contacts"]
     assert "/contacts/{contact_id}" in paths
     assert "get" in paths["/contacts/{contact_id}"]
+    assert "patch" in paths["/contacts/{contact_id}"]
+    assert "delete" in paths["/contacts/{contact_id}"]

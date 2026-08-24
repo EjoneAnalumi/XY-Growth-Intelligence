@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Pencil } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import ActivityTaskPanel from "@/components/opportunities/activity-task-panel";
@@ -13,6 +13,7 @@ import { useCompanies } from "@/hooks/use-companies";
 import { useContacts } from "@/hooks/use-contacts";
 import { usePipelineStages } from "@/hooks/use-pipeline-stages";
 import {
+  archiveOpportunity,
   getOpportunity,
   getOpportunityStageHistory,
   opportunityToFormValues,
@@ -31,6 +32,7 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 });
 
 export default function OpportunityDetailPage() {
+  const router = useRouter();
   const params = useParams<{ id: string }>();
   const opportunityId = params.id;
   const { companies } = useCompanies();
@@ -153,10 +155,17 @@ export default function OpportunityDetailPage() {
           </h1>
         </div>
 
-        <Button type="button" onClick={() => setIsEditing((current) => !current)} className="gap-2">
-          <Pencil className="h-4 w-4" />
-          {isEditing ? "Close edit" : "Edit"}
-        </Button>
+        <div className="flex gap-2">
+          <Button type="button" onClick={() => setIsEditing((current) => !current)} className="gap-2">
+            <Pencil className="h-4 w-4" />
+            {isEditing ? "Close edit" : "Edit"}
+          </Button>
+          <Button type="button" variant="outline" onClick={async () => {
+            if (!window.confirm(`Archive ${opportunity.name}?`)) return;
+            await archiveOpportunity(opportunity.id);
+            router.push("/opportunities");
+          }}>Archive</Button>
+        </div>
       </div>
 
       {isEditing ? (

@@ -10,13 +10,14 @@ import CompanyForm from "@/components/companies/company-form";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/async-state";
 import { useCompanies } from "@/hooks/use-companies";
-import { createCompany } from "@/lib/api/companies";
+import { archiveCompany, createCompany, updateCompany } from "@/lib/api/companies";
 import type { Company, CompanyFormValues } from "@/types/company";
 
 export default function CompaniesPage() {
   const { companies, loading, error, setCompanies, refreshCompanies } = useCompanies();
   const [showForm, setShowForm] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Company | null>(null);
 
   async function handleAdd(company: CompanyFormValues) {
     try {
@@ -29,6 +30,27 @@ export default function CompaniesPage() {
       setSubmitError(
         caughtError instanceof Error ? caughtError.message : "Failed to create company."
       );
+    }
+  }
+
+  async function handleUpdate(values: CompanyFormValues) {
+    if (!editing) return;
+    try {
+      const updated = await updateCompany(editing.id, values);
+      setCompanies((items) => items.map((item) => item.id === updated.id ? updated : item));
+      setEditing(null);
+    } catch (caughtError) {
+      setSubmitError(caughtError instanceof Error ? caughtError.message : "Failed to update company.");
+    }
+  }
+
+  async function handleArchive(company: Company) {
+    if (!window.confirm(`Archive ${company.name}? Its record will be hidden, not permanently erased.`)) return;
+    try {
+      await archiveCompany(company.id);
+      setCompanies((items) => items.filter((item) => item.id !== company.id));
+    } catch (caughtError) {
+      setSubmitError(caughtError instanceof Error ? caughtError.message : "Failed to archive company.");
     }
   }
 
@@ -54,6 +76,14 @@ export default function CompaniesPage() {
       </div>
 
       {showForm ? <CompanyForm onAdd={handleAdd} /> : null}
+      {editing ? (
+        <CompanyForm
+          key={editing.id}
+          title={`Edit ${editing.name}`}
+          initialValues={{ name: editing.name, domain: editing.domain, industry: editing.industry, country: editing.country }}
+          onAdd={handleUpdate}
+        />
+      ) : null}
 
       {submitError ? (
         <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -94,6 +124,8 @@ export default function CompaniesPage() {
                 domain={company.domain}
                 industry={company.industry}
                 country={company.country}
+                onEdit={() => { setEditing(company); setShowForm(false); }}
+                onArchive={() => handleArchive(company)}
               />
             ))}
           </div>

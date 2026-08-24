@@ -190,6 +190,10 @@ export async function updateOpportunity(
   return mapOpportunity(response);
 }
 
+export async function archiveOpportunity(opportunityId: string): Promise<void> {
+  await apiRequest(`/opportunities/${opportunityId}`, { method: "DELETE" });
+}
+
 export async function getOpportunityStageHistory(
   opportunityId: string,
 ): Promise<OpportunityStageHistory[]> {

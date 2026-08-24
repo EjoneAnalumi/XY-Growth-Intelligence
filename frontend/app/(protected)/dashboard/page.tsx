@@ -75,6 +75,25 @@ export default function DashboardPage() {
         </Button>
       </div>
 
+      <section className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
+        <h2 className="font-semibold text-foreground">How these numbers change</h2>
+        <p className="mt-2">The dashboard is calculated from staff records; it is not typed in directly. Create or move opportunities to change pipeline totals, schedule/complete tasks to change follow-ups, and record activities to keep deals active.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button asChild variant="outline"><Link href="/opportunities">Manage opportunities</Link></Button>
+          <Button asChild variant="outline"><Link href="/contacts">Manage contacts</Link></Button>
+        </div>
+      </section>
+
+      <section className="rounded-md border bg-card p-4">
+        <h2 className="font-semibold">Who does what</h2>
+        <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+          <p><strong>Admin:</strong> full CRM access and pipeline configuration.</p>
+          <p><strong>Management:</strong> CRM oversight, stage configuration, and report approval/sharing.</p>
+          <p><strong>Business Development:</strong> companies, contacts, opportunities, activities, tasks, and notes.</p>
+          <p><strong>Technical Analyst:</strong> approved scans and draft technical reports; CRM records are read-only.</p>
+        </div>
+      </section>
+
       {error ? <ErrorState title="Dashboard could not be loaded" description={error} onRetry={refreshSummary} /> : null}
 
       {loading ? <LoadingState title="Loading dashboard metrics..." /> : null}

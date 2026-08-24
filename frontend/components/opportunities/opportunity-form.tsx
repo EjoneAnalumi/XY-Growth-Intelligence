@@ -45,6 +45,9 @@ export default function OpportunityForm({
   const [values, setValues] = useState<OpportunityFormValues>(initialValues ?? emptyValues);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const eligibleContacts = contacts.filter(
+    (contact) => !values.companyId || contact.companyId === values.companyId,
+  );
 
   useEffect(() => {
     setValues((current) => ({
@@ -59,6 +62,12 @@ export default function OpportunityForm({
       setValues(initialValues);
     }
   }, [initialValues]);
+
+  useEffect(() => {
+    if (!values.contactId && eligibleContacts.length === 1) {
+      setValues((current) => ({ ...current, contactId: eligibleContacts[0].id }));
+    }
+  }, [eligibleContacts, values.contactId]);
 
   function updateField(field: keyof OpportunityFormValues, value: string) {
     setValues((current) => ({
@@ -156,15 +165,16 @@ export default function OpportunityForm({
             value={values.contactId}
             onChange={(event) => updateField("contactId", event.target.value)}
           >
-            <option value="">No primary contact</option>
-            {contacts
-              .filter((contact) => !values.companyId || contact.companyId === values.companyId)
-              .map((contact) => (
+            <option value="">No primary contact (optional)</option>
+            {eligibleContacts.map((contact) => (
                 <option key={contact.id} value={contact.id}>
                   {contact.firstName} {contact.lastName}
                 </option>
               ))}
           </select>
+          <p className="text-xs text-muted-foreground">
+            Only contacts linked to the selected company appear. Add or edit that link on Contacts.
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -177,10 +187,13 @@ export default function OpportunityForm({
           >
             {stages.map((stage) => (
               <option key={stage.id} value={stage.id}>
-                {stage.name}
+                {stage.name} ({stage.defaultProbability}% default)
               </option>
             ))}
           </select>
+          <p className="text-xs text-muted-foreground">
+            Stages show sales progress: identified/researching, contacted/discovery, proposal/negotiation, then won or lost. On Hold pauses an open deal.
+          </p>
         </div>
       </div>
 
@@ -192,6 +205,9 @@ export default function OpportunityForm({
             value={values.name}
             onChange={(event) => updateField("name", event.target.value)}
           />
+          <p className="text-xs text-muted-foreground">
+            Name the potential piece of work, for example “Northstar SOC 2 readiness assessment”.
+          </p>
         </div>
 
         <div className="space-y-2">

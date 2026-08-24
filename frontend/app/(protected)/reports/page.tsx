@@ -127,6 +127,9 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
+      <aside className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
+        <strong className="text-foreground">What is a report?</strong> A client-ready summary of one completed security snapshot: its target, findings, severity, and recommended actions. Analysts generate a draft; management reviews and approves it before sharing or downloading.
+      </aside>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-sm font-medium text-primary">Reporting</p>

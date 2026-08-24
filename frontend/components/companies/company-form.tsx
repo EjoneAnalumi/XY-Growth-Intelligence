@@ -8,11 +8,13 @@ import { Label } from "@/components/ui/label";
 import type { CompanyFormValues } from "@/types/company";
 
 type CompanyFormProps = {
-  onAdd: (company: CompanyFormValues) => void;
+  onAdd: (company: CompanyFormValues) => void | Promise<void>;
+  initialValues?: CompanyFormValues;
+  title?: string;
 };
 
-export default function CompanyForm({ onAdd }: CompanyFormProps) {
-  const [values, setValues] = useState<CompanyFormValues>({
+export default function CompanyForm({ onAdd, initialValues, title = "Add company" }: CompanyFormProps) {
+  const [values, setValues] = useState<CompanyFormValues>(initialValues ?? {
     name: "",
     domain: "",
     industry: "",
@@ -24,7 +26,7 @@ export default function CompanyForm({ onAdd }: CompanyFormProps) {
     setValues((current) => ({ ...current, [field]: value }));
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const cleanedValues = {
@@ -56,14 +58,14 @@ export default function CompanyForm({ onAdd }: CompanyFormProps) {
     }
 
     setError(null);
-    onAdd(cleanedValues);
-    setValues({ name: "", domain: "", industry: "", country: "" });
+    await onAdd(cleanedValues);
+    if (!initialValues) setValues({ name: "", domain: "", industry: "", country: "" });
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 rounded-md border bg-card p-5 shadow-sm">
       <div>
-        <h2 className="text-lg font-semibold tracking-normal">Add company</h2>
+        <h2 className="text-lg font-semibold tracking-normal">{title}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Use fictional data only. Demo domains should use `.example`.
         </p>
@@ -113,7 +115,7 @@ export default function CompanyForm({ onAdd }: CompanyFormProps) {
         </div>
       </div>
 
-      <Button type="submit">Save company</Button>
+      <Button type="submit">{initialValues ? "Save changes" : "Save company"}</Button>
     </form>
   );
 }

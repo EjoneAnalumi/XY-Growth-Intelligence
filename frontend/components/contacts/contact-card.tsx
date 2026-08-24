@@ -1,7 +1,10 @@
+import { Button } from "@/components/ui/button";
 import type { Contact } from "@/types/company";
 
 type ContactCardProps = Pick<Contact, "firstName" | "lastName" | "email" | "role"> & {
   companyName?: string;
+  onEdit?: () => void;
+  onArchive?: () => void;
 };
 
 export default function ContactCard({
@@ -10,6 +13,8 @@ export default function ContactCard({
   email,
   role,
   companyName,
+  onEdit,
+  onArchive,
 }: ContactCardProps) {
   return (
     <article className="rounded-md border bg-card p-4 shadow-sm">
@@ -26,6 +31,10 @@ export default function ContactCard({
       </div>
 
       {companyName ? <p className="mt-3 text-sm text-muted-foreground">{companyName}</p> : null}
+      <div className="mt-4 flex gap-2">
+        <Button type="button" variant="outline" onClick={onEdit}>Edit</Button>
+        <Button type="button" variant="outline" onClick={onArchive}>Archive</Button>
+      </div>
     </article>
   );
 }

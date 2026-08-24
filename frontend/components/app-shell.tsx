@@ -4,6 +4,7 @@ import {
   BarChart3,
   Building2,
   LayoutDashboard,
+  KeyRound,
   LogOut,
   Menu,
   Radar,
@@ -91,6 +92,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
               {session?.profile ? `${session.profile.fullName} · ${roleLabels[session.profile.role]}` : "Signed in"}
             </span>
+            <Button type="button" variant="ghost" asChild>
+              <Link href="/reset-password">
+                <KeyRound className="mr-2 size-4" aria-hidden="true" />
+                Change password
+              </Link>
+            </Button>
             <Button type="button" variant="outline" onClick={handleSignOut}>
               <LogOut className="mr-2 size-4" aria-hidden="true" />
               Sign out

@@ -14,6 +14,7 @@ export default function UsersPage() {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<CurrentUser["role"]>("read_only");
+  const [temporaryPassword, setTemporaryPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const load = useCallback(async () => { try { const [loadedUsers, logs] = await Promise.all([getUsers(), getAuditLogs()]); setUsers(loadedUsers); setAuditLogs(logs); } catch (error) { setMessage(error instanceof Error ? error.message : "Users could not be loaded."); } }, []);
@@ -22,18 +23,21 @@ export default function UsersPage() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     try {
-      await inviteUser({ email: email.trim(), fullName: fullName.trim(), role });
-      setEmail(""); setFullName(""); setMessage("Invitation sent."); await load();
+      await inviteUser({ email: email.trim(), fullName: fullName.trim(), role, temporaryPassword });
+      setEmail(""); setFullName(""); setTemporaryPassword("");
+      setMessage(temporaryPassword ? "Account created with a temporary password." : "Invitation sent.");
+      await load();
     } catch (error) { setMessage(error instanceof Error ? error.message : "Invitation failed."); }
   }
 
   return <div className="space-y-5">
     <div><p className="text-sm font-medium text-primary">Administration</p><h1 className="mt-1 text-2xl font-semibold sm:text-3xl">Users</h1><p className="mt-2 text-sm text-muted-foreground">Invite staff, assign least-privilege roles, and deactivate access. There is no public registration.</p></div>
-    <form onSubmit={submit} className="grid gap-4 rounded-md border bg-card p-5 shadow-sm md:grid-cols-3">
+    <form onSubmit={submit} className="grid gap-4 rounded-md border bg-card p-5 shadow-sm md:grid-cols-2 lg:grid-cols-4">
       <div className="space-y-2"><Label htmlFor="invite-name">Full name</Label><Input id="invite-name" required value={fullName} onChange={(event) => setFullName(event.target.value)} /></div>
       <div className="space-y-2"><Label htmlFor="invite-email">Work email</Label><Input id="invite-email" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></div>
       <div className="space-y-2"><Label htmlFor="invite-role">Initial role</Label><select id="invite-role" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={role} onChange={(event) => setRole(event.target.value as CurrentUser["role"])}>{roles.map((item) => <option key={item} value={item}>{item.replaceAll("_", " ")}</option>)}</select></div>
-      <Button type="submit" className="w-fit">Send invitation</Button>
+      <div className="space-y-2"><Label htmlFor="temporary-password">Temporary password (optional)</Label><Input id="temporary-password" type="password" minLength={10} maxLength={128} value={temporaryPassword} onChange={(event) => setTemporaryPassword(event.target.value)} /><p className="text-xs text-muted-foreground">Leave blank to send an invitation email. Share temporary passwords securely; they are never stored here.</p></div>
+      <Button type="submit" className="w-fit">{temporaryPassword ? "Create account" : "Send invitation"}</Button>
     </form>
     {message ? <p role="status" className="text-sm text-muted-foreground">{message}</p> : null}
     <section className="space-y-3">{users.map((user) => <article key={user.id} className="flex flex-col gap-3 rounded-md border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">

@@ -35,6 +35,7 @@ export async function inviteUser(values: {
   email: string;
   fullName: string;
   role: CurrentUser["role"];
+  temporaryPassword?: string;
 }) {
   return apiRequest("/users/invitations", {
     method: "POST",
@@ -43,6 +44,7 @@ export async function inviteUser(values: {
       full_name: values.fullName,
       role: values.role,
       redirect_to: `${window.location.origin}/accept-invite`,
+      temporary_password: values.temporaryPassword || null,
     }),
   });
 }

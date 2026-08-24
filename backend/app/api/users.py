@@ -65,17 +65,28 @@ def invite_user(
 ) -> InvitationResponse:
     if not all((settings.supabase_url, settings.supabase_service_role_key, settings.database_url)):
         raise HTTPException(status_code=503, detail="Supabase invitations are not configured.")
-    body: dict[str, object] = {"email": payload.email, "data": {"full_name": payload.full_name}}
-    if payload.redirect_to:
-        body["redirect_to"] = payload.redirect_to
+    if payload.temporary_password:
+        auth_path = "/auth/v1/admin/users"
+        body: dict[str, object] = {
+            "email": payload.email,
+            "password": payload.temporary_password,
+            "email_confirm": True,
+            "user_metadata": {"full_name": payload.full_name},
+        }
+        params = None
+    else:
+        auth_path = "/auth/v1/invite"
+        body = {"email": payload.email, "data": {"full_name": payload.full_name}}
+        params = {"redirect_to": payload.redirect_to} if payload.redirect_to else None
     try:
         response = httpx.post(
-            f"{settings.supabase_url}/auth/v1/invite",
+            f"{settings.supabase_url}{auth_path}",
             headers={
                 "apikey": settings.supabase_service_role_key,
                 "Authorization": f"Bearer {settings.supabase_service_role_key}",
             },
             json=body,
+            params=params,
             timeout=10,
         )
     except httpx.HTTPError as exc:

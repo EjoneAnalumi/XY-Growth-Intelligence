@@ -91,10 +91,13 @@ export function clearSession() {
 
 export async function requestPasswordReset(email: string) {
   const { url, anonKey } = configuration();
-  const response = await fetch(`${url}/auth/v1/recover`, {
+  const redirectTo = `${window.location.origin}/reset-password`;
+  const endpoint = new URL(`${url}/auth/v1/recover`);
+  endpoint.searchParams.set("redirect_to", redirectTo);
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: { apikey: anonKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ email, redirect_to: `${window.location.origin}/reset-password` }),
+    body: JSON.stringify({ email }),
   });
   if (!response.ok) throw new Error("Password reset request failed.");
 }

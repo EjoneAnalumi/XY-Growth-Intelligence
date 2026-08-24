@@ -14,6 +14,7 @@ function UserRow({ user, onChanged, onDeleted, onMessage }: { user: UserProfile;
   const [email, setEmail] = useState(user.email);
   const [role, setRole] = useState(user.role);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   async function save() {
     setSaving(true);
@@ -21,6 +22,7 @@ function UserRow({ user, onChanged, onDeleted, onMessage }: { user: UserProfile;
       const updated = await updateUser(user.id, { full_name: fullName.trim(), email: email.trim(), role });
       onChanged(updated);
       onMessage(`${updated.full_name} was updated.`);
+      setEditing(false);
     } catch (error) { onMessage(error instanceof Error ? error.message : "User update failed."); }
     finally { setSaving(false); }
   }
@@ -42,18 +44,31 @@ function UserRow({ user, onChanged, onDeleted, onMessage }: { user: UserProfile;
     } catch (error) { onMessage(error instanceof Error ? error.message : "User deletion failed."); }
   }
 
-  return <article className="space-y-3 rounded-md border bg-card p-4">
-    <div className="grid gap-3 md:grid-cols-3">
-      <div className="space-y-1"><Label htmlFor={`name-${user.id}`}>Full name</Label><Input id={`name-${user.id}`} value={fullName} onChange={(event) => setFullName(event.target.value)} /></div>
-      <div className="space-y-1"><Label htmlFor={`email-${user.id}`}>Email</Label><Input id={`email-${user.id}`} type="email" value={email} onChange={(event) => setEmail(event.target.value)} /></div>
-      <div className="space-y-1"><Label htmlFor={`role-${user.id}`}>Role</Label><select id={`role-${user.id}`} className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={role} onChange={(event) => setRole(event.target.value as CurrentUser["role"])}>{roles.map((item) => <option key={item} value={item}>{item.replaceAll("_", " ")}</option>)}</select></div>
+  return <article className="rounded-md border bg-card px-4 py-3">
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="min-w-0 lg:grid lg:flex-1 lg:grid-cols-[1.2fr_1.5fr_1fr_0.7fr] lg:items-center lg:gap-4">
+        <p className="truncate font-medium">{user.full_name}</p>
+        <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+        <p className="text-sm capitalize text-muted-foreground">{user.role.replaceAll("_", " ")}</p>
+        <p className={`text-sm font-medium ${user.active ? "text-primary" : "text-muted-foreground"}`}>{user.active ? "Active" : "Inactive"}</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="outline" onClick={() => setEditing((value) => !value)}>{editing ? "Cancel" : "Edit"}</Button>
+        <Button type="button" variant="outline" onClick={toggleActive}>{user.active ? "Deactivate" : "Reactivate"}</Button>
+        <Button type="button" variant="outline" className="text-destructive" onClick={remove}>Delete</Button>
+      </div>
     </div>
-    <p className="text-xs text-muted-foreground">{user.active ? "Active" : "Inactive"} · Last login {user.last_login_at ? new Date(user.last_login_at).toLocaleString() : "never"}</p>
-    <div className="flex flex-wrap gap-2">
-      <Button type="button" onClick={save} disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
-      <Button type="button" variant="outline" onClick={toggleActive}>{user.active ? "Deactivate" : "Reactivate"}</Button>
-      <Button type="button" variant="outline" className="text-destructive" onClick={remove}>Delete user</Button>
-    </div>
+    {editing ? <div className="mt-4 border-t pt-4">
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="space-y-1"><Label htmlFor={`name-${user.id}`}>Full name</Label><Input id={`name-${user.id}`} value={fullName} onChange={(event) => setFullName(event.target.value)} /></div>
+        <div className="space-y-1"><Label htmlFor={`email-${user.id}`}>Email</Label><Input id={`email-${user.id}`} type="email" value={email} onChange={(event) => setEmail(event.target.value)} /></div>
+        <div className="space-y-1"><Label htmlFor={`role-${user.id}`}>Role</Label><select id={`role-${user.id}`} className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={role} onChange={(event) => setRole(event.target.value as CurrentUser["role"])}>{roles.map((item) => <option key={item} value={item}>{item.replaceAll("_", " ")}</option>)}</select></div>
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <p className="text-xs text-muted-foreground">Last login {user.last_login_at ? new Date(user.last_login_at).toLocaleString() : "never"}</p>
+        <Button type="button" onClick={save} disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
+      </div>
+    </div> : null}
   </article>;
 }
 

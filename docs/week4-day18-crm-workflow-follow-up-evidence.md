@@ -18,7 +18,7 @@ This follow-up is deliberately not named Day 19. It completes the user-requested
 
 ## Verification
 
-- `python -m pytest backend/tests -q`: 95 passed, 5 skipped with local Supabase running.
+- `python -m pytest backend/tests -q`: 96 passed, 5 skipped with local Supabase running.
 - `python -m ruff check backend`: passed.
 - `npm.cmd run typecheck`: passed.
 - `npm.cmd run lint`: passed with no warnings or errors.
@@ -26,6 +26,7 @@ This follow-up is deliberately not named Day 19. It completes the user-requested
 - Local Supabase persistence test with `DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres`: passed. It created synthetic company/contact/opportunity/note records, constructed fresh repository instances, verified every record remained, and archived its fixtures.
 - `npm.cmd ci` retained the known audit result: 15 findings (3 moderate, 11 high, 1 critical). No force upgrade was applied.
 - Automated in-app browser interaction could not start because its local runtime asset was unavailable. UI verification therefore relies on type-check, lint, production build, and live API checks; a manual click-through remains recommended before merge.
+- A live UI check exposed seeded companies/contacts with nullable audit-owner columns. Response schemas now match the nullable Supabase columns; regression coverage was added, and companies, contacts, opportunities, stages, and dashboard endpoints all returned HTTP 200 after the container rebuild.
 
 ## Security
 

@@ -98,6 +98,9 @@ export default function LoginPage() {
                 <option value="technical_analyst">Technical Analyst</option>
                 <option value="management">Management</option>
               </select>
+              <p className="text-xs text-muted-foreground">
+                Admin: full access. Management: oversight and report approval. Business Development: CRM records and follow-ups. Technical Analyst: scans and draft reports.
+              </p>
             </div>
 
             {error ? (
@@ -116,14 +119,14 @@ export default function LoginPage() {
       <section className="hidden bg-secondary px-10 py-12 text-secondary-foreground lg:flex lg:items-end">
         <div className="max-w-xl">
           <p className="text-sm font-medium uppercase tracking-wider text-accent">
-            Week 1 vertical slice
+            Growth Intelligence MVP
           </p>
           <p className="mt-4 text-4xl font-semibold tracking-normal">
-            Login, company creation, contacts, and refresh persistence come first.
+            Persistent CRM workflows, approved snapshots, and reviewed reports in one workspace.
           </p>
           <p className="mt-5 text-base leading-7 text-secondary-foreground/75">
-            This shell is ready for protected internal workflows while Supabase schema and auth
-            integration are being finished.
+            Demo login selects a role; shared CRM records are stored in the local Supabase database.
+            Real Supabase Auth remains a separate production-hardening step.
           </p>
         </div>
       </section>

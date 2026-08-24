@@ -9,11 +9,13 @@ import type { Company, ContactFormValues } from "@/types/company";
 
 type ContactFormProps = {
   companies: Company[];
-  onAdd: (contact: ContactFormValues) => void;
+  onAdd: (contact: ContactFormValues) => void | Promise<void>;
+  initialValues?: ContactFormValues;
+  title?: string;
 };
 
-export default function ContactForm({ companies, onAdd }: ContactFormProps) {
-  const [values, setValues] = useState<ContactFormValues>({
+export default function ContactForm({ companies, onAdd, initialValues, title = "Add contact" }: ContactFormProps) {
+  const [values, setValues] = useState<ContactFormValues>(initialValues ?? {
     companyId: companies[0]?.id ?? "",
     firstName: "",
     lastName: "",
@@ -33,7 +35,7 @@ export default function ContactForm({ companies, onAdd }: ContactFormProps) {
     setValues((current) => ({ ...current, [field]: value }));
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const cleanedValues = {
@@ -77,9 +79,9 @@ export default function ContactForm({ companies, onAdd }: ContactFormProps) {
     }
 
     setError(null);
-    onAdd(cleanedValues);
+    await onAdd(cleanedValues);
     setSuccess("Contact added successfully.");
-    setValues({
+    if (!initialValues) setValues({
       companyId: cleanedValues.companyId,
       firstName: "",
       lastName: "",
@@ -91,7 +93,7 @@ export default function ContactForm({ companies, onAdd }: ContactFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 rounded-md border bg-card p-5 shadow-sm">
       <div>
-        <h2 className="text-lg font-semibold tracking-normal">Add contact</h2>
+        <h2 className="text-lg font-semibold tracking-normal">{title}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Link each contact to a fictional company record.
         </p>
@@ -165,7 +167,7 @@ export default function ContactForm({ companies, onAdd }: ContactFormProps) {
       </div>
 
       <Button type="submit" disabled={companies.length === 0}>
-        Save contact
+        {initialValues ? "Save changes" : "Save contact"}
       </Button>
     </form>
   );

@@ -47,3 +47,21 @@ export async function createContact(payload: ContactFormValues): Promise<Contact
 
   return mapContact(response);
 }
+
+export async function updateContact(id: string, payload: ContactFormValues): Promise<Contact> {
+  const response = await apiRequest<ContactApiResponse>(`/contacts/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      company_id: payload.companyId,
+      first_name: payload.firstName,
+      last_name: payload.lastName,
+      email: payload.email,
+      title: payload.role,
+    }),
+  });
+  return mapContact(response);
+}
+
+export async function archiveContact(id: string): Promise<void> {
+  await apiRequest(`/contacts/${id}`, { method: "DELETE" });
+}

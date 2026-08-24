@@ -108,6 +108,10 @@ export default function SecurityScansPage() {
         </p>
       </div>
 
+      <aside className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
+        <strong className="text-foreground">What is being scanned?</strong> A company&apos;s explicitly approved public demo domain. The snapshot performs limited DNS/TLS checks; it is not a vulnerability exploit or an internal-network scan. Select the company whose public exposure you are assessing and use only synthetic or authorized targets.
+      </aside>
+
       <section className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
         <form onSubmit={handleSubmit} className="space-y-5 rounded-md border bg-card p-5 shadow-sm">
           <div className="flex items-center gap-3">

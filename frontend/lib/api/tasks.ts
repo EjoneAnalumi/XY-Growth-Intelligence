@@ -65,3 +65,10 @@ export async function createTask(values: TaskFormValues): Promise<Task> {
 
   return mapTask(response);
 }
+
+export async function completeTask(id: string): Promise<Task> {
+  return mapTask(await apiRequest<TaskApiResponse>(`/tasks/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "completed" }),
+  }));
+}

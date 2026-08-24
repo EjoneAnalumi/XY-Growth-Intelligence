@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarPlus, MessageSquarePlus } from "lucide-react";
+import { CalendarPlus, MessageSquarePlus, StickyNote } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,8 @@ import { ErrorState, LoadingState } from "@/components/ui/async-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createActivity, getActivities } from "@/lib/api/activities";
-import { createTask, getTasks } from "@/lib/api/tasks";
+import { archiveNote, createNote, getNotes, updateNote, type Note } from "@/lib/api/notes";
+import { completeTask, createTask, getTasks } from "@/lib/api/tasks";
 import type {
   Activity,
   ActivityFormValues,
@@ -49,6 +50,8 @@ export default function ActivityTaskPanel({
 }: ActivityTaskPanelProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [noteBody, setNoteBody] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activityError, setActivityError] = useState<string | null>(null);
@@ -78,11 +81,14 @@ export default function ActivityTaskPanel({
     try {
       setLoading(true);
       setError(null);
-      const [activityResponse, taskResponse] = await Promise.all([getActivities(), getTasks()]);
+      const [activityResponse, taskResponse, noteResponse] = await Promise.all([
+        getActivities(), getTasks(), getNotes(),
+      ]);
       setActivities(
         activityResponse.filter((activity) => activity.opportunityId === opportunity.id),
       );
       setTasks(taskResponse.filter((task) => task.opportunityId === opportunity.id));
+      setNotes(noteResponse.filter((note) => note.opportunityId === opportunity.id));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Failed to load follow-up work.");
     } finally {
@@ -157,6 +163,23 @@ export default function ActivityTaskPanel({
       setTaskError(caughtError instanceof Error ? caughtError.message : "Failed to create task.");
     } finally {
       setIsSavingTask(false);
+    }
+  }
+
+  async function handleNoteSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!noteBody.trim()) return;
+    try {
+      const created = await createNote({
+        companyId: opportunity.companyId,
+        contactId: opportunity.contactId,
+        opportunityId: opportunity.id,
+        body: noteBody.trim(),
+      });
+      setNotes((items) => [created, ...items]);
+      setNoteBody("");
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Failed to save note.");
     }
   }
 
@@ -360,9 +383,38 @@ export default function ActivityTaskPanel({
                 <p className="mt-1 text-xs text-muted-foreground">
                   {task.status} {task.dueAt ? `- due ${task.dueAt}` : ""}
                 </p>
+                <Button type="button" variant="outline" className="mt-2" onClick={async () => {
+                  const updated = await completeTask(task.id);
+                  setTasks((items) => items.map((item) => item.id === updated.id ? updated : item));
+                }}>Mark complete</Button>
               </div>
             ))}
           </div>
+        </div>
+      </div>
+      <div className="mt-5 rounded-md border bg-background p-4">
+        <div className="flex items-center gap-2"><StickyNote className="h-5 w-5 text-primary" /><h3 className="text-sm font-semibold">Staff Notes</h3></div>
+        <p className="mt-1 text-sm text-muted-foreground">Save internal context, reminders, or decisions. Use Tasks above for dated to-dos.</p>
+        <form onSubmit={handleNoteSubmit} className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <textarea aria-label="New staff note" className="min-h-20 flex-1 rounded-md border bg-background px-3 py-2 text-sm" value={noteBody} onChange={(event) => setNoteBody(event.target.value)} placeholder="What should the team remember?" />
+          <Button type="submit">Save note</Button>
+        </form>
+        <div className="mt-3 space-y-2">
+          {notes.map((note) => <div key={note.id} className="rounded-md border p-3 text-sm">
+            <p>{note.body}</p>
+            <div className="mt-2 flex gap-2">
+              <Button type="button" variant="outline" onClick={async () => {
+                const body = window.prompt("Edit note", note.body);
+                if (!body?.trim()) return;
+                const updated = await updateNote(note.id, body.trim());
+                setNotes((items) => items.map((item) => item.id === note.id ? updated : item));
+              }}>Edit</Button>
+              <Button type="button" variant="outline" onClick={async () => {
+                await archiveNote(note.id);
+                setNotes((items) => items.filter((item) => item.id !== note.id));
+              }}>Archive</Button>
+            </div>
+          </div>)}
         </div>
       </div>
     </section>

@@ -28,7 +28,7 @@ This is a separate follow-up, not Day 19. It replaces the mock role selector wit
 - `npm.cmd run typecheck`: passed.
 - `npm.cmd run lint`: passed with no warnings or errors.
 - `npm.cmd run build`: passed and generated 16 routes.
-- `npm.cmd test -- --run`: 5 files and 15 tests passed in the completed run. A final repeat reached Vitest startup but hung in the Windows/esbuild process and was stopped; no test failure was reported.
+- `npm.cmd test -- --run`: 6 files and 16 tests passed in the final complete run.
 - Local Supabase issued a real Business Development session; FastAPI returned the stored role/name and 9 visible synthetic profiles.
 - Admin invitation API created a temporary synthetic Read Only user; the test user was deleted immediately afterward.
 - A synthetic user CRUD verification successfully created an invitation, edited the name/email/role, returned 204 on deletion, and confirmed the account disappeared.
@@ -57,3 +57,5 @@ The Windows workstation repeatedly accumulated duplicate Next.js servers from di
 ## Status
 
 The integrated local Auth, invitation, role, profile attribution, and audit flows are implemented. Production email delivery and deployment secrets are environment configuration, not repository content.
+
+For the complete cross-feature website handoff, see `docs/week4-day18-website-change-handoff.md`.

@@ -16,6 +16,8 @@ Important current limitations:
 
 Local Supabase provides seeded synthetic accounts for development. Production must configure its own invited users, redirect URLs, SMTP provider, and scoped secrets.
 
+See [`docs/week4-day18-website-change-handoff.md`](docs/week4-day18-website-change-handoff.md) for the consolidated implementation, security, verification, and remaining-work record.
+
 ## Prerequisites
 
 Install these before cloning:

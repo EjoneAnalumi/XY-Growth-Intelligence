@@ -4,6 +4,8 @@ Date: 24-08-2026
 Branch: `feature/day18-clean-install`  
 Owner: Both interns (shared task)
 
+> Historical note: the persistence and mock-auth limitations recorded during the original clean-install run were subsequently completed or superseded by PR #28 and `docs/week4-day18-supabase-auth-follow-up-evidence.md`. See `docs/week4-day18-website-change-handoff.md` for current status.
+
 ## Exact task scope
 
 Run a clean installation using the README, identify and document every required setup step, and demonstrate that a new environment can start without undocumented team knowledge. This task does not implement the separate durable-persistence or Supabase Auth backlog.

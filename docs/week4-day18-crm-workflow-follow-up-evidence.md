@@ -13,6 +13,7 @@ This follow-up is deliberately not named Day 19. It completes the user-requested
 - Companies and contacts now support update and soft-delete/archive APIs and UI actions.
 - Opportunities, activities, tasks, notes, pipeline stages, stage history, and dashboard calculations read/write the existing Supabase tables.
 - Staff can record activities, schedule and complete tasks, and create/edit/archive internal notes on an opportunity.
+- Staff Notes now has a dedicated main-navigation page for shared reminders; opportunity-specific notes remain visible on opportunity details. Activities and tasks also expose edit/archive controls, and opportunities expose edit/archive controls on the detail page.
 - The opportunity form filters contacts to the selected company, auto-selects the sole matching contact, and explains why other contacts are excluded.
 - In-app guidance explains opportunity names, pipeline stages, dashboard calculations, scan targets, report subjects/workflow, and the four staff roles.
 
@@ -27,6 +28,7 @@ This follow-up is deliberately not named Day 19. It completes the user-requested
 - `npm.cmd ci` retained the known audit result: 15 findings (3 moderate, 11 high, 1 critical). No force upgrade was applied.
 - Automated in-app browser interaction could not start because its local runtime asset was unavailable. UI verification therefore relies on type-check, lint, production build, and live API checks; a manual click-through remains recommended before merge.
 - A live UI check exposed seeded companies/contacts with nullable audit-owner columns. Response schemas now match the nullable Supabase columns; regression coverage was added, and companies, contacts, opportunities, stages, and dashboard endpoints all returned HTTP 200 after the container rebuild.
+- Four leaked `Admin Stage <suffix>` RLS-test rows were traced to a missing test cleanup. Two unused rows were removed; the referenced synthetic closed-win opportunity and history were remapped to the existing `Won` stage before the remaining rows were removed. The test now removes its own temporary stage. Supabase was verified at 15 intended stages and zero `Admin Stage` rows after the full suite.
 
 ## Security
 

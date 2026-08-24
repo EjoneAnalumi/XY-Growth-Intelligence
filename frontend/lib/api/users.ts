@@ -35,7 +35,6 @@ export async function inviteUser(values: {
   email: string;
   fullName: string;
   role: CurrentUser["role"];
-  temporaryPassword?: string;
 }) {
   return apiRequest("/users/invitations", {
     method: "POST",
@@ -44,16 +43,24 @@ export async function inviteUser(values: {
       full_name: values.fullName,
       role: values.role,
       redirect_to: `${window.location.origin}/accept-invite`,
-      temporary_password: values.temporaryPassword || null,
     }),
   });
 }
 
-export async function updateUser(id: string, values: { role?: CurrentUser["role"]; active?: boolean }) {
+export async function updateUser(id: string, values: {
+  email?: string;
+  full_name?: string;
+  role?: CurrentUser["role"];
+  active?: boolean;
+}) {
   return apiRequest<UserProfile>(`/users/${id}`, {
     method: "PATCH",
     body: JSON.stringify(values),
   });
+}
+
+export async function deleteUser(id: string) {
+  return apiRequest<void>(`/users/${id}`, { method: "DELETE" });
 }
 
 export async function getAuditLogs(): Promise<AuditLog[]> {

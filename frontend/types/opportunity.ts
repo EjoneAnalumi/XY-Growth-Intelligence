@@ -30,6 +30,8 @@ export type Opportunity = {
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  createdBy: string | null;
+  updatedBy: string | null;
 };
 
 export type OpportunityFormValues = {

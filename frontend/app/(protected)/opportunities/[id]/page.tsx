@@ -19,6 +19,7 @@ import {
   opportunityToFormValues,
   updateOpportunity,
 } from "@/lib/api/opportunities";
+import { getUsers } from "@/lib/api/users";
 import type {
   Opportunity,
   OpportunityFormValues,
@@ -44,18 +45,21 @@ export default function OpportunityDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [userNames, setUserNames] = useState<Map<string, string>>(new Map());
 
   const loadOpportunity = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const [opportunityResponse, historyResponse] = await Promise.all([
+      const [opportunityResponse, historyResponse, users] = await Promise.all([
         getOpportunity(opportunityId),
         getOpportunityStageHistory(opportunityId),
+        getUsers(),
       ]);
 
       setOpportunity(opportunityResponse);
       setStageHistory(historyResponse);
+      setUserNames(new Map(users.map((user) => [user.id, user.full_name])));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Failed to load opportunity");
     } finally {
@@ -137,6 +141,8 @@ export default function OpportunityDetailPage() {
     ["Next Action", opportunity.nextAction || "Not set"],
     ["Next Action Due", opportunity.nextActionDueAt || "Not set"],
     ["Lost Reason", opportunity.lostReason || "None"],
+    ["Created By", opportunity.createdBy ? userNames.get(opportunity.createdBy) ?? "Unknown staff member" : "Seed data"],
+    ["Last Updated By", opportunity.updatedBy ? userNames.get(opportunity.updatedBy) ?? "Unknown staff member" : "Seed data"],
   ];
 
   return (
@@ -213,6 +219,7 @@ export default function OpportunityDetailPage() {
                 </p>
                 <p className="mt-1 text-muted-foreground">{history.note ?? "No note"}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{history.changedAt}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Changed by {history.changedBy ? userNames.get(history.changedBy) ?? "Unknown staff member" : "Seed data"}</p>
               </div>
             ))}
           </div>

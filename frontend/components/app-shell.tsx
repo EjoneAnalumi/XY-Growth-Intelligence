@@ -18,15 +18,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { getMockSession, signOutMock } from "@/lib/auth";
-import type { MockRole } from "@/lib/auth";
+import { getSession, signOut } from "@/lib/auth";
+import type { UserRole } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 type NavigationItem = {
   href: string;
   label: string;
   icon: typeof LayoutDashboard;
-  roles?: MockRole[];
+  roles?: UserRole[];
 };
 
 const navigation: NavigationItem[] = [
@@ -35,6 +35,7 @@ const navigation: NavigationItem[] = [
   { href: "/contacts", label: "Contacts", icon: UsersRound },
   { href: "/opportunities", label: "Opportunities", icon: Target },
   { href: "/notes", label: "Staff Notes", icon: StickyNote },
+  { href: "/users", label: "Users", icon: UsersRound, roles: ["admin"] },
   {
     href: "/security-scans",
     label: "Security Scans",
@@ -48,20 +49,21 @@ const roleLabels = {
   admin: "Admin",
   business_development: "Business Development",
   technical_analyst: "Technical Analyst",
-  management: "Management"
+  management: "Management",
+  read_only: "Read Only"
 };
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const session = getMockSession();
+  const session = getSession();
   const visibleNavigation = navigation.filter(
-    (item) => !item.roles || (session && item.roles.includes(session.role))
+    (item) => !item.roles || (session?.profile && item.roles.includes(session.profile.role))
   );
 
-  function handleSignOut() {
-    signOutMock();
+  async function handleSignOut() {
+    await signOut();
     router.replace("/login");
   }
 
@@ -87,7 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <div className="hidden items-center gap-3 md:flex">
             <span className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
-              {session ? roleLabels[session.role] : "Signed in"}
+              {session?.profile ? `${session.profile.fullName} · ${roleLabels[session.profile.role]}` : "Signed in"}
             </span>
             <Button type="button" variant="outline" onClick={handleSignOut}>
               <LogOut className="mr-2 size-4" aria-hidden="true" />

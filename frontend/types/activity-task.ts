@@ -23,6 +23,8 @@ export type Activity = {
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  createdBy: string | null;
+  updatedBy: string | null;
 };
 
 export type ActivityFormValues = {
@@ -52,6 +54,8 @@ export type Task = {
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  createdBy: string | null;
+  updatedBy: string | null;
 };
 
 export type TaskFormValues = {

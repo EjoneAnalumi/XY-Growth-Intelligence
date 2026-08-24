@@ -27,7 +27,7 @@ import {
   shareReport,
 } from "@/lib/api/reports";
 import { runSnapshotScan } from "@/lib/api/security-scans";
-import { getMockSession } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 
 type LoadState = "loading" | "ready" | "error";
 
@@ -54,9 +54,9 @@ export default function ReportsPage() {
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [selectedScanId, setSelectedScanId] = useState<string | null>(null);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
-  const session = getMockSession();
-  const canGenerate = ["admin", "technical_analyst", "management"].includes(session?.role ?? "");
-  const canApprove = ["admin", "management"].includes(session?.role ?? "");
+  const session = getSession();
+  const canGenerate = ["admin", "technical_analyst", "management"].includes(session?.profile?.role ?? "");
+  const canApprove = ["admin", "management"].includes(session?.profile?.role ?? "");
   const latestReport = useMemo(() => reports[reports.length - 1] ?? null, [reports]);
   const selectedReport = useMemo(
     () => reports.find((report) => report.id === selectedReportId) ?? latestReport,

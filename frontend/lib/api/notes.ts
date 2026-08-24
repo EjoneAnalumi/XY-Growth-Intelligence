@@ -7,6 +7,8 @@ export type Note = {
   opportunityId: string | null;
   body: string;
   createdAt: string;
+  createdBy: string | null;
+  updatedBy: string | null;
 };
 
 type NoteResponse = {
@@ -16,6 +18,8 @@ type NoteResponse = {
   opportunity_id: string | null;
   body: string;
   created_at: string;
+  created_by: string | null;
+  updated_by: string | null;
 };
 
 const mapNote = (note: NoteResponse): Note => ({
@@ -25,6 +29,8 @@ const mapNote = (note: NoteResponse): Note => ({
   opportunityId: note.opportunity_id,
   body: note.body,
   createdAt: note.created_at,
+  createdBy: note.created_by,
+  updatedBy: note.updated_by,
 });
 
 export async function getNotes(): Promise<Note[]> {
@@ -32,7 +38,7 @@ export async function getNotes(): Promise<Note[]> {
   return response.items.map(mapNote);
 }
 
-export async function createNote(values: Omit<Note, "id" | "createdAt">): Promise<Note> {
+export async function createNote(values: Omit<Note, "id" | "createdAt" | "createdBy" | "updatedBy">): Promise<Note> {
   const response = await apiRequest<NoteResponse>("/notes", {
     method: "POST",
     body: JSON.stringify({

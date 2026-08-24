@@ -1,5 +1,5 @@
 import { ApiError, apiRequest, getApiBaseUrl } from "@/lib/api/client";
-import { getMockSession } from "@/lib/auth";
+import { getAccessToken } from "@/lib/auth";
 import type { Company, CompanyFormValues } from "@/types/company";
 
 type CompanyApiResponse = {
@@ -70,16 +70,16 @@ export type CompanyCsvExport = {
 };
 
 async function requestCompanyCsv(path: string, init: RequestInit): Promise<Response> {
-  const session = getMockSession();
+  const token = await getAccessToken();
 
-  if (!session) {
+  if (!token) {
     throw new ApiError("You must sign in before using the API.", 401);
   }
 
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${session.token}`,
+      Authorization: `Bearer ${token}`,
       ...init.headers,
     },
   });

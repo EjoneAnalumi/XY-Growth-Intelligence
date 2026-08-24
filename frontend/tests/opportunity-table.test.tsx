@@ -51,6 +51,8 @@ const opportunities: Opportunity[] = [
     archivedAt: null,
     createdAt: "2026-08-19T00:00:00Z",
     updatedAt: "2026-08-19T00:00:00Z",
+    createdBy: null,
+    updatedBy: null,
   },
 ];
 

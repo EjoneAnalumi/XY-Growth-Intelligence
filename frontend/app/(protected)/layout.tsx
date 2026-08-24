@@ -4,19 +4,17 @@ import { useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 
 import { AppShell } from "@/components/app-shell";
-import { getMockSession } from "@/lib/auth";
+import { getAccessToken } from "@/lib/auth";
 
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    if (!getMockSession()) {
-      router.replace("/login");
-      return;
-    }
-
-    setIsChecking(false);
+    void getAccessToken().then((token) => {
+      if (!token) router.replace("/login");
+      else setIsChecking(false);
+    });
   }, [router]);
 
   if (isChecking) {

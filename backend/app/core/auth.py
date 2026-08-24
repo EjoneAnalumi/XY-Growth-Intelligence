@@ -1,10 +1,12 @@
-from typing import Annotated
+from typing import Annotated, NoReturn
 
+import httpx
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.config import Settings, get_settings
 from app.schemas.users import CurrentUser, UserRole
+from app.services.user_repository import UserRepository
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -57,10 +59,37 @@ def get_current_user(
 
         return user
 
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Supabase JWT verification is not configured yet.",
+    if not all((settings.supabase_url, settings.supabase_anon_key, settings.database_url)):
+        raise_auth_error("Supabase authentication is not configured.")
+
+    try:
+        response = httpx.get(
+            f"{settings.supabase_url}/auth/v1/user",
+            headers={
+                "apikey": settings.supabase_anon_key,
+                "Authorization": f"Bearer {credentials.credentials}",
+            },
+            timeout=5,
+        )
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication service is unavailable.",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+
+    if response.status_code != 200:
+        raise_auth_error("Invalid or expired Supabase session.")
+    auth_user = response.json()
+    user = UserRepository(settings.database_url).get_profile(
+        auth_user["id"], auth_user.get("email") or ""
     )
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User profile is inactive or unavailable.",
+        )
+    return user
 
 
 def require_roles(*allowed_roles: UserRole):
@@ -76,7 +105,7 @@ def require_roles(*allowed_roles: UserRole):
     return dependency
 
 
-def raise_auth_error(detail: str) -> None:
+def raise_auth_error(detail: str) -> NoReturn:
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail=detail,

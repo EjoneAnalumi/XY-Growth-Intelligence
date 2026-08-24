@@ -13,6 +13,7 @@ This is a separate follow-up, not Day 19. It replaces the mock role selector wit
 - Forgot-password, reset-password, and invitation-acceptance pages.
 - Admin-only staff invitations, role assignment, activation/deactivation, and user directory.
 - Admin user management now supports editing staff names and email addresses and permanently deleting accounts. Self-deactivation, self-demotion, and self-deletion are rejected by FastAPI.
+- The Admin user list uses compact summary rows; editing expands only the selected staff member while status and delete controls remain immediately available.
 - Onboarding remains invitation-only; the temporary-password option was removed.
 - Database provisioning trigger creates every invited profile as Read Only before Admin assignment.
 - FastAPI validates the bearer session through Supabase Auth, rejects expired tokens, and loads the active database profile and role.

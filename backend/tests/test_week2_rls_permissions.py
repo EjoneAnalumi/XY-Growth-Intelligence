@@ -102,7 +102,40 @@ def db() -> Iterator:
         raise
 
     yield connection
-    connection.close()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("RESET ROLE")
+            test_user_ids = (ADMIN_ID, BD_ID, RO_ID, TA_ID)
+            for table in ("icp_score_results", "notes", "tasks", "activities", "opportunities"):
+                actor_column = "calculated_by" if table == "icp_score_results" else "created_by"
+                cursor.execute(
+                    f"DELETE FROM public.{table} WHERE {actor_column} = ANY(%s::uuid[])",
+                    (list(test_user_ids),),
+                )
+            cursor.execute(
+                "DELETE FROM public.companies WHERE created_by = ANY(%s::uuid[])",
+                (list(test_user_ids),),
+            )
+            cursor.execute(
+                "DELETE FROM public.pipeline_stages "
+                "WHERE name LIKE 'Admin Stage %' OR name LIKE 'BD AdminOnly %'",
+            )
+            cursor.execute(
+                "DELETE FROM public.audit_logs WHERE user_id = ANY(%s::uuid[])",
+                (list(test_user_ids),),
+            )
+            cursor.execute(
+                "DELETE FROM public.profiles WHERE id = ANY(%s::uuid[])",
+                (list(test_user_ids),),
+            )
+            cursor.execute(
+                "DELETE FROM auth.users WHERE id = ANY(%s::uuid[])",
+                (list(test_user_ids),),
+            )
+        connection.commit()
+    finally:
+        connection.close()
 
 
 def _as_role(cursor, user_id: str | None, role: str) -> None:

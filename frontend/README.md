@@ -17,7 +17,7 @@ npm.cmd run build
 npm.cmd run dev
 ```
 
-Open http://127.0.0.1:3000/login and use the synthetic demo credentials displayed by the form.
+Open http://localhost:3000/login. Start this frontend from the `supabase-auth` worktree and use the Supabase environment block in the root README.
 
 ## Runtime boundaries
 

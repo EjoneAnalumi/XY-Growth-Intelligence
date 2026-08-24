@@ -50,6 +50,10 @@ This is a separate follow-up, not Day 19. It replaces the mock role selector wit
 - Rotate the seeded local-only demo passwords or omit demo users outside local development.
 - Complete a browser screenshot/accessibility evidence pass before final internship submission.
 
+## Local port recovery
+
+The Windows workstation repeatedly accumulated duplicate Next.js servers from different worktrees and an orphaned local-mode Uvicorn listener on `127.0.0.1:8000`. The root README now provides one canonical startup from the `supabase-auth` worktree, loads local Supabase values only into the current process, fixes frontend/backend ports at 3000/8000, and documents safe port inspection and the Windows-restart condition for a listener whose PID no longer exists. Supabase ports remain outside the application-port cleanup scope.
+
 ## Status
 
 The integrated local Auth, invitation, role, profile attribution, and audit flows are implemented. Production email delivery and deployment secrets are environment configuration, not repository content.

@@ -14,15 +14,10 @@ Create the shared virtual environment from the repository root, then run:
 .\.venv\Scripts\python.exe -m ruff check backend
 ```
 
-Start FastAPI directly:
+Start the integrated backend from the repository root using the Docker Compose and local Supabase environment block in the root README. Direct Uvicorn startup defaults to the database-free test mode and must not be used to judge the integrated login flow.
 
-```powershell
-Set-Location backend
-..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-- Health: http://127.0.0.1:8000/health
-- OpenAPI UI: http://127.0.0.1:8000/docs
+- Health: http://localhost:8000/health
+- OpenAPI UI: http://localhost:8000/docs
 
 ## Runtime boundaries
 

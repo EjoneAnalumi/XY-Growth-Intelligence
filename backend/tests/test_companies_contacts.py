@@ -80,6 +80,23 @@ def test_get_company_returns_not_found() -> None:
     assert response.json()["detail"] == "Company not found."
 
 
+def test_update_and_archive_company() -> None:
+    company = client.post(
+        "/companies", headers=writer_headers, json={"name": "Before"}
+    ).json()
+    updated = client.patch(
+        f"/companies/{company['id']}",
+        headers=writer_headers,
+        json={"name": "After", "industry": "Synthetic Services"},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["name"] == "After"
+
+    archived = client.delete(f"/companies/{company['id']}", headers=writer_headers)
+    assert archived.status_code == 200
+    assert client.get(f"/companies/{company['id']}", headers=writer_headers).status_code == 404
+
+
 def test_list_companies_requires_authentication() -> None:
     response = client.get("/companies")
 
@@ -196,6 +213,32 @@ def test_list_contacts_supports_company_filter_and_pagination() -> None:
     assert response.json()["items"][0]["first_name"] == "Jon"
 
 
+def test_update_and_archive_contact() -> None:
+    company = client.post(
+        "/companies", headers=writer_headers, json={"name": "Contact Company"}
+    ).json()
+    contact = client.post(
+        "/contacts",
+        headers=writer_headers,
+        json={
+            "company_id": company["id"],
+            "first_name": "Before",
+            "last_name": "Tester",
+        },
+    ).json()
+    updated = client.patch(
+        f"/contacts/{contact['id']}",
+        headers=writer_headers,
+        json={"first_name": "After", "title": "Decision Maker"},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["first_name"] == "After"
+
+    archived = client.delete(f"/contacts/{contact['id']}", headers=writer_headers)
+    assert archived.status_code == 200
+    assert client.get(f"/contacts/{contact['id']}", headers=writer_headers).status_code == 404
+
+
 def test_openapi_documents_company_and_contact_endpoints() -> None:
     response = client.get("/openapi.json")
 
@@ -206,8 +249,12 @@ def test_openapi_documents_company_and_contact_endpoints() -> None:
     assert "post" in paths["/companies"]
     assert "/companies/{company_id}" in paths
     assert "get" in paths["/companies/{company_id}"]
+    assert "patch" in paths["/companies/{company_id}"]
+    assert "delete" in paths["/companies/{company_id}"]
     assert "/contacts" in paths
     assert "get" in paths["/contacts"]
     assert "post" in paths["/contacts"]
     assert "/contacts/{contact_id}" in paths
     assert "get" in paths["/contacts/{contact_id}"]
+    assert "patch" in paths["/contacts/{contact_id}"]
+    assert "delete" in paths["/contacts/{contact_id}"]

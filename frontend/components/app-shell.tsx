@@ -8,6 +8,7 @@ import {
   Menu,
   Radar,
   ShieldCheck,
+  StickyNote,
   Target,
   UsersRound,
   X
@@ -33,6 +34,7 @@ const navigation: NavigationItem[] = [
   { href: "/companies", label: "Companies", icon: Building2 },
   { href: "/contacts", label: "Contacts", icon: UsersRound },
   { href: "/opportunities", label: "Opportunities", icon: Target },
+  { href: "/notes", label: "Staff Notes", icon: StickyNote },
   {
     href: "/security-scans",
     label: "Security Scans",

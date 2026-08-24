@@ -371,6 +371,7 @@ def test_business_development_writer_allow_and_admin_only_deny(db) -> None:
 
 
 def test_admin_can_insert_pipeline_stage(db) -> None:
+    stage_name = f"Admin Stage {uuid4().hex[:8]}"
     with db.cursor() as cursor:
         _as_role(cursor, ADMIN_ID, "authenticated")
         cursor.execute("SELECT auth.uid(), public.current_user_role()")
@@ -384,9 +385,10 @@ def test_admin_can_insert_pipeline_stage(db) -> None:
             )
             VALUES (%s, 993, 10)
             """,
-            (f"Admin Stage {uuid4().hex[:8]}",),
+            (stage_name,),
         )
         cursor.execute("RESET ROLE")
+        cursor.execute("DELETE FROM public.pipeline_stages WHERE name = %s", (stage_name,))
     db.commit()
 
 

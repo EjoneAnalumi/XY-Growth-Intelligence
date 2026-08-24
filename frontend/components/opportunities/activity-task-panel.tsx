@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { ErrorState, LoadingState } from "@/components/ui/async-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createActivity, getActivities } from "@/lib/api/activities";
+import { archiveActivity, createActivity, getActivities, updateActivity } from "@/lib/api/activities";
 import { archiveNote, createNote, getNotes, updateNote, type Note } from "@/lib/api/notes";
-import { completeTask, createTask, getTasks } from "@/lib/api/tasks";
+import { archiveTask, completeTask, createTask, getTasks, updateTask } from "@/lib/api/tasks";
 import type {
   Activity,
   ActivityFormValues,
@@ -361,6 +361,21 @@ export default function ActivityTaskPanel({
                   {activity.activityType.replaceAll("_", " ")}{" "}
                   {activity.occurredAt ? `- ${activity.occurredAt}` : ""}
                 </p>
+                {activity.notes ? <p className="mt-2 text-sm">{activity.notes}</p> : null}
+                <div className="mt-2 flex gap-2">
+                  <Button type="button" variant="outline" onClick={async () => {
+                    const subject = window.prompt("Edit activity subject", activity.subject);
+                    if (!subject?.trim()) return;
+                    const notes = window.prompt("Edit activity notes", activity.notes) ?? activity.notes;
+                    const updated = await updateActivity(activity.id, { subject: subject.trim(), notes });
+                    setActivities((items) => items.map((item) => item.id === updated.id ? updated : item));
+                  }}>Edit</Button>
+                  <Button type="button" variant="outline" onClick={async () => {
+                    if (!window.confirm("Archive this activity?")) return;
+                    await archiveActivity(activity.id);
+                    setActivities((items) => items.filter((item) => item.id !== activity.id));
+                  }}>Archive</Button>
+                </div>
               </div>
             ))}
           </div>
@@ -387,6 +402,18 @@ export default function ActivityTaskPanel({
                   const updated = await completeTask(task.id);
                   setTasks((items) => items.map((item) => item.id === updated.id ? updated : item));
                 }}>Mark complete</Button>
+                <Button type="button" variant="outline" className="ml-2 mt-2" onClick={async () => {
+                  const title = window.prompt("Edit task title", task.title);
+                  if (!title?.trim()) return;
+                  const description = window.prompt("Edit task description", task.description) ?? task.description;
+                  const updated = await updateTask(task.id, { title: title.trim(), description });
+                  setTasks((items) => items.map((item) => item.id === updated.id ? updated : item));
+                }}>Edit</Button>
+                <Button type="button" variant="outline" className="ml-2 mt-2" onClick={async () => {
+                  if (!window.confirm("Archive this task?")) return;
+                  await archiveTask(task.id);
+                  setTasks((items) => items.filter((item) => item.id !== task.id));
+                }}>Archive</Button>
               </div>
             ))}
           </div>

@@ -8,13 +8,13 @@ Implemented flows include company/contact management, opportunity pipeline views
 
 Important current limitations:
 
-- Login uses the documented local demo session; Supabase Auth is not connected to the frontend/backend runtime yet.
+- Staff authentication uses invitation-only Supabase Auth sessions. Public registration is disabled; Admin users invite staff and assign roles.
 - When `DATABASE_URL` is configured, companies, contacts, opportunities, activities, tasks, and notes use the Supabase PostgreSQL database and survive browser logout and backend restart. Unit tests without a database URL retain an isolated in-memory repository.
 - CSV, snapshot, and report paths also use PostgreSQL persistence.
 - Docker Compose starts the backend only. Run the frontend separately with npm.
 - Use synthetic data only. Never place hosted credentials, production keys, or real customer/prospect data in this repository.
 
-Real Supabase Auth remains required production work. The current demo login selects a local role, so it does not provide real user identity, password validation, or per-user sessions even though staff CRM records are now durable and shared.
+Local Supabase provides seeded synthetic accounts for development. Production must configure its own invited users, redirect URLs, SMTP provider, and scoped secrets.
 
 ## Prerequisites
 

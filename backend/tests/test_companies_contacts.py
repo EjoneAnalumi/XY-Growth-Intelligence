@@ -1,6 +1,8 @@
 from uuid import UUID
 
 from app.main import app
+from app.schemas.companies import CompanyResponse
+from app.schemas.contacts import ContactResponse
 from app.services.growth_repository import repository
 from fastapi.testclient import TestClient
 
@@ -11,6 +13,35 @@ read_only_headers = {"Authorization": "Bearer dev-read-only"}
 
 def setup_function() -> None:
     repository.reset()
+
+
+def test_seed_compatible_responses_allow_null_audit_owners() -> None:
+    company = CompanyResponse.model_validate(
+        {
+            "id": "10000000-0000-4000-8000-000000000001",
+            "name": "Synthetic Seed Company",
+            "created_by": None,
+            "updated_by": None,
+            "created_at": "2026-08-24T00:00:00Z",
+            "updated_at": "2026-08-24T00:00:00Z",
+        }
+    )
+    contact = ContactResponse.model_validate(
+        {
+            "id": "20000000-0000-4000-8000-000000000001",
+            "company_id": company.id,
+            "first_name": "Synthetic",
+            "last_name": "Contact",
+            "owner_id": None,
+            "created_by": None,
+            "updated_by": None,
+            "created_at": "2026-08-24T00:00:00Z",
+            "updated_at": "2026-08-24T00:00:00Z",
+        }
+    )
+
+    assert company.created_by is None
+    assert contact.owner_id is None
 
 
 def test_create_company_with_valid_payload() -> None:

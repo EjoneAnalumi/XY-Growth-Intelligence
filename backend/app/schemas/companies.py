@@ -50,8 +50,8 @@ class CompanyCreate(BaseModel):
 class CompanyResponse(CompanyCreate):
     id: UUID
     fit_score: int | None = None
-    created_by: UUID
-    updated_by: UUID
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { archiveActivity, createActivity, getActivities, updateActivity } from "@/lib/api/activities";
 import { archiveNote, createNote, getNotes, updateNote, type Note } from "@/lib/api/notes";
 import { archiveTask, completeTask, createTask, getTasks, updateTask } from "@/lib/api/tasks";
+import { getUsers } from "@/lib/api/users";
 import type {
   Activity,
   ActivityFormValues,
@@ -51,6 +52,7 @@ export default function ActivityTaskPanel({
   const [activities, setActivities] = useState<Activity[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [userNames, setUserNames] = useState<Map<string, string>>(new Map());
   const [noteBody, setNoteBody] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,9 +83,10 @@ export default function ActivityTaskPanel({
     try {
       setLoading(true);
       setError(null);
-      const [activityResponse, taskResponse, noteResponse] = await Promise.all([
-        getActivities(), getTasks(), getNotes(),
+      const [activityResponse, taskResponse, noteResponse, users] = await Promise.all([
+        getActivities(), getTasks(), getNotes(), getUsers(),
       ]);
+      setUserNames(new Map(users.map((user) => [user.id, user.full_name])));
       setActivities(
         activityResponse.filter((activity) => activity.opportunityId === opportunity.id),
       );
@@ -361,6 +364,7 @@ export default function ActivityTaskPanel({
                   {activity.activityType.replaceAll("_", " ")}{" "}
                   {activity.occurredAt ? `- ${activity.occurredAt}` : ""}
                 </p>
+                <p className="mt-1 text-xs text-muted-foreground">Recorded by {activity.createdBy ? userNames.get(activity.createdBy) ?? "Unknown staff member" : "Seed data"}</p>
                 {activity.notes ? <p className="mt-2 text-sm">{activity.notes}</p> : null}
                 <div className="mt-2 flex gap-2">
                   <Button type="button" variant="outline" onClick={async () => {
@@ -398,6 +402,7 @@ export default function ActivityTaskPanel({
                 <p className="mt-1 text-xs text-muted-foreground">
                   {task.status} {task.dueAt ? `- due ${task.dueAt}` : ""}
                 </p>
+                <p className="mt-1 text-xs text-muted-foreground">Created by {task.createdBy ? userNames.get(task.createdBy) ?? "Unknown staff member" : "Seed data"}</p>
                 <Button type="button" variant="outline" className="mt-2" onClick={async () => {
                   const updated = await completeTask(task.id);
                   setTasks((items) => items.map((item) => item.id === updated.id ? updated : item));
@@ -429,6 +434,7 @@ export default function ActivityTaskPanel({
         <div className="mt-3 space-y-2">
           {notes.map((note) => <div key={note.id} className="rounded-md border p-3 text-sm">
             <p>{note.body}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Written by {note.createdBy ? userNames.get(note.createdBy) ?? "Unknown staff member" : "Seed data"}</p>
             <div className="mt-2 flex gap-2">
               <Button type="button" variant="outline" onClick={async () => {
                 const body = window.prompt("Edit note", note.body);

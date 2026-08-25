@@ -1,6 +1,7 @@
+from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 UserRole = Literal[
     "admin",
@@ -29,3 +30,54 @@ class CurrentUser(BaseModel):
     email: str
     full_name: str
     role: UserRole
+
+
+class UserProfile(CurrentUser):
+    active: bool
+    last_login_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class UserListResponse(BaseModel):
+    items: list[UserProfile]
+    total: int
+
+
+class UserInvitationCreate(BaseModel):
+    email: str = Field(pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+    full_name: str = Field(min_length=2, max_length=200)
+    role: UserRole = "read_only"
+    redirect_to: str | None = None
+
+
+class UserRoleUpdate(BaseModel):
+    role: UserRole | None = None
+    active: bool | None = None
+    full_name: str | None = Field(default=None, min_length=2, max_length=200)
+
+
+class UserAdminUpdate(UserRoleUpdate):
+    email: str | None = Field(default=None, pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+
+
+class InvitationResponse(BaseModel):
+    id: str
+    email: str
+    full_name: str
+    role: UserRole
+
+
+class AuditLogResponse(BaseModel):
+    id: str
+    user_id: str | None = None
+    user_name: str | None = None
+    entity_type: str
+    entity_id: str
+    action: str
+    changed_at: datetime
+
+
+class AuditLogListResponse(BaseModel):
+    items: list[AuditLogResponse]
+    total: int

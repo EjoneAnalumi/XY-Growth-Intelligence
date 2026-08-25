@@ -43,6 +43,8 @@ type OpportunityApiResponse = {
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
 };
 
 type OpportunityListApiResponse = {
@@ -101,6 +103,8 @@ function mapOpportunity(opportunity: OpportunityApiResponse): Opportunity {
     archivedAt: opportunity.archived_at,
     createdAt: opportunity.created_at,
     updatedAt: opportunity.updated_at,
+    createdBy: opportunity.created_by,
+    updatedBy: opportunity.updated_by,
   };
 }
 

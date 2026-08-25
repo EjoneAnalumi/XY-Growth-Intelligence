@@ -6,18 +6,22 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ErrorState, LoadingState } from "@/components/ui/async-state";
 import { archiveNote, createNote, getNotes, updateNote, type Note } from "@/lib/api/notes";
+import { getUsers } from "@/lib/api/users";
 
 export default function StaffNotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userNames, setUserNames] = useState<Map<string, string>>(new Map());
 
   const loadNotes = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      setNotes(await getNotes());
+      const [loadedNotes, users] = await Promise.all([getNotes(), getUsers()]);
+      setNotes(loadedNotes);
+      setUserNames(new Map(users.map((user) => [user.id, user.full_name])));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Failed to load notes.");
     } finally {
@@ -82,6 +86,7 @@ export default function StaffNotesPage() {
               <div className="min-w-0 flex-1">
                 <p className="whitespace-pre-wrap text-sm">{note.body}</p>
                 <p className="mt-2 text-xs text-muted-foreground">{new Date(note.createdAt).toLocaleString()}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Written by {note.createdBy ? userNames.get(note.createdBy) ?? "Unknown staff member" : "Seed data"}</p>
                 <div className="mt-3 flex gap-2">
                   <Button type="button" variant="outline" onClick={async () => {
                     const nextBody = window.prompt("Edit note", note.body);

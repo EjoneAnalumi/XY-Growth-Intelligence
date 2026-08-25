@@ -1,4 +1,4 @@
-import { getMockSession } from "@/lib/auth";
+import { clearSession, getAccessToken } from "@/lib/auth";
 
 const defaultApiBaseUrl = "http://localhost:8000";
 
@@ -19,9 +19,9 @@ export function getApiBaseUrl() {
 }
 
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const session = getMockSession();
+  const token = await getAccessToken();
 
-  if (!session) {
+  if (!token) {
     throw new ApiError("You must sign in before using the API.", 401);
   }
 
@@ -29,12 +29,13 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     ...init,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${session.token}`,
+      Authorization: `Bearer ${token}`,
       ...init.headers,
     },
   });
 
   if (!response.ok) {
+    if (response.status === 401) clearSession();
     const body = await response.json().catch(() => null);
     const message =
       typeof body?.detail === "string" ? body.detail : `API request failed with ${response.status}.`;

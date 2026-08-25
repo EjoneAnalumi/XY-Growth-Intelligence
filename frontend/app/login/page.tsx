@@ -8,14 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getCurrentUser } from "@/lib/api/users";
-import { signInMock, signOutMock } from "@/lib/auth";
-import type { MockRole } from "@/lib/auth";
+import { clearSession, setProfile, signIn } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("bd.demo@example.test");
-  const [password, setPassword] = useState("demo-password");
-  const [role, setRole] = useState<MockRole>("business_development");
+  const [password, setPassword] = useState("local-demo");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -30,12 +28,13 @@ export default function LoginPage() {
 
     try {
       setIsSubmitting(true);
-      signInMock(email, role);
-      await getCurrentUser();
+      await signIn(email, password);
+      const user = await getCurrentUser();
+      setProfile({ id: user.id, email: user.email, fullName: user.full_name, role: user.role });
       router.replace("/dashboard");
     } catch {
-      signOutMock();
-      setError("Backend login check failed. Make sure FastAPI is running on port 8000.");
+      clearSession();
+      setError("Sign-in failed. Check your invitation, password, and local services.");
     } finally {
       setIsSubmitting(false);
     }
@@ -59,7 +58,7 @@ export default function LoginPage() {
             <div>
               <h2 className="text-xl font-semibold tracking-normal">Sign in</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Use a demo account until Supabase Auth is connected.
+                Sign in with your invited XY CYBER staff account.
               </p>
             </div>
 
@@ -85,23 +84,7 @@ export default function LoginPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="role">Demo role</Label>
-              <select
-                id="role"
-                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-                value={role}
-                onChange={(event) => setRole(event.target.value as MockRole)}
-              >
-                <option value="admin">Admin</option>
-                <option value="business_development">Business Development</option>
-                <option value="technical_analyst">Technical Analyst</option>
-                <option value="management">Management</option>
-              </select>
-              <p className="text-xs text-muted-foreground">
-                Admin: full access. Management: oversight and report approval. Business Development: CRM records and follow-ups. Technical Analyst: scans and draft reports.
-              </p>
-            </div>
+            <p className="text-sm"><a className="text-primary underline" href="/forgot-password">Forgot password?</a></p>
 
             {error ? (
               <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -125,8 +108,7 @@ export default function LoginPage() {
             Persistent CRM workflows, approved snapshots, and reviewed reports in one workspace.
           </p>
           <p className="mt-5 text-base leading-7 text-secondary-foreground/75">
-            Demo login selects a role; shared CRM records are stored in the local Supabase database.
-            Real Supabase Auth remains a separate production-hardening step.
+            Accounts are invitation-only. Your Supabase profile controls your name, access, and role.
           </p>
         </div>
       </section>

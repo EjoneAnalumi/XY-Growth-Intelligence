@@ -13,6 +13,8 @@ type ActivityApiResponse = {
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
 };
 
 type ActivityListApiResponse = {
@@ -33,6 +35,8 @@ function mapActivity(activity: ActivityApiResponse): Activity {
     archivedAt: activity.archived_at,
     createdAt: activity.created_at,
     updatedAt: activity.updated_at,
+    createdBy: activity.created_by,
+    updatedBy: activity.updated_by,
   };
 }
 

@@ -8,13 +8,15 @@ Implemented flows include company/contact management, opportunity pipeline views
 
 Important current limitations:
 
-- Login uses the documented local demo session; Supabase Auth is not connected to the frontend/backend runtime yet.
+- Staff authentication uses invitation-only Supabase Auth sessions. Public registration is disabled; Admin users invite staff and assign roles.
 - When `DATABASE_URL` is configured, companies, contacts, opportunities, activities, tasks, and notes use the Supabase PostgreSQL database and survive browser logout and backend restart. Unit tests without a database URL retain an isolated in-memory repository.
 - CSV, snapshot, and report paths also use PostgreSQL persistence.
 - Docker Compose starts the backend only. Run the frontend separately with npm.
 - Use synthetic data only. Never place hosted credentials, production keys, or real customer/prospect data in this repository.
 
-Real Supabase Auth remains required production work. The current demo login selects a local role, so it does not provide real user identity, password validation, or per-user sessions even though staff CRM records are now durable and shared.
+Local Supabase provides seeded synthetic accounts for development. Production must configure its own invited users, redirect URLs, SMTP provider, and scoped secrets.
+
+See [`docs/week4-day18-website-change-handoff.md`](docs/week4-day18-website-change-handoff.md) for the consolidated implementation, security, verification, and remaining-work record.
 
 ## Prerequisites
 
@@ -101,44 +103,58 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m ruff check backend
 ```
 
-Run the backend directly:
+Run the integrated Supabase Auth backend container from the repository root. This block reads local-only values into the current PowerShell process without printing or committing them:
 
 ```powershell
-Set-Location backend
-..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-Or run the backend container from the repository root:
-
-```powershell
+$lines = npx.cmd --yes supabase@2.115.0 status -o env 2>$null
+foreach ($line in $lines) {
+    if ($line -match '^([A-Z_]+)="(.*)"$') {
+        Set-Item -Path "Env:$($matches[1])" -Value $matches[2]
+    }
+}
+$env:BACKEND_PORT = '8000'
+$env:AUTH_MODE = 'supabase'
+$env:SUPABASE_URL = $env:API_URL
+$env:SUPABASE_ANON_KEY = $env:ANON_KEY
+$env:SUPABASE_SERVICE_ROLE_KEY = $env:SERVICE_ROLE_KEY
 docker compose up --build --detach
 docker compose ps
 ```
 
 The Compose configuration translates host Supabase addresses to `host.docker.internal` inside the backend container. It does not start the frontend or Supabase.
 
-Verify the backend at http://127.0.0.1:8000/health. The expected response is:
+Verify the backend at http://localhost:8000/health. The expected response is:
 
 ```json
 {"status":"ok"}
 ```
 
-API documentation is available at http://127.0.0.1:8000/docs.
+API documentation is available at http://localhost:8000/docs.
 
 ### 4. Install and verify the frontend
 
 Open another PowerShell terminal:
 
 ```powershell
+$repo = 'C:\Users\LENOVO\Documents\GitHub\XY-Growth-Intelligence\.worktrees\supabase-auth'
+Set-Location $repo
+$lines = npx.cmd --yes supabase@2.115.0 status -o env 2>$null
+foreach ($line in $lines) {
+    if ($line -match '^([A-Z_]+)="(.*)"$') {
+        Set-Item -Path "Env:$($matches[1])" -Value $matches[2]
+    }
+}
+$env:NEXT_PUBLIC_API_BASE_URL = 'http://localhost:8000'
+$env:NEXT_PUBLIC_SUPABASE_URL = $env:API_URL
+$env:NEXT_PUBLIC_SUPABASE_ANON_KEY = $env:ANON_KEY
 Set-Location frontend
 npm.cmd ci
 npm.cmd run typecheck
 npm.cmd run lint
-npm.cmd run build
-npm.cmd run dev
+npm.cmd run dev -- --port 3000
 ```
 
-Open http://127.0.0.1:3000/login and use the synthetic demo credentials displayed by the login form. The demo session is local-only; it is not Supabase authentication.
+Open http://localhost:3000/login. The frontend must be started from the `supabase-auth` worktree shown above; starting `frontend` from the original checkout serves the old UI.
 
 ### 5. Shut everything down
 
@@ -205,6 +221,23 @@ This is a local Windows/Docker workaround, not permission to ignore failures in 
 ### A port is already occupied
 
 The local stack requires ports `3000`, `8000`, and `54320` through `54329`. Stop the conflicting process or intentionally change all matching configuration references before retrying.
+
+Before starting the app, inspect only its expected ports:
+
+```powershell
+Get-NetTCPConnection -State Listen -LocalPort 3000,3001,3002,8000,8001 -ErrorAction SilentlyContinue |
+    Select-Object LocalAddress,LocalPort,OwningProcess
+```
+
+Stop a confirmed stale Node/Python process by its displayed PID, then stop any old Compose backend:
+
+```powershell
+Stop-Process -Id <PID> -Force
+Set-Location 'C:\Users\LENOVO\Documents\GitHub\XY-Growth-Intelligence\.worktrees\supabase-auth'
+docker compose down
+```
+
+Do not stop ports `54320` through `54329` when keeping local Supabase available. If `127.0.0.1:8000` still serves a response but its reported PID does not exist in `Get-Process` or `tasklist`, Windows has retained an orphaned listener. Restart Windows before starting Docker Desktop and the commands above; repeated app starts cannot safely clear a nonexistent process.
 
 ## Repository structure
 

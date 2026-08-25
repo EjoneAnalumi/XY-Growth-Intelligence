@@ -8,8 +8,10 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
 }));
 vi.mock("@/lib/auth", () => ({
-  getMockSession: () => ({ role: "admin" }),
-  signOutMock: vi.fn(),
+  getSession: () => ({
+    profile: { fullName: "Admin Demo", role: "admin" },
+  }),
+  signOut: vi.fn(),
 }));
 
 import { AppShell } from "@/components/app-shell";

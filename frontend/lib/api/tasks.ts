@@ -15,6 +15,8 @@ type TaskApiResponse = {
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
 };
 
 type TaskListApiResponse = {
@@ -37,6 +39,8 @@ function mapTask(task: TaskApiResponse): Task {
     archivedAt: task.archived_at,
     createdAt: task.created_at,
     updatedAt: task.updated_at,
+    createdBy: task.created_by,
+    updatedBy: task.updated_by,
   };
 }
 

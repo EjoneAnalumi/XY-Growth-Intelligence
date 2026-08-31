@@ -136,7 +136,9 @@ API documentation is available at http://localhost:8000/docs.
 Open another PowerShell terminal:
 
 ```powershell
-$repo = 'C:\Users\LENOVO\Documents\GitHub\XY-Growth-Intelligence\.worktrees\supabase-auth'
+# Run this from the repository cloned in step 1; do not use a machine-specific
+# worktree path from a previous developer environment.
+$repo = (Get-Location).Path
 Set-Location $repo
 $lines = npx.cmd --yes supabase@2.115.0 status -o env 2>$null
 foreach ($line in $lines) {
@@ -154,7 +156,7 @@ npm.cmd run lint
 npm.cmd run dev -- --port 3000
 ```
 
-Open http://localhost:3000/login. The frontend must be started from the `supabase-auth` worktree shown above; starting `frontend` from the original checkout serves the old UI.
+Open http://localhost:3000/login. The frontend must be started from this checkout's `frontend` directory.
 
 ### 5. Shut everything down
 
@@ -233,9 +235,10 @@ Stop a confirmed stale Node/Python process by its displayed PID, then stop any o
 
 ```powershell
 Stop-Process -Id <PID> -Force
-Set-Location 'C:\Users\LENOVO\Documents\GitHub\XY-Growth-Intelligence\.worktrees\supabase-auth'
 docker compose down
 ```
+
+Run `docker compose down` from the repository root.
 
 Do not stop ports `54320` through `54329` when keeping local Supabase available. If `127.0.0.1:8000` still serves a response but its reported PID does not exist in `Get-Process` or `tasklist`, Windows has retained an orphaned listener. Restart Windows before starting Docker Desktop and the commands above; repeated app starts cannot safely clear a nonexistent process.
 

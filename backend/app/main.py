@@ -18,6 +18,10 @@ from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging, register_request_logging
 
 settings = get_settings()
+if settings.auth_mode == "supabase" and not settings.database_url:
+    raise RuntimeError(
+        "DATABASE_URL is required when AUTH_MODE=supabase; refusing to use volatile memory storage."
+    )
 configure_logging(settings.log_level)
 
 app = FastAPI(title=settings.app_name)

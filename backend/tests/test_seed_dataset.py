@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import socket
+from os import getenv
 from urllib.parse import urlparse
 
 import psycopg
 import pytest
 
-DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+DATABASE_URL = getenv("SUPABASE_DB_URL")
 
 
 def _connection():
+    if not DATABASE_URL:
+        pytest.skip("Seed dataset integration requires SUPABASE_DB_URL to be configured.")
     parsed = urlparse(DATABASE_URL)
     try:
         with socket.create_connection((parsed.hostname, parsed.port or 5432), timeout=5):

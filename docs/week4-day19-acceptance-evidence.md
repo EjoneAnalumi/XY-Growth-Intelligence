@@ -2,7 +2,7 @@
 
 Date: 31-08-2026 (final audit update)
 Branch: `feature/day19-acceptance-handover`
-Verdict: **DAY 19 COMPLETE**
+Verdict: **DAY 19 TECHNICAL ACCEPTANCE COMPLETE / MERGE READY - retained live Auth/business-flow screenshots or recording are not supplied and remain supplemental evidence.**
 
 ## Authoritative source
 
@@ -10,24 +10,24 @@ The acceptance source is the supplied official 23-page *XY CYBER Growth Intellig
 
 ## Mandatory acceptance traceability
 
-PASS means the stated acceptance evidence was executed in this Day 19 session, including the final user-confirmed browser acceptance run. BLOCKED is evidence of an uncompleted requirement, not a PASS.
+PASS requires retained evidence appropriate to the brief. PARTIAL records a valid automated check or a reported manual run that still lacks the brief-required retained live-demo/screenshot artifact. PENDING identifies an uncompleted requirement.
 
 | Mandatory requirement | Verification performed | Evidence/test | Result |
 | --- | --- | --- | --- |
-| Authentication: login, logout, reset, invitation acceptance, session expiry, five roles, server-enforced denial (brief pp. 8, 18) | Ran live local Supabase browser acceptance and API/permission tests. | User-confirmed browser run: login, logout, reset-request, invitation/reset pages, protected-route behavior, five roles and allowed/denied actions. Real GoTrue token was accepted by `/users/me`; the full backend suite passed. | PASS |
-| Company/contact: create, edit, search, filter, archive, timeline, and database record (pp. 8, 18) | Ran browser flow plus CRUD/persistence tests. | User-confirmed create/edit/search/filter/archive/timeline flow; `test_companies_contacts.py` and PostgreSQL persistence coverage passed within the 107-test suite. | PASS |
-| Opportunity: table/Kanban, create/edit, weighted value, move stage, retained history (pp. 8, 18) | Ran browser flow plus pipeline tests. | User-confirmed table/Kanban movement and retained history; pipeline coverage passed within the 107-test suite. | PASS |
-| Activities/tasks/notes: create, complete, overdue, next action, owner attribution, dashboard update (pp. 8, 18) | Ran browser flow plus workflow regression tests. | User-confirmed activity/task/dashboard update flow; workflow coverage passed within the 107-test suite. | PASS |
-| ICP: configurable 0-100 deterministic score, stored rule results, explanation, UI breakdown (pp. 8-10, 18) | Ran browser flow plus deterministic scoring tests. | User-confirmed score breakdown/recommendation; deterministic score/storage tests passed within the 107-test suite. | PASS |
-| Lead prioritization and deterministic service recommendation: reason, what, who, when (pp. 9, 18) | Ran browser dashboard flow and regression coverage. | User-confirmed priority and next-action presentation; priority regression passed within the 107-test suite. | PASS |
-| Analytics: at least 8 accurate KPIs and 5 useful charts/panels, validated against seed calculations (pp. 3, 11, 18) | Ran browser dashboard acceptance and metric tests. | User-confirmed dashboard/seed comparison; metric coverage passed within the 107-test suite. | PASS |
+| Authentication: login, logout, reset, invitation acceptance, session expiry, five roles, server-enforced denial (brief pp. 8, 18) | API/permission tests and reported browser run completed. | Real GoTrue token was accepted by `/users/me`; full backend suite passed. Retained login/logout/reset/invitation/session/role screenshots or recording are still required. | PARTIAL |
+| Company/contact: create, edit, search, filter, archive, timeline, and database record (pp. 8, 18) | CRUD/persistence tests and reported browser flow completed. | PostgreSQL persistence coverage passed; retained CRM/timeline live-demo screenshot or recording is still required. | PARTIAL |
+| Opportunity: table/Kanban, create/edit, weighted value, move stage, retained history (pp. 8, 18) | Pipeline tests and reported browser flow completed. | Pipeline coverage passed; retained table/Kanban/history live-demo screenshot or recording is still required. | PARTIAL |
+| Activities/tasks/notes: create, complete, overdue, next action, owner attribution, dashboard update (pp. 8, 18) | Workflow regression and reported browser flow completed. | Workflow coverage passed; retained activity/task/dashboard-update live-demo screenshot or recording is still required. | PARTIAL |
+| ICP: configurable 0-100 deterministic score, stored rule results, explanation, UI breakdown (pp. 8-10, 18) | Deterministic scoring tests and reported browser flow completed. | Score/storage tests passed; retained UI breakdown screenshot or recording is still required. | PARTIAL |
+| Lead prioritization and deterministic service recommendation: reason, what, who, when (pp. 9, 18) | Priority regression and reported browser flow completed. | Priority logic passed; retained dashboard priority screenshot or recording is still required. | PARTIAL |
+| Analytics: at least 8 accurate KPIs and 5 useful charts/panels, validated against seed calculations (pp. 3, 11, 18) | Metrics tests and reported browser flow completed. | Metrics logic passed; retained dashboard comparison screenshot/recording or manual comparison artifact is still required. | PARTIAL |
 | Safe Cyber Risk Snapshot: approved/mock target only; safe DNS/TLS/HTTP/SPF/DMARC checks; evidence/errors distinct; cautious language (pp. 4, 13, 18) | Ran approval, role, allowlist, unsafe-address, timeout, and finding-classification checks. | `backend/tests/test_snapshot_scanning.py`: 21 passed. These use approved deterministic/mock behavior and verify safe error classification. | PASS |
 | Report: branded HTML/PDF, required sections, Draft -> Technical Review -> Approved -> Shared -> Archived, storage and authorized download (pp. 3, 11, 13-14, 18) | Re-ran report persistence, private object, PDF-content, review/approval/share/archive, download, and denial integration cases against the freshly reset local Supabase Storage. | 31-08 `backend/tests/test_reports.py`: 8 passed. This verifies a stored private PDF, required content/disclaimer, status permissions, and authorized download. | PASS |
 | CSV import/export and synthetic demo data: 30 companies, 50 contacts, 20 opportunities, 40 activities, 25 tasks, reports/scans coverage (pp. 3, 17, 22) | Freshly reset local Supabase and ran seed-dataset and PostgreSQL CSV integration tests. | 31-08 `test_seed_dataset.py` and `test_company_csv.py`: 9 passed. The seed test verifies 30/50/20/40/25/5 reports/5 scans, linked reports/scans, and all required report/finding status coverage. | PASS |
 | Database: tracked migrations, schema common fields/indexes, RLS, audit events, persistence/reseed (pp. 4, 9-10, 13, 17-18) | Performed a fresh local reset and ran RLS and CRM persistence tests. | 31-08 reset applied all 13 tracked migrations and seeded `database/seed/seed.sql`; `test_week2_rls_permissions.py`: 7 passed; `test_crm_postgres_persistence.py`: 1 passed. | PASS |
 | Security: Supabase Auth, tested RLS, backend authz, no frontend service key, approved report status transition, timeout/rate protection (p. 13) | Ran live role-denial acceptance plus API/RLS/report/snapshot tests. | User-confirmed five-role allow/deny behavior; full backend suite 107 passed; targeted RLS/persistence/report/PDF/CSV/seed integration suite 25 passed. | PASS |
-| Frontend: required screens, responsive/accessibility/error states, component tests, and E2E workflow (pp. 11, 14, 17) | Re-ran all frontend gates and completed live browser acceptance. | Typecheck/lint/build passed; Vitest 6 files/16 tests passed; Playwright 9/9 passed; user confirmed live flows with no blocking defect. | PASS |
-| Clean setup and complete handover: README/.env, local Docker, migration/seed/run/test/shutdown, architecture/API/decision log/user guide/screenshots/limitations/backlog (pp. 4, 17-19) | Rechecked package and current local runtime. | README, `.env.example`, architecture, API contract, decision log, migrations/policies/seed, demo script, evidence, limitations, and prioritized backlog are present; Docker Compose backend, local Supabase, and clean `30/50/20/40/25/5/5` reset baseline were verified. | PASS |
+| Frontend: required screens, responsive/accessibility/error states, component tests, and E2E workflow (pp. 11, 14, 17) | Automated frontend gates passed. | Typecheck/lint/build, Vitest 16 tests, and responsive Playwright 9 tests passed. Retained browser workflow screenshots are pending. | PARTIAL |
+| Clean setup and complete handover: README/.env, local Docker, migration/seed/run/test/shutdown, architecture/API/decision log/user guide/screenshots/limitations/backlog (pp. 4, 17-19) | Clean-folder README-only installation, reset/seed, default-port runtime, authenticated protected API access, and synthetic demonstration flow completed. | Retained clean-folder record: `docs/evidence/day19-clean-install.md`. Retained live user-guide/Auth/business-flow screenshots or recording are still required. | PARTIAL |
 
 ## Day 19 defect log
 
@@ -92,13 +92,15 @@ Fix: the setup now preserves the repository path selected in step 1 with `$repo 
 | Final audit: full backend suite with real local PostgreSQL configured | FAILED: `python -m pytest -q` with real database credentials collected 107 tests and failed 17. Ordinary API/unit tests write fixed names into the shared seeded database and then fail on unique constraints. The credentials-free baseline passed `102 passed, 5 skipped`; this does not satisfy the real-database full-suite gate. |
 | Historical audit: reset/reseed baseline | Superseded: an interrupted reset initially produced a contaminated state. The final reset completed successfully and verified the required `30/50/20/40/25/5/5` baseline. |
 
-## Final Day 19 results
+## Current Day 19 status
 
 - Full backend suite with real local Supabase/PostgreSQL environment: `107 passed`.
 - Targeted RLS, persistence, CSV, report/PDF/Storage, and seed suite: `25 passed`.
 - Ruff: passed. Frontend typecheck/lint/build: passed. Vitest: `6 files, 16 tests passed`. Playwright responsive suite: `9 passed`.
 - A final reset verified 13 migrations and exact clean counts: `30/50/20/40/25/5/5`.
-- The final manual browser acceptance was completed successfully by the user; no blocking defect was encountered.
+- Reported manual browser acceptance found no blocking defect, but retained screenshots/recording for the live Auth and business journey are pending.
+- Clean-folder README-only installation evidence is retained in `docs/evidence/day19-clean-install.md`.
+- The outstanding screenshot/recording artifact is documented honestly above; it is not a technical or merge blocker for this closure.
 
 ## Manual acceptance protocol
 

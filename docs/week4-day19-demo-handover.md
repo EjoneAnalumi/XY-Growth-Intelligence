@@ -1,6 +1,6 @@
 # Week 4 Day 19 Demo and Handover
 
-Status: **acceptance-approved**. This script follows the actual internship brief (pp. 18-19); its required browser journey was completed successfully in the final Day 19 acceptance run.
+Status: **technical acceptance and clean-install handover complete**. This script follows the actual internship brief (pp. 18-19). Retained browser screenshots/recording are not supplied; that supplemental artifact is tracked separately and is not a merge blocker. The clean-folder README installation record is retained separately.
 
 ## Deterministic 15-minute final demonstration
 
@@ -31,14 +31,13 @@ Required acceptance retest commands and their current status are in `docs/week4-
 
 Available: README, architecture, API contract, decision log, migrations/policies/seed, sample CSV data, test suites, this demo script, and Day 19 evidence.
 
-The deterministic seed includes the brief-required five reports and five scans, with complete report-workflow and scan-finding status coverage. Frontend build, component tests, responsive Playwright, Docker/Supabase startup, clean seed reset, and live Auth/session/browser acceptance are verified. See the acceptance evidence for the exact results.
+The deterministic seed includes the brief-required five reports and five scans, with complete report-workflow and scan-finding status coverage. Frontend build, component tests, responsive Playwright, Docker/Supabase startup, clean seed reset, and the README-only clean-folder installation are verified. See `docs/evidence/day19-clean-install.md` and the acceptance evidence for exact results. Retained live Auth/business-flow screenshots or recording remain pending.
 
 ## Prioritized next-phase backlog
 
 | Priority | Item | Effort |
 | --- | --- | --- |
 | High | Run and retain the complete live Auth and full-business-flow screenshot acceptance evidence on a browser-enabled local environment. | Medium |
-| High | Perform a clean-machine README-only installation and resolve every ambiguous setup step. | Medium |
 | Medium | Replace the local Supabase image-download/startup workaround with a documented, reproducible Docker image cache/update procedure. | Small |
 | Medium | Add retained user-guide screenshots and accessibility evidence for each mandatory workflow. | Medium |
 | Low | Review and remediate frontend dependency-audit findings in a separately scoped dependency-hardening change. | Medium |

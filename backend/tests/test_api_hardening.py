@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -170,3 +171,12 @@ def test_migration_mirrors_are_complete_and_security_tables_have_rls() -> None:
     )
     for table in ("reports", "report_files", "security_scans", "security_findings"):
         assert f"alter table public.{table} enable row level security" in migration_sql
+
+
+def test_local_supabase_configuration_disables_public_signup() -> None:
+    repository_root = Path(__file__).resolve().parents[2]
+    with (repository_root / "supabase" / "config.toml").open("rb") as config_file:
+        config = tomllib.load(config_file)
+
+    assert config["auth"]["enable_signup"] is False
+    assert config["auth"]["email"]["enable_signup"] is True

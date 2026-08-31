@@ -77,13 +77,23 @@ Copy only these generated **local** values from `supabase status` into the match
 
 Do not place `SERVICE_ROLE_KEY` in any `NEXT_PUBLIC_*` variable. Never use hosted or production keys for local development.
 
-Apply every tracked migration and recreate the synthetic dataset:
+For the first clean installation only, apply every tracked migration and recreate the synthetic dataset:
 
 ```powershell
 npx.cmd --yes supabase@2.115.0 db reset
 ```
 
-The configuration reads migrations from `database/migrations/**/*.sql` and seed data from `database/seed/seed.sql`. Reset is destructive to the local Supabase database only.
+The configuration reads migrations from `database/migrations/**/*.sql` and seed data from `database/seed/seed.sql`.
+
+> **Warning:** `supabase db reset` deletes locally created notes, users, and CRM changes. Do not run it during normal startup or after restarting the laptop.
+
+For normal daily use, run this single command from the repository root:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File .\scripts\start-local.ps1
+```
+
+It starts the existing Supabase database without resetting it and launches both the backend and frontend with persistent PostgreSQL storage enabled.
 
 Local service URLs:
 
@@ -133,7 +143,7 @@ API documentation is available at http://localhost:8000/docs.
 
 ### 4. Install and verify the frontend
 
-Open another PowerShell terminal:
+Open another PowerShell terminal only when running the services manually instead of using `scripts/start-local.ps1`:
 
 ```powershell
 # Run this from the repository cloned in step 1; do not use a machine-specific
@@ -156,7 +166,7 @@ npm.cmd run lint
 npm.cmd run dev -- --port 3000
 ```
 
-Open http://localhost:3000/login. The frontend must be started from this checkout's `frontend` directory.
+Open http://localhost:3000/login. Run both services from this checkout.
 
 ### 5. Shut everything down
 

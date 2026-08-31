@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorState, LoadingState } from "@/components/ui/async-state";
 import { archiveNote, createNote, getNotes, updateNote, type Note } from "@/lib/api/notes";
 import { getUsers } from "@/lib/api/users";
+import { getSession } from "@/lib/auth";
 
 export default function StaffNotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -14,6 +15,8 @@ export default function StaffNotesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userNames, setUserNames] = useState<Map<string, string>>(new Map());
+  const role = getSession()?.profile?.role;
+  const canWrite = role === "admin" || role === "management" || role === "business_development";
 
   const loadNotes = useCallback(async () => {
     try {
@@ -58,19 +61,25 @@ export default function StaffNotesPage() {
         </p>
       </div>
 
-      <form onSubmit={saveNote} className="rounded-md border bg-card p-5 shadow-sm">
-        <label htmlFor="staff-note" className="font-semibold">New note</label>
-        <textarea
-          id="staff-note"
-          className="mt-3 min-h-28 w-full rounded-md border bg-background px-3 py-2 text-sm"
-          value={body}
-          onChange={(event) => setBody(event.target.value)}
-          placeholder="Write a reminder, decision, or context the team should remember..."
-        />
-        <Button type="submit" className="mt-3 gap-2" disabled={!body.trim()}>
-          <Plus className="h-4 w-4" /> Save note
-        </Button>
-      </form>
+      {canWrite ? (
+        <form onSubmit={saveNote} className="rounded-md border bg-card p-5 shadow-sm">
+          <label htmlFor="staff-note" className="font-semibold">New note</label>
+          <textarea
+            id="staff-note"
+            className="mt-3 min-h-28 w-full rounded-md border bg-background px-3 py-2 text-sm"
+            value={body}
+            onChange={(event) => setBody(event.target.value)}
+            placeholder="Write a reminder, decision, or context the team should remember..."
+          />
+          <Button type="submit" className="mt-3 gap-2" disabled={!body.trim()}>
+            <Plus className="h-4 w-4" /> Save note
+          </Button>
+        </form>
+      ) : (
+        <p className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
+          Your role has read-only access to staff notes.
+        </p>
+      )}
 
       {loading ? <LoadingState title="Loading staff notes..." /> : null}
       {error ? <ErrorState title="Notes could not be loaded" description={error} onRetry={loadNotes} /> : null}
@@ -87,7 +96,7 @@ export default function StaffNotesPage() {
                 <p className="whitespace-pre-wrap text-sm">{note.body}</p>
                 <p className="mt-2 text-xs text-muted-foreground">{new Date(note.createdAt).toLocaleString()}</p>
                 <p className="mt-1 text-xs text-muted-foreground">Written by {note.createdBy ? userNames.get(note.createdBy) ?? "Unknown staff member" : "Seed data"}</p>
-                <div className="mt-3 flex gap-2">
+                {canWrite ? <div className="mt-3 flex gap-2">
                   <Button type="button" variant="outline" onClick={async () => {
                     const nextBody = window.prompt("Edit note", note.body);
                     if (!nextBody?.trim()) return;
@@ -99,7 +108,7 @@ export default function StaffNotesPage() {
                     await archiveNote(note.id);
                     setNotes((items) => items.filter((item) => item.id !== note.id));
                   }}>Archive</Button>
-                </div>
+                </div> : null}
               </div>
             </div>
           </article>

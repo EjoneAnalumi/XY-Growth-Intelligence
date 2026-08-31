@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import pytest
 
-
 POSTGRES_INTEGRATION_MODULES = {
     "test_company_csv.py",
     "test_crm_postgres_persistence.py",
@@ -22,7 +21,9 @@ POSTGRES_INTEGRATION_MODULES = {
 
 
 @pytest.fixture(autouse=True)
-def isolate_unit_repositories(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest) -> None:
+def isolate_unit_repositories(
+    monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
+) -> None:
     """Prevent in-memory unit cases from writing fixed fixtures to local seed data."""
     if request.fspath.basename not in POSTGRES_INTEGRATION_MODULES:
         monkeypatch.delenv("DATABASE_URL", raising=False)

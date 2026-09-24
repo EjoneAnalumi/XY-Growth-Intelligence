@@ -82,3 +82,17 @@ Red examples include public deployment, real customer data, paid services, disab
 - Affected files or APIs: `database/migrations/20260729000001_initial_schema.sql`, `database/policies/week1-rls.md`.
 - Rollback approach: Replace role constraint and RLS helper checks in a follow-up migration if the supervisor changes the role model.
 - Supervisor approval required: No
+
+### 24-09-2026 - Correct Day 19 acceptance and package the internship MVP
+
+- Decision owner: backend/data and frontend/product maintainers (review required).
+- Decision level: Yellow; requested by the repository owner in the Day 20 task.
+- Decision: retain PR #30 history in the Day 20 branch; replace placeholder report SQL
+  with local-only real PDF bootstrap, add required report sections, live evidence and frontend CI.
+- Reason: row counts cannot demonstrate downloadable reports, and partial evidence must
+  not be presented as complete acceptance. Repeated seeding must preserve workflow states.
+- API impact: no public request/response shape changed. Exposure indicator is explicitly
+  a synthetic report triage heuristic, not a validated security risk rating.
+- Rollback: revert the feature commits; keep private report objects and existing CRM data.
+- Supervisor approval required: no for local synthetic work; yes before hosted deployment.
+- Release: versioned internship prerelease with explicit functional gaps and human review pending.

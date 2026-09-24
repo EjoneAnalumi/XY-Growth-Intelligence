@@ -4,7 +4,7 @@ from base64 import b64encode
 from contextlib import closing
 from datetime import UTC, datetime
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import httpx
 import psycopg
@@ -207,10 +207,14 @@ class SupabaseReportRepository:
             return [self._serialize(row) for row in cursor.fetchall()]
 
     def generate_report(
-        self, payload: ReportGenerateRequest, current_user: CurrentUser
+        self,
+        payload: ReportGenerateRequest,
+        current_user: CurrentUser,
+        *,
+        report_id: UUID | None = None,
     ) -> dict[str, Any]:
         self._require_role(current_user, {"admin", "management", "technical_analyst"})
-        report_id = uuid4()
+        report_id = report_id or uuid4()
         context = self._scan_context(str(payload.security_scan_id))
         findings = self._scan_findings(str(payload.security_scan_id))
         title = f"Cyber Risk Snapshot - {context['company_name']}"

@@ -115,6 +115,7 @@ export default function IcpScorePanel({ companies }: IcpScorePanelProps) {
 
         <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
           <select
+            aria-label="Company for ICP scoring"
             className="h-10 rounded-md border bg-background px-3 text-sm"
             value={selectedCompanyId}
             onChange={(event) => {

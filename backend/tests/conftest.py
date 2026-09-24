@@ -16,6 +16,7 @@ POSTGRES_INTEGRATION_MODULES = {
     "test_crm_postgres_persistence.py",
     "test_reports.py",
     "test_seed_dataset.py",
+    "test_seed_reports.py",
     "test_week2_rls_permissions.py",
 }
 

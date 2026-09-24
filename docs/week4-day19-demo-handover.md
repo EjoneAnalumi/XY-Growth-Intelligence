@@ -1,6 +1,9 @@
 # Week 4 Day 19 Demo and Handover
 
-Status: **technical acceptance and clean-install handover complete**. This script follows the actual internship brief (pp. 18-19). Retained browser screenshots/recording are not supplied; that supplemental artifact is tracked separately and is not a merge blocker. The clean-folder README installation record is retained separately.
+Date: 31-08-2026
+Branch: `feature/day19-acceptance-handover`
+
+Historical status: **partial acceptance; superseded by Day 20 evidence**. This script follows the actual internship brief (pp. 18-19). Retained browser screenshots/recording are not supplied; that required evidence is tracked separately and remains open in this historical record. The clean-folder README installation record is retained separately.
 
 ## Deterministic 15-minute final demonstration
 
@@ -31,7 +34,7 @@ Required acceptance retest commands and their current status are in `docs/week4-
 
 Available: README, architecture, API contract, decision log, migrations/policies/seed, sample CSV data, test suites, this demo script, and Day 19 evidence.
 
-The deterministic seed includes the brief-required five reports and five scans, with complete report-workflow and scan-finding status coverage. Frontend build, component tests, responsive Playwright, Docker/Supabase startup, clean seed reset, and the README-only clean-folder installation are verified. See `docs/evidence/day19-clean-install.md` and the acceptance evidence for exact results. Retained live Auth/business-flow screenshots or recording remain pending.
+The deterministic seed includes the brief-required five reports and five scans, with complete report-workflow and scan-finding status coverage. Frontend build, component tests, responsive Playwright, Docker/Supabase startup, clean seed reset, and the README-only clean-folder installation are verified. See `docs/week4-day19-clean-install-evidence.md` and the acceptance evidence for exact results. Retained live Auth/business-flow screenshots or recording remain pending.
 
 ## Prioritized next-phase backlog
 

@@ -2,7 +2,7 @@
 
 Date: 31-08-2026 (final audit update)
 Branch: `feature/day19-acceptance-handover`
-Verdict: **DAY 19 TECHNICAL ACCEPTANCE COMPLETE / MERGE READY - retained live Auth/business-flow screenshots or recording are not supplied and remain supplemental evidence.**
+Verdict: **PARTIAL historical acceptance. Automated and reported manual results below do not close the missing retained artifacts. See week4-day20-handover-evidence.md for the subsequent corrections and verification.**
 
 ## Authoritative source
 
@@ -27,7 +27,7 @@ PASS requires retained evidence appropriate to the brief. PARTIAL records a vali
 | Database: tracked migrations, schema common fields/indexes, RLS, audit events, persistence/reseed (pp. 4, 9-10, 13, 17-18) | Performed a fresh local reset and ran RLS and CRM persistence tests. | 31-08 reset applied all 13 tracked migrations and seeded `database/seed/seed.sql`; `test_week2_rls_permissions.py`: 7 passed; `test_crm_postgres_persistence.py`: 1 passed. | PASS |
 | Security: Supabase Auth, tested RLS, backend authz, no frontend service key, approved report status transition, timeout/rate protection (p. 13) | Ran live role-denial acceptance plus API/RLS/report/snapshot tests. | User-confirmed five-role allow/deny behavior; full backend suite 107 passed; targeted RLS/persistence/report/PDF/CSV/seed integration suite 25 passed. | PASS |
 | Frontend: required screens, responsive/accessibility/error states, component tests, and E2E workflow (pp. 11, 14, 17) | Automated frontend gates passed. | Typecheck/lint/build, Vitest 16 tests, and responsive Playwright 9 tests passed. Retained browser workflow screenshots are pending. | PARTIAL |
-| Clean setup and complete handover: README/.env, local Docker, migration/seed/run/test/shutdown, architecture/API/decision log/user guide/screenshots/limitations/backlog (pp. 4, 17-19) | Clean-folder README-only installation, reset/seed, default-port runtime, authenticated protected API access, and synthetic demonstration flow completed. | Retained clean-folder record: `docs/evidence/day19-clean-install.md`. Retained live user-guide/Auth/business-flow screenshots or recording are still required. | PARTIAL |
+| Clean setup and complete handover: README/.env, local Docker, migration/seed/run/test/shutdown, architecture/API/decision log/user guide/screenshots/limitations/backlog (pp. 4, 17-19) | Clean-folder README-only installation, reset/seed, default-port runtime, authenticated protected API access, and synthetic demonstration flow completed. | Retained clean-folder record: `docs/week4-day19-clean-install-evidence.md`. Retained live user-guide/Auth/business-flow screenshots or recording are still required. | PARTIAL |
 
 ## Day 19 defect log
 
@@ -99,8 +99,8 @@ Fix: the setup now preserves the repository path selected in step 1 with `$repo 
 - Ruff: passed. Frontend typecheck/lint/build: passed. Vitest: `6 files, 16 tests passed`. Playwright responsive suite: `9 passed`.
 - A final reset verified 13 migrations and exact clean counts: `30/50/20/40/25/5/5`.
 - Reported manual browser acceptance found no blocking defect, but retained screenshots/recording for the live Auth and business journey are pending.
-- Clean-folder README-only installation evidence is retained in `docs/evidence/day19-clean-install.md`.
-- The outstanding screenshot/recording artifact is documented honestly above; it is not a technical or merge blocker for this closure.
+- Clean-folder README-only installation evidence is retained in `docs/week4-day19-clean-install-evidence.md`.
+- The outstanding screenshot/recording artifact is documented honestly above; the acceptance claim remains partial until it is supplied.
 
 ## Manual acceptance protocol
 

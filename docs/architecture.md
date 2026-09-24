@@ -127,22 +127,8 @@ Not allowed:
 - Accessing non-public or restricted systems.
 - Scanning a company only because it is a sales prospect.
 
-## Current Scope
+## Current implementation
 
-Implemented:
-
-- Repository foundation.
-- `GET /health` backend endpoint.
-- Basic backend health test.
-- Ruff and pytest configuration.
-- Backend CI workflow.
-- Week 1 Day 2 Supabase migration for `profiles`, `companies`, and `contacts`.
-- First RLS policy set for the project roles from the brief.
-- Synthetic seed data with 10 fictional companies and fictional contacts.
-
-Next:
-
-- Apply and manually test Supabase schema v1, RLS allow/deny behavior, and seed data.
-- Backend configuration, structured logging, and auth verification.
-- Company/contact API contract and endpoints.
-- Next.js app shell and protected login flow.
+The historical foundation above has been implemented and expanded. For the verified
+Day 20 runtime, persistence modes, operational ownership, configuration and remaining
+brief deviations, see [architecture and operations](week4-day20-architecture-operations.md).

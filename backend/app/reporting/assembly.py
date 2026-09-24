@@ -26,8 +26,7 @@ REPORT_STYLES = [
     ".summary{font-size:16px;color:#334155;}",
     ".finding{border:1px solid #e5e7eb;border-radius:8px;padding:18px;margin-top:14px;"
     "background:#fbfcfe;}",
-    ".finding-heading{display:flex;justify-content:space-between;gap:16px;"
-    "align-items:flex-start;}",
+    ".finding-heading{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;}",
     "h4{margin:0;font-size:16px;text-transform:capitalize;}",
     ".badge{border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;"
     "text-transform:uppercase;}",
@@ -36,8 +35,7 @@ REPORT_STYLES = [
     ".severity-medium{background:#ffedd5;color:#9a3412;}",
     ".severity-high{background:#fee2e2;color:#991b1b;}",
     ".method{font-size:13px;color:#475569;}",
-    ".evidence{border-left:3px solid #0f766e;margin-top:12px;padding-left:12px;"
-    "color:#334155;}",
+    ".evidence{border-left:3px solid #0f766e;margin-top:12px;padding-left:12px;color:#334155;}",
     ".evidence p{margin:0 0 6px;font-weight:700;}",
     "ul{margin:0;padding-left:18px;}",
     ".disclaimer{background:#fffbeb;color:#713f12;}",
@@ -60,6 +58,38 @@ def assemble_report_html(
     scan_summary = escape(scan_summary)
     completed_at = escape(completed_at)
 
+    observations = [
+        item for item in findings if item["finding"] and item["status"] not in {"error", "timeout"}
+    ]
+    weights = {"info": 0, "low": 5, "medium": 15, "high": 30}
+    exposure_score = min(100, sum(weights.get(item["severity"], 0) for item in observations))
+    findings = sorted(findings, key=lambda item: weights.get(item["severity"], 0), reverse=True)
+
+    def posture(checks: set[str]) -> str:
+        items = [item for item in findings if item["check_name"] in checks]
+        return (
+            "".join(
+                f"<li>{escape(item['check_name'])}: {escape(item['summary'])} "
+                f"({escape(item['status'])})</li>"
+                for item in items
+            )
+            or "<li>Not assessed in this snapshot; no assurance is implied.</li>"
+        )
+
+    actions = (
+        "".join(
+            f"<li>Validate the {escape(item['check_name'])} observation with the system owner, "
+            "confirm business relevance, and agree a remediation and retest date.</li>"
+            for item in observations
+        )
+        or "<li>Review scope and incomplete checks with the system owner "
+        "before drawing conclusions.</li>"
+    )
+    has_email_observation = any(item["check_name"] in {"spf", "dmarc"} for item in observations)
+    primary_service = (
+        "Email security review" if has_email_observation else "External exposure review"
+    )
+    secondary_service = "Cloud and application security assessment"
     finding_sections = []
     for finding in findings:
         evidence = finding["evidence"]
@@ -116,10 +146,37 @@ def assemble_report_html(
             '<section class="section">',
             "<h2>Executive Summary</h2>",
             f'<p class="summary">{scan_summary}</p>',
+            f"<p>Overall exposure indicator: {exposure_score}/100 "
+            "(synthetic triage heuristic).</p>",
+            "<p>Weights: low 5, medium 15, high 30 per observation; capped at 100. "
+            "Errors and timeouts contribute zero and indicate unknown coverage, not safety. "
+            "This is not a validated risk rating or a probability of compromise.</p>",
             "</section>",
             '<section class="section">',
             "<h2>Snapshot Findings And Evidence</h2>",
+            "<p>Findings are ordered by severity, highest first; check errors remain explicit.</p>",
             *finding_sections,
+            "</section>",
+            '<section class="section">',
+            "<h2>Email security posture</h2>",
+            f"<ul>{posture({'spf', 'dmarc'})}</ul>",
+            "<h2>Web and TLS posture</h2>",
+            f"<ul>{posture({'tls', 'https', 'http_headers'})}</ul>",
+            "<h2>Public asset overview</h2>",
+            f"<p>Approved target: {domain}. Only this target is in scope; "
+            "no asset discovery was performed.</p>",
+            f"<ul>{posture({'dns'})}</ul>",
+            "<h2>Business impact</h2>",
+            "<p>Email authentication observations may affect trust in outbound mail. Web and TLS "
+            "observations may affect service trust and availability. Actual impact depends on "
+            "business context and requires validation; no breach or compromise is established.</p>",
+            "<h2>Recommended actions</h2>",
+            f"<ul>{actions}</ul>",
+            "<h2>Recommended XY CYBER services and next engagement</h2>",
+            f"<p>Primary: {primary_service}. Secondary: {secondary_service}.</p>",
+            "<p>The primary recommendation follows observed email findings when present, otherwise "
+            "the external target scope. Confirm service fit in a scoped discovery meeting with "
+            "Business Development and a Technical Analyst before commissioning work.</p>",
             "</section>",
             '<section class="section disclaimer">',
             "<h2>Methodology and limitations</h2>",

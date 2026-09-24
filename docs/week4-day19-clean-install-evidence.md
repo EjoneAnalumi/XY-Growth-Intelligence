@@ -1,6 +1,6 @@
 # Day 19 Clean-Folder README Installation Evidence
 
-Date: 2026-08-31
+Date: 31-08-2026
 Environment: Windows 11 clean-folder verification
 Clean clone: `C:\Users\W11\day19-clean-verification`
 Branch and commit: `feature/day19-acceptance-handover` at `d68d8075bc0bbe63810913eb1691f2d836bdbbc2`

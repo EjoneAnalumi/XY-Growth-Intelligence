@@ -2,6 +2,14 @@
 
 Internal Growth Intelligence MVP for the XY CYBER one-month internship project. The monorepo contains a FastAPI backend, a Next.js frontend, Supabase PostgreSQL migrations and synthetic seed data, and local Docker configuration.
 
+## Final internship handover
+
+Start with [Day 20 handover and evidence](docs/week4-day20-handover-evidence.md),
+[operator/demo guide](docs/week4-day20-demo-user-guide.md), and
+[limitations and prioritized backlog](docs/week4-day20-limitations-backlog.md).
+The tagged internship release is a local synthetic MVP; the handover records remaining
+brief deviations explicitly and does not authorize production deployment.
+
 ## Current MVP status
 
 Implemented flows include company/contact management, opportunity pipeline views, activities and tasks, ICP scoring, dashboard metrics, safe snapshot checks, report workflow, and company CSV import/export.
@@ -84,6 +92,9 @@ npx.cmd --yes supabase@2.115.0 db reset
 ```
 
 The configuration reads migrations from `database/migrations/**/*.sql` and seed data from `database/seed/seed.sql`.
+SQL creates the CRM fixtures and five scans. After backend dependencies and local environment
+variables are ready in step 3, complete the five report fixtures with `python -m app.seed_reports`.
+Reports require actual private Storage uploads, so SQL alone cannot complete them.
 
 > **Warning:** `supabase db reset` deletes locally created notes, users, and CRM changes. Do not run it during normal startup or after restarting the laptop.
 
@@ -127,6 +138,12 @@ $env:AUTH_MODE = 'supabase'
 $env:SUPABASE_URL = $env:API_URL
 $env:SUPABASE_ANON_KEY = $env:ANON_KEY
 $env:SUPABASE_SERVICE_ROLE_KEY = $env:SERVICE_ROLE_KEY
+$env:DATABASE_URL = $env:DB_URL
+$env:APP_ENV = 'local'
+# Completes the local seed with five real PDFs; preserves existing report states.
+Push-Location backend
+..\.venv\Scripts\python.exe -m app.seed_reports
+Pop-Location
 docker compose up --build --detach
 docker compose ps
 ```
@@ -166,7 +183,7 @@ npm.cmd run lint
 npm.cmd run dev -- --port 3000
 ```
 
-Open http://localhost:3000/login. Run both services from this checkout.
+Open http://localhost:3000/login. Run both services from this checkout. Local synthetic account identities are documented in `database/migrations/20260815000001_report_persistence.sql`; use those only on the local stack.
 
 ### 5. Shut everything down
 
@@ -182,6 +199,7 @@ npx.cmd --yes supabase@2.115.0 stop
 The default test command intentionally runs without database credentials and skips environment-dependent report/RLS integration cases. To run the local integration groups, obtain values from `supabase status`, set them only in the current shell, and run:
 
 ```powershell
+$env:AUTH_MODE='local' # Integration suite uses synthetic test-role tokens; live UI uses supabase.
 $env:DATABASE_URL='<local DB_URL>'
 $env:SUPABASE_DB_URL='<local DB_URL>'
 $env:SUPABASE_URL='<local API_URL>'
@@ -265,4 +283,4 @@ sample-data/         Synthetic CSV fixtures
 docker-compose.yml   Backend container for local development
 ```
 
-See `docs/architecture.md`, `docs/api-contract.md`, and `docs/decision-log.md` for implementation details and recorded decisions.
+See `docs/week4-day20-architecture-operations.md`, `docs/api-contract.md`, and `docs/decision-log.md` for current implementation details and recorded decisions.

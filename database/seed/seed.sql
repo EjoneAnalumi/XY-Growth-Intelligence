@@ -276,38 +276,7 @@ ON CONFLICT (security_scan_id, check_name) DO UPDATE SET
     evidence = EXCLUDED.evidence,
     error_classification = EXCLUDED.error_classification;
 
-SELECT set_config('app.report_actor_id', '00000000-0000-4000-8000-000000000004', false);
-SELECT set_config('app.report_actor_role', 'technical_analyst', false);
-INSERT INTO public.reports (
-    id, company_id, security_scan_id, title, status, storage_bucket, storage_path, html_preview,
-    created_by, created_at, updated_at
-) VALUES
-    ('90000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', '80000000-0000-4000-8000-000000000001', 'Cyber Risk Snapshot - Northstar Robotics Labs', 'draft', 'reports', NULL, '<html><body>Synthetic draft report. Methodology and limitations included.</body></html>', '00000000-0000-4000-8000-000000000004', NOW() - INTERVAL '11 days', NOW() - INTERVAL '11 days'),
-    ('90000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000002', '80000000-0000-4000-8000-000000000002', 'Cyber Risk Snapshot - Blue Harbor Finance', 'draft', 'reports', NULL, '<html><body>Synthetic review report. Methodology and limitations included.</body></html>', '00000000-0000-4000-8000-000000000004', NOW() - INTERVAL '9 days', NOW() - INTERVAL '9 days'),
-    ('90000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000003', '80000000-0000-4000-8000-000000000003', 'Cyber Risk Snapshot - Greenfield Health', 'draft', 'reports', NULL, '<html><body>Synthetic approved report. Methodology and limitations included.</body></html>', '00000000-0000-4000-8000-000000000004', NOW() - INTERVAL '7 days', NOW() - INTERVAL '7 days'),
-    ('90000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-000000000004', '80000000-0000-4000-8000-000000000004', 'Cyber Risk Snapshot - Atlas Grid', 'draft', 'reports', NULL, '<html><body>Synthetic shared report. Methodology and limitations included.</body></html>', '00000000-0000-4000-8000-000000000004', NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
-    ('90000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000005', '80000000-0000-4000-8000-000000000005', 'Cyber Risk Snapshot - Silverline Retail', 'draft', 'reports', NULL, '<html><body>Synthetic archived report. Methodology and limitations included.</body></html>', '00000000-0000-4000-8000-000000000004', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days')
-ON CONFLICT (id) DO NOTHING;
-
-UPDATE public.reports SET status = 'review'
-WHERE id IN (
-    '90000000-0000-4000-8000-000000000002',
-    '90000000-0000-4000-8000-000000000003',
-    '90000000-0000-4000-8000-000000000004',
-    '90000000-0000-4000-8000-000000000005'
-);
-SELECT set_config('app.report_actor_id', '00000000-0000-4000-8000-000000000002', false);
-SELECT set_config('app.report_actor_role', 'management', false);
-UPDATE public.reports SET status = 'approved'
-WHERE id IN (
-    '90000000-0000-4000-8000-000000000003',
-    '90000000-0000-4000-8000-000000000004',
-    '90000000-0000-4000-8000-000000000005'
-);
-UPDATE public.reports SET status = 'shared'
-WHERE id IN (
-    '90000000-0000-4000-8000-000000000004',
-    '90000000-0000-4000-8000-000000000005'
-);
-UPDATE public.reports SET status = 'archived'
-WHERE id = '90000000-0000-4000-8000-000000000005';
+-- Reports require real private Storage objects, which SQL alone cannot upload.
+-- After this SQL seed, run from backend/: python -m app.seed_reports
+-- That local-only command creates five real PDFs through the report workflow,
+-- and is safe to repeat without rewinding existing report states.

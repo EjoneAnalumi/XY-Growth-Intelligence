@@ -43,11 +43,18 @@ const opportunity = {
 async function mockApi(page: Page) {
   await page.addInitScript(() => {
     window.localStorage.setItem(
-      "xy-growth-intelligence:mock-session",
+      "xy-growth-intelligence:supabase-session",
       JSON.stringify({
+        accessToken: "dev-admin",
+        refreshToken: "playwright-deterministic-refresh-token",
+        expiresAt: Date.now() + 60 * 60 * 1000,
         email: "admin.demo@example.test",
-        role: "admin",
-        token: "dev-admin",
+        profile: {
+          id: "00000000-0000-4000-8000-000000000001",
+          email: "admin.demo@example.test",
+          fullName: "Admin Demo",
+          role: "admin",
+        },
       }),
     );
   });
@@ -157,6 +164,7 @@ for (const viewport of viewports) {
     test("keeps navigation and primary dashboard content usable", async ({ page }, testInfo) => {
       await page.goto("/dashboard");
 
+      await expect(page).toHaveURL(/\/dashboard$/);
       await expect(page.getByRole("heading", { name: "Growth Intelligence dashboard" })).toBeVisible();
       await expect(page.getByRole("button", { name: "Refresh" })).toBeVisible();
       await expectPageFitsViewport(page);
@@ -185,6 +193,7 @@ for (const viewport of viewports) {
 
     test("keeps CRM forms, cards, and actions accessible", async ({ page }, testInfo) => {
       await page.goto("/companies");
+      await expect(page).toHaveURL(/\/companies$/);
       await expect(page.getByRole("heading", { name: "Companies" })).toBeVisible();
       await page.getByRole("button", { name: "Add Company" }).click();
       await expect(page.getByRole("heading", { name: "Add company" })).toBeVisible();
@@ -205,6 +214,7 @@ for (const viewport of viewports) {
 
     test("contains intentional table and Kanban overflow", async ({ page }, testInfo) => {
       await page.goto("/opportunities");
+      await expect(page).toHaveURL(/\/opportunities$/);
       await expect(page.getByRole("heading", { name: "Opportunities" })).toBeVisible();
       await expect(page.getByRole("button", { name: "New Opportunity" })).toBeEnabled();
 

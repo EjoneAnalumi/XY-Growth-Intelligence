@@ -234,3 +234,80 @@ ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status,
     completed_at = EXCLUDED.completed_at,
     updated_at = NOW();
+
+-- Synthetic Week 4 report-demo coverage required by the internship brief.
+-- All targets are reserved example domains and all observations are deterministic.
+INSERT INTO public.security_scans (
+    id, company_id, initiated_by, domain, approval_note, approved, status,
+    started_at, completed_at, duration_ms
+) VALUES
+    ('80000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000004', 'northstar-robotics.example', 'Approved synthetic demo target.', true, 'completed', NOW() - INTERVAL '12 days', NOW() - INTERVAL '12 days' + INTERVAL '2 seconds', 2000),
+    ('80000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000004', 'blueharbor-finance.example', 'Approved synthetic demo target.', true, 'completed', NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days' + INTERVAL '3 seconds', 3000),
+    ('80000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000004', 'greenfield-health.example', 'Approved synthetic demo target.', true, 'completed', NOW() - INTERVAL '8 days', NOW() - INTERVAL '8 days' + INTERVAL '1 second', 1000),
+    ('80000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-000000000004', '00000000-0000-4000-8000-000000000004', 'atlas-grid.example', 'Approved synthetic demo target.', true, 'completed', NOW() - INTERVAL '6 days', NOW() - INTERVAL '6 days' + INTERVAL '4 seconds', 4000),
+    ('80000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000005', '00000000-0000-4000-8000-000000000004', 'silverline-retail.example', 'Approved synthetic demo target.', true, 'completed', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days' + INTERVAL '2 seconds', 2000)
+ON CONFLICT (id) DO UPDATE SET
+    company_id = EXCLUDED.company_id,
+    domain = EXCLUDED.domain,
+    approval_note = EXCLUDED.approval_note,
+    started_at = EXCLUDED.started_at,
+    completed_at = EXCLUDED.completed_at,
+    duration_ms = EXCLUDED.duration_ms;
+
+INSERT INTO public.security_findings (
+    security_scan_id, check_name, status, summary, finding, severity, method, evidence,
+    error_classification, details
+) VALUES
+    ('80000000-0000-4000-8000-000000000001', 'dns', 'pass', 'Public DNS resolution completed.', false, 'info', 'deterministic mock', '["203.0.113.10"]', NULL, '{}'),
+    ('80000000-0000-4000-8000-000000000001', 'tls', 'observation', 'TLS certificate expires within 30 days.', true, 'medium', 'deterministic mock', '["expires in 21 days"]', NULL, '{}'),
+    ('80000000-0000-4000-8000-000000000002', 'http_headers', 'observation', 'Content-Security-Policy header was not observed.', true, 'low', 'deterministic mock', '["content-security-policy missing"]', NULL, '{}'),
+    ('80000000-0000-4000-8000-000000000002', 'spf', 'pass', 'A single SPF record was observed.', false, 'info', 'deterministic mock', '["v=spf1 include:_spf.example -all"]', NULL, '{}'),
+    ('80000000-0000-4000-8000-000000000003', 'dmarc', 'observation', 'DMARC monitoring policy was observed.', true, 'low', 'deterministic mock', '["v=DMARC1; p=none"]', NULL, '{}'),
+    ('80000000-0000-4000-8000-000000000003', 'https', 'pass', 'HTTPS endpoint responded successfully.', false, 'info', 'deterministic mock', '["HTTP 200"]', NULL, '{}'),
+    ('80000000-0000-4000-8000-000000000004', 'dns', 'timeout', 'DNS query timed out without a finding.', false, 'info', 'deterministic mock', '[]', 'timeout', '{}'),
+    ('80000000-0000-4000-8000-000000000004', 'tls', 'error', 'TLS probe returned a classified connection error.', false, 'info', 'deterministic mock', '[]', 'connection_error', '{}'),
+    ('80000000-0000-4000-8000-000000000005', 'spf', 'fail', 'No SPF record was observed.', true, 'medium', 'deterministic mock', '[]', NULL, '{}'),
+    ('80000000-0000-4000-8000-000000000005', 'dmarc', 'pass', 'Enforcing DMARC policy was observed.', false, 'info', 'deterministic mock', '["v=DMARC1; p=reject"]', NULL, '{}')
+ON CONFLICT (security_scan_id, check_name) DO UPDATE SET
+    status = EXCLUDED.status,
+    summary = EXCLUDED.summary,
+    finding = EXCLUDED.finding,
+    severity = EXCLUDED.severity,
+    evidence = EXCLUDED.evidence,
+    error_classification = EXCLUDED.error_classification;
+
+SELECT set_config('app.report_actor_id', '00000000-0000-4000-8000-000000000004', false);
+SELECT set_config('app.report_actor_role', 'technical_analyst', false);
+INSERT INTO public.reports (
+    id, company_id, security_scan_id, title, status, storage_bucket, storage_path, html_preview,
+    created_by, created_at, updated_at
+) VALUES
+    ('90000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', '80000000-0000-4000-8000-000000000001', 'Cyber Risk Snapshot - Northstar Robotics Labs', 'draft', 'reports', NULL, '<html><body>Synthetic draft report. Methodology and limitations included.</body></html>', '00000000-0000-4000-8000-000000000004', NOW() - INTERVAL '11 days', NOW() - INTERVAL '11 days'),
+    ('90000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000002', '80000000-0000-4000-8000-000000000002', 'Cyber Risk Snapshot - Blue Harbor Finance', 'draft', 'reports', NULL, '<html><body>Synthetic review report. Methodology and limitations included.</body></html>', '00000000-0000-4000-8000-000000000004', NOW() - INTERVAL '9 days', NOW() - INTERVAL '9 days'),
+    ('90000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000003', '80000000-0000-4000-8000-000000000003', 'Cyber Risk Snapshot - Greenfield Health', 'draft', 'reports', NULL, '<html><body>Synthetic approved report. Methodology and limitations included.</body></html>', '00000000-0000-4000-8000-000000000004', NOW() - INTERVAL '7 days', NOW() - INTERVAL '7 days'),
+    ('90000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-000000000004', '80000000-0000-4000-8000-000000000004', 'Cyber Risk Snapshot - Atlas Grid', 'draft', 'reports', NULL, '<html><body>Synthetic shared report. Methodology and limitations included.</body></html>', '00000000-0000-4000-8000-000000000004', NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
+    ('90000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000005', '80000000-0000-4000-8000-000000000005', 'Cyber Risk Snapshot - Silverline Retail', 'draft', 'reports', NULL, '<html><body>Synthetic archived report. Methodology and limitations included.</body></html>', '00000000-0000-4000-8000-000000000004', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days')
+ON CONFLICT (id) DO NOTHING;
+
+UPDATE public.reports SET status = 'review'
+WHERE id IN (
+    '90000000-0000-4000-8000-000000000002',
+    '90000000-0000-4000-8000-000000000003',
+    '90000000-0000-4000-8000-000000000004',
+    '90000000-0000-4000-8000-000000000005'
+);
+SELECT set_config('app.report_actor_id', '00000000-0000-4000-8000-000000000002', false);
+SELECT set_config('app.report_actor_role', 'management', false);
+UPDATE public.reports SET status = 'approved'
+WHERE id IN (
+    '90000000-0000-4000-8000-000000000003',
+    '90000000-0000-4000-8000-000000000004',
+    '90000000-0000-4000-8000-000000000005'
+);
+UPDATE public.reports SET status = 'shared'
+WHERE id IN (
+    '90000000-0000-4000-8000-000000000004',
+    '90000000-0000-4000-8000-000000000005'
+);
+UPDATE public.reports SET status = 'archived'
+WHERE id = '90000000-0000-4000-8000-000000000005';

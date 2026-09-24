@@ -5,12 +5,13 @@ export default defineConfig({
   outputDir: "../tmp/playwright-results",
   timeout: 30_000,
   use: {
+    channel: process.env.PLAYWRIGHT_CHANNEL,
     baseURL: "http://127.0.0.1:3001",
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "npm.cmd run dev -- --hostname 127.0.0.1 --port 3001",
+    command: `${process.platform === "win32" ? "npm.cmd" : "npm"} run dev -- --hostname 127.0.0.1 --port 3001`,
     url: "http://127.0.0.1:3001",
     reuseExistingServer: true,
     timeout: 120_000,

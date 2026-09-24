@@ -1,0 +1,360 @@
+{
+  "before": {
+    "total_opportunities": 24,
+    "open_opportunities": 21,
+    "won_opportunities": 2,
+    "lost_opportunities": 1,
+    "pipeline_value_usd": 2300000,
+    "weighted_pipeline_value_usd": 1245500,
+    "high_priority_opportunities": 7,
+    "inactive_opportunities": 1,
+    "open_tasks": 25,
+    "overdue_tasks": 16,
+    "due_this_week_tasks": 7,
+    "activities_count": 43,
+    "average_days_in_current_stage": 27.19,
+    "stage_summaries": [
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000001",
+        "stage_name": "Identified",
+        "opportunity_count": 2,
+        "total_value_usd": 70000,
+        "weighted_value_usd": 3500
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000002",
+        "stage_name": "Researching",
+        "opportunity_count": 1,
+        "total_value_usd": 40000,
+        "weighted_value_usd": 4000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000003",
+        "stage_name": "Contacted",
+        "opportunity_count": 1,
+        "total_value_usd": 60000,
+        "weighted_value_usd": 9000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000004",
+        "stage_name": "Meeting Scheduled",
+        "opportunity_count": 1,
+        "total_value_usd": 80000,
+        "weighted_value_usd": 20000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000005",
+        "stage_name": "Discovery Completed",
+        "opportunity_count": 1,
+        "total_value_usd": 100000,
+        "weighted_value_usd": 35000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000006",
+        "stage_name": "Qualified",
+        "opportunity_count": 6,
+        "total_value_usd": 235000,
+        "weighted_value_usd": 107750
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000007",
+        "stage_name": "Assessment Offered",
+        "opportunity_count": 1,
+        "total_value_usd": 140000,
+        "weighted_value_usd": 70000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000008",
+        "stage_name": "Pilot Proposed",
+        "opportunity_count": 1,
+        "total_value_usd": 160000,
+        "weighted_value_usd": 96000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000009",
+        "stage_name": "Pilot Active",
+        "opportunity_count": 1,
+        "total_value_usd": 180000,
+        "weighted_value_usd": 126000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000010",
+        "stage_name": "Proposal Sent",
+        "opportunity_count": 2,
+        "total_value_usd": 325000,
+        "weighted_value_usd": 243750
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000011",
+        "stage_name": "Negotiation",
+        "opportunity_count": 2,
+        "total_value_usd": 370000,
+        "weighted_value_usd": 314500
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000012",
+        "stage_name": "Contract Review",
+        "opportunity_count": 1,
+        "total_value_usd": 240000,
+        "weighted_value_usd": 216000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000013",
+        "stage_name": "Won",
+        "opportunity_count": 2,
+        "total_value_usd": 435000,
+        "weighted_value_usd": 435000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000014",
+        "stage_name": "Lost",
+        "opportunity_count": 1,
+        "total_value_usd": 280000,
+        "weighted_value_usd": 56000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000015",
+        "stage_name": "On Hold",
+        "opportunity_count": 1,
+        "total_value_usd": 300000,
+        "weighted_value_usd": 0
+      }
+    ],
+    "priority_opportunities": [
+      {
+        "opportunity_id": "60000000-0000-4000-8000-000000000011",
+        "name": "Apex security negotiation",
+        "stage_id": "30000000-0000-4000-8000-000000000011",
+        "stage_name": "Negotiation",
+        "company_id": "10000000-0000-4000-8000-000000000011",
+        "priority_score": 76,
+        "weighted_value_usd": 187000,
+        "days_in_current_stage": 35,
+        "reason": "high weighted value, strong ICP fit, overdue follow-up"
+      },
+      {
+        "opportunity_id": "60000000-0000-4000-8000-000000000010",
+        "name": "Vector learning proposal",
+        "stage_id": "30000000-0000-4000-8000-000000000010",
+        "stage_name": "Proposal Sent",
+        "company_id": "10000000-0000-4000-8000-000000000010",
+        "priority_score": 76,
+        "weighted_value_usd": 150000,
+        "days_in_current_stage": 34,
+        "reason": "high weighted value, strong ICP fit, overdue follow-up"
+      },
+      {
+        "opportunity_id": "60000000-0000-4000-8000-000000000012",
+        "name": "Beacon retail contract review",
+        "stage_id": "30000000-0000-4000-8000-000000000012",
+        "stage_name": "Contract Review",
+        "company_id": "10000000-0000-4000-8000-000000000012",
+        "priority_score": 74,
+        "weighted_value_usd": 216000,
+        "days_in_current_stage": 36,
+        "reason": "high weighted value, overdue follow-up"
+      },
+      {
+        "opportunity_id": "60000000-0000-4000-8000-000000000009",
+        "name": "Meridian bio research pilot",
+        "stage_id": "30000000-0000-4000-8000-000000000009",
+        "stage_name": "Pilot Active",
+        "company_id": "10000000-0000-4000-8000-000000000009",
+        "priority_score": 70,
+        "weighted_value_usd": 126000,
+        "days_in_current_stage": 33,
+        "reason": "high weighted value, strong ICP fit, inactive opportunity"
+      },
+      {
+        "opportunity_id": "60000000-0000-4000-8000-000000000008",
+        "name": "Summit legal privacy monitoring",
+        "stage_id": "30000000-0000-4000-8000-000000000008",
+        "stage_name": "Pilot Proposed",
+        "company_id": "10000000-0000-4000-8000-000000000008",
+        "priority_score": 62,
+        "weighted_value_usd": 96000,
+        "days_in_current_stage": 32,
+        "reason": "overdue follow-up"
+      }
+    ]
+  },
+  "after": {
+    "total_opportunities": 25,
+    "open_opportunities": 22,
+    "won_opportunities": 2,
+    "lost_opportunities": 1,
+    "pipeline_value_usd": 2310000,
+    "weighted_pipeline_value_usd": 1250500,
+    "high_priority_opportunities": 7,
+    "inactive_opportunities": 1,
+    "open_tasks": 26,
+    "overdue_tasks": 17,
+    "due_this_week_tasks": 7,
+    "activities_count": 44,
+    "average_days_in_current_stage": 25.95,
+    "stage_summaries": [
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000001",
+        "stage_name": "Identified",
+        "opportunity_count": 2,
+        "total_value_usd": 70000,
+        "weighted_value_usd": 3500
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000002",
+        "stage_name": "Researching",
+        "opportunity_count": 1,
+        "total_value_usd": 40000,
+        "weighted_value_usd": 4000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000003",
+        "stage_name": "Contacted",
+        "opportunity_count": 1,
+        "total_value_usd": 60000,
+        "weighted_value_usd": 9000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000004",
+        "stage_name": "Meeting Scheduled",
+        "opportunity_count": 1,
+        "total_value_usd": 80000,
+        "weighted_value_usd": 20000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000005",
+        "stage_name": "Discovery Completed",
+        "opportunity_count": 1,
+        "total_value_usd": 100000,
+        "weighted_value_usd": 35000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000006",
+        "stage_name": "Qualified",
+        "opportunity_count": 7,
+        "total_value_usd": 245000,
+        "weighted_value_usd": 112750
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000007",
+        "stage_name": "Assessment Offered",
+        "opportunity_count": 1,
+        "total_value_usd": 140000,
+        "weighted_value_usd": 70000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000008",
+        "stage_name": "Pilot Proposed",
+        "opportunity_count": 1,
+        "total_value_usd": 160000,
+        "weighted_value_usd": 96000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000009",
+        "stage_name": "Pilot Active",
+        "opportunity_count": 1,
+        "total_value_usd": 180000,
+        "weighted_value_usd": 126000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000010",
+        "stage_name": "Proposal Sent",
+        "opportunity_count": 2,
+        "total_value_usd": 325000,
+        "weighted_value_usd": 243750
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000011",
+        "stage_name": "Negotiation",
+        "opportunity_count": 2,
+        "total_value_usd": 370000,
+        "weighted_value_usd": 314500
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000012",
+        "stage_name": "Contract Review",
+        "opportunity_count": 1,
+        "total_value_usd": 240000,
+        "weighted_value_usd": 216000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000013",
+        "stage_name": "Won",
+        "opportunity_count": 2,
+        "total_value_usd": 435000,
+        "weighted_value_usd": 435000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000014",
+        "stage_name": "Lost",
+        "opportunity_count": 1,
+        "total_value_usd": 280000,
+        "weighted_value_usd": 56000
+      },
+      {
+        "stage_id": "30000000-0000-4000-8000-000000000015",
+        "stage_name": "On Hold",
+        "opportunity_count": 1,
+        "total_value_usd": 300000,
+        "weighted_value_usd": 0
+      }
+    ],
+    "priority_opportunities": [
+      {
+        "opportunity_id": "60000000-0000-4000-8000-000000000011",
+        "name": "Apex security negotiation",
+        "stage_id": "30000000-0000-4000-8000-000000000011",
+        "stage_name": "Negotiation",
+        "company_id": "10000000-0000-4000-8000-000000000011",
+        "priority_score": 76,
+        "weighted_value_usd": 187000,
+        "days_in_current_stage": 35,
+        "reason": "high weighted value, strong ICP fit, overdue follow-up"
+      },
+      {
+        "opportunity_id": "60000000-0000-4000-8000-000000000010",
+        "name": "Vector learning proposal",
+        "stage_id": "30000000-0000-4000-8000-000000000010",
+        "stage_name": "Proposal Sent",
+        "company_id": "10000000-0000-4000-8000-000000000010",
+        "priority_score": 76,
+        "weighted_value_usd": 150000,
+        "days_in_current_stage": 34,
+        "reason": "high weighted value, strong ICP fit, overdue follow-up"
+      },
+      {
+        "opportunity_id": "60000000-0000-4000-8000-000000000012",
+        "name": "Beacon retail contract review",
+        "stage_id": "30000000-0000-4000-8000-000000000012",
+        "stage_name": "Contract Review",
+        "company_id": "10000000-0000-4000-8000-000000000012",
+        "priority_score": 74,
+        "weighted_value_usd": 216000,
+        "days_in_current_stage": 36,
+        "reason": "high weighted value, overdue follow-up"
+      },
+      {
+        "opportunity_id": "60000000-0000-4000-8000-000000000009",
+        "name": "Meridian bio research pilot",
+        "stage_id": "30000000-0000-4000-8000-000000000009",
+        "stage_name": "Pilot Active",
+        "company_id": "10000000-0000-4000-8000-000000000009",
+        "priority_score": 70,
+        "weighted_value_usd": 126000,
+        "days_in_current_stage": 33,
+        "reason": "high weighted value, strong ICP fit, inactive opportunity"
+      },
+      {
+        "opportunity_id": "60000000-0000-4000-8000-000000000008",
+        "name": "Summit legal privacy monitoring",
+        "stage_id": "30000000-0000-4000-8000-000000000008",
+        "stage_name": "Pilot Proposed",
+        "company_id": "10000000-0000-4000-8000-000000000008",
+        "priority_score": 62,
+        "weighted_value_usd": 96000,
+        "days_in_current_stage": 32,
+        "reason": "overdue follow-up"
+      }
+    ]
+  }
+}

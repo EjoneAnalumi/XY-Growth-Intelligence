@@ -101,6 +101,9 @@ def update_contact(
     repository: Repository,
     current_user: WriterUser,
 ) -> ContactResponse:
+    for field in ("company_id", "first_name", "last_name", "channels", "is_primary"):
+        if field in payload.model_fields_set and getattr(payload, field) is None:
+            raise HTTPException(422, f"{field} cannot be null.")
     contact = repository.update_contact(
         contact_id, payload.model_dump(exclude_unset=True), current_user
     )

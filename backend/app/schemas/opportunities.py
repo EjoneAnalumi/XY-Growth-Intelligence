@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class OpportunityCreate(BaseModel):
     model_config = ConfigDict(
+        extra="forbid",
         json_schema_extra={
             "examples": [
                 {
@@ -15,7 +16,7 @@ class OpportunityCreate(BaseModel):
                     "stage_id": "30000000-0000-4000-8000-000000000002",
                     "name": "Enterprise Security Audit & SOC Setup",
                     "service": "Managed SOC",
-                    "value_usd": 45000.00,
+                    "value_eur": 45000.00,
                     "probability": 60,
                     "expected_close_date": "2026-09-30",
                     "need": "Compliance requirement for ISO 27001",
@@ -30,7 +31,7 @@ class OpportunityCreate(BaseModel):
     stage_id: UUID
     name: Annotated[str, Field(min_length=1, max_length=255)]
     service: Annotated[str | None, Field(max_length=120)] = None
-    value_usd: Annotated[float | None, Field(ge=0)] = 0.0
+    value_eur: Annotated[float | None, Field(ge=0)] = 0.0
     probability: Annotated[int | None, Field(ge=0, le=100)] = 0
     expected_close_date: date | None = None
     owner_id: UUID | None = None
@@ -44,11 +45,12 @@ class OpportunityCreate(BaseModel):
 
 class OpportunityUpdate(BaseModel):
     model_config = ConfigDict(
+        extra="forbid",
         json_schema_extra={
             "examples": [
                 {
                     "stage_id": "30000000-0000-4000-8000-000000000003",
-                    "value_usd": 50000.00,
+                    "value_eur": 50000.00,
                     "probability": 80,
                     "next_action": "Send final commercial proposal",
                 }
@@ -60,7 +62,7 @@ class OpportunityUpdate(BaseModel):
     contact_id: UUID | None = None
     stage_id: UUID | None = None
     service: Annotated[str | None, Field(max_length=120)] = None
-    value_usd: Annotated[float | None, Field(ge=0)] = None
+    value_eur: Annotated[float | None, Field(ge=0)] = None
     probability: Annotated[int | None, Field(ge=0, le=100)] = None
     expected_close_date: date | None = None
     owner_id: UUID | None = None
@@ -78,8 +80,9 @@ class OpportunityStageMove(BaseModel):
 
 
 class OpportunityResponse(OpportunityCreate):
+    model_config = ConfigDict(extra="ignore")
     id: UUID
-    weighted_value_usd: float | None = 0.0
+    weighted_value_eur: float | None = 0.0
     current_stage_entered_at: datetime | None = None
     days_in_current_stage: int = 0
     created_by: UUID | None = None

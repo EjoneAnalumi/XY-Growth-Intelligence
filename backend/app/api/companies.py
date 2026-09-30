@@ -14,6 +14,7 @@ from app.schemas.companies import (
 from app.schemas.icp import IcpScoreResponse
 from app.schemas.users import CurrentUser
 from app.scoring.icp import IcpScoringEngine
+from app.services.administration import administration_repository
 from app.services.company_csv import CompanyCsvError, export_company_csv, parse_company_csv
 from app.services.company_csv_repository import (
     CompanyCsvDuplicateError,
@@ -21,6 +22,7 @@ from app.services.company_csv_repository import (
     get_postgres_company_csv_repository,
 )
 from app.services.growth_repository import InMemoryGrowthRepository, get_growth_repository
+from app.services.recommendations import recommend_services
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 
@@ -30,6 +32,17 @@ WriterUser = Annotated[
 ]
 ReaderUser = Annotated[CurrentUser, Depends(get_current_user)]
 Repository = Annotated[InMemoryGrowthRepository, Depends(get_growth_repository)]
+
+
+@router.get("/{company_id}/recommendations")
+def company_recommendations(company_id: UUID, repository: Repository, current_user: ReaderUser):
+    company = repository.get_company(company_id)
+    if company is None:
+        raise HTTPException(404, "Company not found.")
+    score = repository.get_latest_icp_score(company_id)
+    if score is None:
+        raise HTTPException(409, "Calculate an ICP score before requesting recommendations.")
+    return recommend_services(score, administration_repository.list_services())
 
 
 @router.get("", response_model=CompanyListResponse)
@@ -137,7 +150,9 @@ def export_companies(repository: Repository, current_user: ReaderUser) -> Respon
             postgres_repository.export_companies()
             if postgres_repository is not None
             else [
-                CompanyCreate.model_validate(company.model_dump())
+                CompanyCreate.model_validate(
+                    company.model_dump(include=set(CompanyCreate.model_fields))
+                )
                 for company in repository.list_companies(100000, 0)
             ]
         )
@@ -174,6 +189,17 @@ def update_company(
     repository: Repository,
     current_user: WriterUser,
 ) -> CompanyResponse:
+    for field in (
+        "name",
+        "status",
+        "lifecycle_stage",
+        "cloud_usage",
+        "regulatory_context",
+        "tags",
+        "strategic_importance",
+    ):
+        if field in payload.model_fields_set and getattr(payload, field) is None:
+            raise HTTPException(422, f"{field} cannot be null.")
     company = repository.update_company(
         company_id, payload.model_dump(exclude_unset=True), current_user
     )
@@ -214,7 +240,7 @@ def calculate_company_icp(
     if company is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found.")
 
-    score = IcpScoringEngine().calculate(company)
+    score = IcpScoringEngine().calculate(company, administration_repository.get_weights())
     result = repository.save_icp_score(company_id, score, current_user)
 
     if result is None:

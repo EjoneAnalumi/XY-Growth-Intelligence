@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -5,8 +7,8 @@ class PipelineStageSummary(BaseModel):
     stage_id: str
     stage_name: str
     opportunity_count: int
-    total_value_usd: float
-    weighted_value_usd: float
+    total_value_eur: float
+    weighted_value_eur: float
 
 
 class PriorityOpportunitySummary(BaseModel):
@@ -16,9 +18,12 @@ class PriorityOpportunitySummary(BaseModel):
     stage_name: str
     company_id: str
     priority_score: int
-    weighted_value_usd: float
+    weighted_value_eur: float
     days_in_current_stage: int
     reason: str
+    owner_id: str | None = None
+    next_action: str | None = None
+    due_at: datetime | None = None
 
 
 class DashboardSummaryResponse(BaseModel):
@@ -26,8 +31,8 @@ class DashboardSummaryResponse(BaseModel):
     open_opportunities: int
     won_opportunities: int
     lost_opportunities: int
-    pipeline_value_usd: float
-    weighted_pipeline_value_usd: float
+    pipeline_value_eur: float
+    weighted_pipeline_value_eur: float
     high_priority_opportunities: int
     inactive_opportunities: int
     open_tasks: int

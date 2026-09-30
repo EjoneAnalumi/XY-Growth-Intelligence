@@ -40,6 +40,8 @@ class ContactCreate(BaseModel):
         Field(pattern="^(buyer|champion|influencer|procurement|unknown)$"),
     ] = None
     channels: list[str] = []
+    last_contact_at: datetime | None = None
+    next_follow_up_at: datetime | None = None
     is_primary: bool = False
 
 
@@ -53,6 +55,17 @@ class ContactResponse(ContactCreate):
 
 
 class ContactUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    phone: Annotated[str | None, Field(max_length=80)] = None
+    department: Annotated[str | None, Field(max_length=120)] = None
+    role: Annotated[str | None, Field(max_length=160)] = None
+    influence: Annotated[str | None, Field(pattern="^(high|medium|low|unknown)$")] = None
+    decision_category: Annotated[
+        str | None, Field(pattern="^(buyer|champion|influencer|procurement|unknown)$")
+    ] = None
+    channels: list[str] | None = None
+    last_contact_at: datetime | None = None
+    next_follow_up_at: datetime | None = None
     company_id: UUID | None = None
     first_name: Annotated[str | None, Field(min_length=1, max_length=100)] = None
     last_name: Annotated[str | None, Field(min_length=1, max_length=100)] = None

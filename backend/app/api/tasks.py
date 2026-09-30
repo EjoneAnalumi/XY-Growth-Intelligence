@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,6 +10,7 @@ from app.services.pipeline_repository import (
     InMemoryPipelineRepository,
     get_pipeline_repository,
 )
+from app.services.task_assignment import validate_assignee
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -26,9 +28,14 @@ def create_task(
     repository: Repository,
     current_user: WriterUser,
 ) -> TaskResponse:
+    values = data.model_dump(exclude_none=True, mode="json")
+    values["owner_id"] = data.owner_id if "owner_id" in data.model_fields_set else current_user.id
+    validate_assignee(values.get("owner_id"))
+    if values.get("status") == "completed":
+        values["completed_at"] = datetime.now(UTC)
     return repository.create_record(
         "tasks",
-        data.model_dump(exclude_none=True, mode="json"),
+        values,
         current_user,
     )
 
@@ -61,12 +68,35 @@ def update_task(
     task_id: str,
     data: TaskUpdate,
     repository: Repository,
-    current_user: WriterUser,
+    current_user: ReaderUser,
 ) -> TaskResponse:
+    values = data.model_dump(exclude_unset=True, mode="json")
+    current = repository.get_record("tasks", task_id)
+    if current is None:
+        raise HTTPException(status_code=404, detail="Task not found.")
+    if current_user.role == "technical_analyst":
+        if str(current.get("owner_id")) != str(current_user.id) or set(values) - {
+            "status",
+            "outcome",
+        }:
+            raise HTTPException(
+                403, "Analysts may update status and outcome only on their assigned tasks."
+            )
+    elif current_user.role not in {"admin", "management", "business_development"}:
+        raise HTTPException(403, "Your role cannot update tasks.")
+    if any(values.get(key) is None for key in ("title", "status", "priority") if key in values):
+        raise HTTPException(422, "Task title, status and priority cannot be null.")
+    values.pop("completed_at", None)
+    if "owner_id" in values:
+        validate_assignee(values["owner_id"])
+    if values.get("status") == "completed":
+        values["completed_at"] = current.get("completed_at") or datetime.now(UTC)
+    elif values.get("status") in {"open", "in_progress", "cancelled"}:
+        values["completed_at"] = None
     task = repository.update_record(
         "tasks",
         task_id,
-        data.model_dump(exclude_none=True, mode="json"),
+        values,
         current_user,
     )
 

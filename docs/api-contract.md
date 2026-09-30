@@ -4,6 +4,32 @@ This file records request and response examples before dependent frontend screen
 
 Breaking API changes require a Yellow decision and same-day update here.
 
+## Review changes — 29-09-2026
+
+All monetary API/CSV fields use EUR: `annual_revenue_eur`, `value_eur`,
+`weighted_value_eur`, `pipeline_value_eur`, `weighted_pipeline_value_eur` and
+`total_value_eur`. Apply all migrations before starting the backend.
+
+- `POST /tasks`: omit `owner_id` to assign to the creator; send null for unassigned.
+  Read Only/inactive/nonexistent assignees return 422. Responses include `assigned_by`
+  and `assigned_at`; these change when the owner changes.
+- `PATCH /tasks/{id}`: Admin/Management/BD retain task editing. Analysts can update
+  only `status` and `outcome` on their own assigned tasks; other writes return 403.
+- `POST /notes`: Analysts can create shared team notes. Analyst PATCH/DELETE requires
+  authorship; Admin/Management/BD retain existing access. Read Only cannot write notes.
+- `GET /inbox`: authenticated per-user `unread_task_ids`, `unread_note_ids`,
+  `overdue_tasks`, `due_soon_tasks` (24 hours). Counts exclude archived records and
+  completed/cancelled tasks. Own notes are excluded; changed shared notes become unread.
+- `POST /inbox/{kind}/{record_id}/read`: kind is `tasks` or `notes`; records the
+  current user's receipt. Task acknowledgement requires ownership. Returns `{"read":true}`;
+  missing/archived records return 404 and another user's task returns 403.
+- `POST /reports/{id}/archive`: Admin/Management can archive any non-archived report,
+  independently of internal sharing. Approval and download restrictions remain enforced.
+
+See [review evidence](week4-day20-review-usability-evidence.md) for role boundaries,
+cleanup, validation and UI behavior. The older endpoint examples below retain their
+historical development-stage notes where explicitly described.
+
 ## Current Implemented Endpoint
 
 ### Health
@@ -290,7 +316,7 @@ Valid request:
   "stage_id": "30000000-0000-4000-8000-000000000001",
   "name": "Managed SOC Pilot",
   "service": "Managed SOC",
-  "value_usd": 50000,
+  "value_eur": 50000,
   "probability": 40,
   "expected_close_date": "2026-09-30",
   "need": "Compliance-driven monitoring requirement",
@@ -308,9 +334,9 @@ Successful response includes calculated weighted value:
   "stage_id": "30000000-0000-4000-8000-000000000001",
   "name": "Managed SOC Pilot",
   "service": "Managed SOC",
-  "value_usd": 50000,
+  "value_eur": 50000,
   "probability": 40,
-  "weighted_value_usd": 20000,
+  "weighted_value_eur": 20000,
   "expected_close_date": "2026-09-30",
   "owner_id": null,
   "need": "Compliance-driven monitoring requirement",
@@ -337,7 +363,7 @@ Valid request:
 
 ```json
 {
-  "value_usd": 60000,
+  "value_eur": 60000,
   "probability": 50,
   "next_action": "Send pilot checklist"
 }
@@ -511,8 +537,8 @@ Valid response shape:
   "open_opportunities": 2,
   "won_opportunities": 1,
   "lost_opportunities": 1,
-  "pipeline_value_usd": 140000,
-  "weighted_pipeline_value_usd": 80000,
+  "pipeline_value_eur": 140000,
+  "weighted_pipeline_value_eur": 80000,
   "high_priority_opportunities": 1,
   "inactive_opportunities": 1,
   "open_tasks": 2,
@@ -525,8 +551,8 @@ Valid response shape:
       "stage_id": "30000000-0000-4000-8000-000000000001",
       "stage_name": "Identified",
       "opportunity_count": 1,
-      "total_value_usd": 100000,
-      "weighted_value_usd": 50000
+      "total_value_eur": 100000,
+      "weighted_value_eur": 50000
     }
   ],
   "priority_opportunities": [
@@ -537,7 +563,7 @@ Valid response shape:
       "stage_name": "Proposal Sent",
       "company_id": "10000000-0000-4000-8000-000000000001",
       "priority_score": 75,
-      "weighted_value_usd": 160000,
+      "weighted_value_eur": 160000,
       "days_in_current_stage": 0,
       "reason": "high weighted value, strong ICP fit, follow-up due this week"
     }
@@ -547,8 +573,8 @@ Valid response shape:
 
 Metric rules:
 
-- `pipeline_value_usd` counts active opportunities that are not in Won or Lost stages.
-- `weighted_pipeline_value_usd` is `value_usd * probability / 100` for active open opportunities.
+- `pipeline_value_eur` counts active opportunities that are not in Won or Lost stages.
+- `weighted_pipeline_value_eur` is `value_eur * probability / 100` for active open opportunities.
 - `days_in_current_stage` is calculated from the latest stage movement into the current stage, or from `created_at` if the opportunity never moved.
 - `overdue_tasks` excludes completed and cancelled tasks.
 - `due_this_week_tasks` excludes completed and cancelled tasks and uses the next seven days.
@@ -788,3 +814,13 @@ the same envelope with the safe message `Internal server error.` and are logged 
 - `POST /security-scans/snapshot`: implemented for approved demo DNS/TLS checks with timeout handling.
 - `GET/POST /reports`: implemented for durable generation, review, approval, internal sharing,
   archive, and approved-only download workflow.
+
+
+### Note deletion follow-up (29-09-2026)
+
+`DELETE /notes/{id}` removes the note for everyone using the existing soft-delete
+storage mechanism. Only its author or Admin is allowed; other roles receive 403.
+`DELETE /notes/{id}/for-me` returns `{ "deleted_for_me": true }` and persistently hides
+that note only for the authenticated user, including Read Only. Repeating it is safe.
+Dismissals are excluded from note lists, note detail (404), profile timelines and unread
+counts. Other users retain access. Later edits do not undo a personal dismissal.

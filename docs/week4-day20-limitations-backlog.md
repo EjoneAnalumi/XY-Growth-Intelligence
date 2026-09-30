@@ -1,5 +1,7 @@
 # Week 4 Day 20 Known Limitations and Next-Phase Backlog
 
+> Update 28-09-2026: this is historical release evidence. See [MVP completion evidence](week4-day20-mvp-completion-evidence.md) for the implemented follow-up and current remaining work.
+
 Date: 24-09-2026
 Branch: `feature/week4-day20-final-handover`
 

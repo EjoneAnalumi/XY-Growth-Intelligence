@@ -4,6 +4,17 @@ Internal Growth Intelligence MVP for the XY CYBER one-month internship project. 
 
 ## Final internship handover
 
+Start with the [submission readiness review, 30-09-2026](docs/week4-day20-submission-readiness.md)
+for current checks and outstanding release steps. The latest work is on the MVP completion feature branch; the existing release tag predates it.
+
+The latest review follow-up covers EUR, personal task/note unread counts, sorting and report usability:
+[review evidence, 29-09-2026](docs/week4-day20-review-usability-evidence.md).
+
+The implementation baseline and earlier validation record is
+[MVP completion evidence, 28-09-2026](docs/week4-day20-mvp-completion-evidence.md).
+It supersedes the functional gap status in the earlier handover below; the earlier
+release and its evidence remain historical records.
+
 Start with [Day 20 handover and evidence](docs/week4-day20-handover-evidence.md),
 [operator/demo guide](docs/week4-day20-demo-user-guide.md), and
 [limitations and prioritized backlog](docs/week4-day20-limitations-backlog.md).
@@ -12,7 +23,11 @@ brief deviations explicitly and does not authorize production deployment.
 
 ## Current MVP status
 
-Implemented flows include company/contact management, opportunity pipeline views, activities and tasks, ICP scoring, dashboard metrics, safe snapshot checks, report workflow, and company CSV import/export.
+Implemented flows include editable company/contact profiles and timelines, searchable lists,
+opportunity pipelines, standalone tasks, configurable ICP scoring, backend service recommendations,
+management analytics, safe mock snapshots, branded PDF reports, and CSV exchange for companies,
+contacts, opportunities, activities and tasks. Administration includes ICP weights, service
+catalogue, stages, users and audit browsing.
 
 Important current limitations:
 
@@ -32,7 +47,7 @@ Install these before cloning:
 
 - Git
 - Python 3.12
-- Node.js LTS with npm
+- Node.js 22 LTS (22.12 or newer) with npm
 - Docker Desktop configured for Linux containers
 
 The commands below are tested with Windows PowerShell. Use `npm.cmd` and `npx.cmd` because PowerShell may block the `npm.ps1` and `npx.ps1` shims.

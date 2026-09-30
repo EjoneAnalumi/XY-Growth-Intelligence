@@ -1,0 +1,40 @@
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, expect, it, vi } from "vitest";
+import SecurityScansPage from "@/app/(protected)/security-scans/page";
+const mocks = vi.hoisted(() => ({ scan: vi.fn(), generate: vi.fn(), push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
+vi.mock("@/lib/api/security-scans", () => ({ runSnapshotScan: mocks.scan }));
+vi.mock("@/lib/api/reports", () => ({ generateReport: mocks.generate }));
+const snapshot = { id: "scan-1", domain: "demo.example", approved: true, startedAt: "2026-09-29T20:04:43Z", completedAt: "2026-09-29T20:04:44Z", durationMs: 1000, results: [] };
+afterEach(() => { cleanup(); vi.resetAllMocks(); window.history.replaceState({}, "", "/"); });
+it("creates and opens the draft when starting from Reports", async () => {
+  window.history.replaceState({}, "", "/security-scans?create_report=1");
+  mocks.scan.mockResolvedValue(snapshot); mocks.generate.mockResolvedValue({ id: "report-1" });
+  render(<SecurityScansPage />);
+  await userEvent.click(await screen.findByRole("button", { name: "Run snapshot and create report" }));
+  await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/reports?report_id=report-1"));
+  expect(mocks.generate).toHaveBeenCalledExactlyOnceWith("scan-1");
+});
+it("shows local scan times and creates a report only on request for standalone scans", async () => {
+  mocks.scan.mockResolvedValue(snapshot); mocks.generate.mockResolvedValue({ id: "report-1" });
+  render(<SecurityScansPage />);
+  await userEvent.click(screen.getByRole("button", { name: "Run snapshot scan" }));
+  await screen.findByText(/Snapshot saved/);
+  expect(mocks.generate).not.toHaveBeenCalled();
+  const time = document.querySelector('time[datetime="2026-09-29T20:04:43Z"]');
+  expect(time).toHaveTextContent(new Date(snapshot.startedAt).toLocaleString());
+  expect(screen.queryByText(snapshot.startedAt)).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Create report from this snapshot" }));
+  await waitFor(() => expect(mocks.push).toHaveBeenCalled());
+});
+it("preserves a successful scan when draft creation fails and retries without rescanning", async () => {
+  window.history.replaceState({}, "", "/security-scans?create_report=1");
+  mocks.scan.mockResolvedValue(snapshot); mocks.generate.mockRejectedValueOnce(new Error("Temporarily unavailable")).mockResolvedValueOnce({ id: "report-2" });
+  render(<SecurityScansPage />);
+  await userEvent.click(await screen.findByRole("button", { name: "Run snapshot and create report" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Scan saved, but the report could not be created");
+  await userEvent.click(screen.getByRole("button", { name: "Create report from this snapshot" }));
+  await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/reports?report_id=report-2"));
+  expect(mocks.scan).toHaveBeenCalledTimes(1);
+});

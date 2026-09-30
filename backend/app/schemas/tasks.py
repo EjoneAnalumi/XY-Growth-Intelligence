@@ -42,6 +42,8 @@ class TaskUpdate(BaseModel):
 
 
 class TaskResponse(TaskCreate):
+    assigned_by: UUID | None = None
+    assigned_at: datetime | None = None
     id: UUID
     outcome: str | None = None
     completed_at: datetime | None = None

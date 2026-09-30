@@ -11,9 +11,9 @@ class Opportunity:
         name: str,
         contact_id: UUID | None = None,
         service: str | None = None,
-        value_usd: float | None = None,
+        value_eur: float | None = None,
         probability: int = 0,
-        weighted_value_usd: float | None = None,
+        weighted_value_eur: float | None = None,
         expected_close_date: date | None = None,
         owner_id: UUID | None = None,
         need: str | None = None,
@@ -34,9 +34,9 @@ class Opportunity:
         self.stage_id = stage_id
         self.name = name
         self.service = service
-        self.value_usd = value_usd
+        self.value_eur = value_eur
         self.probability = probability
-        self.weighted_value_usd = weighted_value_usd
+        self.weighted_value_eur = weighted_value_eur
         self.expected_close_date = expected_close_date
         self.owner_id = owner_id
         self.need = need

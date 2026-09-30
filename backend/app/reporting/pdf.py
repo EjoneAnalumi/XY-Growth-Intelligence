@@ -1,83 +1,64 @@
+"""Convert the escaped report HTML to a branded, offline PDF."""
+
 import re
-import zlib
-from html import unescape
-from textwrap import wrap
+from io import BytesIO
+from pathlib import Path
+
+import reportlab
+from xhtml2pdf import pisa
+from xhtml2pdf.files import ResourceAccessPolicy
+
+# ReportLab ships redistributable Bitstream Vera fonts for accented Latin text.
+FONT_DIR = Path(reportlab.__file__).parent / "fonts"
+
+PRINT_CSS = """
+@font-face { font-family: ReportVera; src: url("report-font:regular"); }
+@font-face { font-family: ReportVera; src: url("report-font:bold"); font-weight: bold; }
+@page { size: a4; margin: 18mm; }
+body { font-family: ReportVera; font-size: 10pt; color: #17202a; }
+h1 { font-size: 28pt; color: #0f766e; margin-bottom: 12pt; }
+h2 { font-size: 16pt; color: #0f766e; margin-top: 18pt; margin-bottom: 8pt;
+     -pdf-keep-with-next: true; }
+h3, h4 { font-size: 12pt; -pdf-keep-with-next: true; }
+p { margin: 4pt 0 9pt; line-height: 1.5; }
+.brand { font-size: 12pt; color: #0f766e; font-weight: bold; }
+.confidential { font-size: 9pt; color: #475569; }
+.meta { background-color: #eef7f4; padding: 10pt; }
+.meta span { color: #475569; }
+.finding { margin-top: 12pt; padding: 8pt; border-bottom: 1pt solid #cbd5e1; }
+.badge { font-weight: bold; color: #475569; }
+.severity-high { color: #991b1b; }
+.severity-medium { color: #9a3412; }
+.method, .evidence { font-size: 9pt; }
+.disclaimer { background-color: #fffbeb; padding: 10pt; }
+.footer { color: #64748b; font-size: 8pt; margin-top: 16pt; }
+li { margin-bottom: 5pt; }
+"""
+
+
+def deny_resource(uri: str, relative: str | None = None) -> str:
+    """Never fetch URLs or arbitrary local files while generating a report."""
+    if uri in {"report-font:regular", "report-font:bold"}:
+        return str(FONT_DIR / ("Vera.ttf" if uri.endswith("regular") else "VeraBd.ttf"))
+    raise ValueError("External PDF resources are not permitted.")
 
 
 def render_pdf_bytes(title: str, html: str) -> bytes:
-    source = f"{title}\n\nGenerated from approved HTML report context.\n\n{html}"
-    pages = _page_chunks(_pdf_lines(source))
-    font_object_id = 3 + len(pages) * 2
-    page_object_ids = [3 + index * 2 for index in range(len(pages))]
-    objects = [
-        b"<< /Type /Catalog /Pages 2 0 R >>",
-        (
-            f"<< /Type /Pages /Kids [{' '.join(f'{page_id} 0 R' for page_id in page_object_ids)}] "
-            f"/Count {len(pages)} >>"
-        ).encode(),
-    ]
-    for index, lines in enumerate(pages):
-        page_id = page_object_ids[index]
-        content_id = page_id + 1
-        objects.append(
-            (
-                f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
-                f"/Resources << /Font << /F1 {font_object_id} 0 R >> >> "
-                f"/Contents {content_id} 0 R >>"
-            ).encode()
-        )
-        stream = _page_stream(lines)
-        compressed = zlib.compress(stream)
-        objects.append(
-            b"<< /Length %d /Filter /FlateDecode >>\nstream\n%s\nendstream"
-            % (len(compressed), compressed)
-        )
-    objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
-
-    output = bytearray(b"%PDF-1.4\n")
-    offsets = [0]
-    for index, body in enumerate(objects, start=1):
-        offsets.append(len(output))
-        output.extend(f"{index} 0 obj\n".encode())
-        output.extend(body)
-        output.extend(b"\nendobj\n")
-
-    xref_offset = len(output)
-    output.extend(f"xref\n0 {len(objects) + 1}\n".encode())
-    output.extend(b"0000000000 65535 f \n")
-    for offset in offsets[1:]:
-        output.extend(f"{offset:010d} 00000 n \n".encode())
-
-    output.extend(
-        (
-            f"trailer << /Size {len(objects) + 1} /Root 1 0 R >>\n"
-            f"startxref\n{xref_offset}\n%%EOF\n"
-        ).encode()
+    # Preserve the preview body and replace screen CSS with print-compatible CSS.
+    document = re.sub(r"<style\b[^>]*>.*?</style>", "", html, flags=re.I | re.S)
+    if "</head>" in document:
+        document = document.replace("</head>", f"<style>{PRINT_CSS}</style></head>")
+    else:
+        document = f"<html><head><style>{PRINT_CSS}</style></head><body>{document}</body></html>"
+    output = BytesIO()
+    result = pisa.CreatePDF(
+        document,
+        dest=output,
+        encoding="utf-8",
+        link_callback=deny_resource,
+        context_meta={"title": title, "author": "XY CYBER"},
+        resource_policy=ResourceAccessPolicy(allow_remote=False, base_dir=FONT_DIR),
     )
-    return bytes(output)
-
-
-def _pdf_lines(value: str) -> list[str]:
-    value = re.sub(r"<(?:style|script)[^>]*>.*?</(?:style|script)>", "", value, flags=re.I | re.S)
-    text = re.sub(r"</(?:article|h[1-4]|li|p|ul)>", "\n", value, flags=re.IGNORECASE)
-    text = re.sub(r"<[^>]+>", "", text)
-    lines = []
-    for paragraph in unescape(text).splitlines():
-        cleaned = " ".join(paragraph.split())
-        if cleaned:
-            lines.extend(wrap(cleaned, width=88) or [cleaned])
-    return lines or ["Report content was unavailable."]
-
-
-def _page_chunks(lines: list[str]) -> list[list[str]]:
-    return [lines[index : index + 48] for index in range(0, len(lines), 48)]
-
-
-def _page_stream(lines: list[str]) -> bytes:
-    escaped_lines = [
-        "(" + line.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)") + ") Tj T*"
-        for line in lines
-    ]
-    return ("BT /F1 10 Tf 50 760 Td 14 TL\n" + "\n".join(escaped_lines) + "\nET").encode(
-        "latin-1", errors="replace"
-    )
+    if result.err:
+        raise ValueError("Report PDF could not be rendered.")
+    return output.getvalue()

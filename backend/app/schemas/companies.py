@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class CompanyCreate(BaseModel):
     model_config = ConfigDict(
+        extra="forbid",
         json_schema_extra={
             "examples": [
                 {
@@ -29,12 +30,15 @@ class CompanyCreate(BaseModel):
     company_size: Annotated[str | None, Field(max_length=80)] = None
     employee_range: Annotated[str | None, Field(max_length=80)] = None
     employee_count: Annotated[int | None, Field(ge=0)] = None
-    annual_revenue_usd: Annotated[float | None, Field(ge=0)] = None
+    annual_revenue_eur: Annotated[float | None, Field(ge=0)] = None
     headquarters_city: Annotated[str | None, Field(max_length=120)] = None
     headquarters_country: Annotated[str | None, Field(max_length=120)] = None
     cloud_usage: list[str] = []
     regulatory_context: list[str] = []
     lead_source: Annotated[str | None, Field(max_length=120)] = None
+    owner_id: UUID | None = None
+    next_action: str | None = None
+    strategic_importance: Annotated[int, Field(ge=0, le=5)] = 0
     last_activity_at: datetime | None = None
     next_action_due_at: datetime | None = None
     lifecycle_stage: Annotated[
@@ -48,6 +52,7 @@ class CompanyCreate(BaseModel):
 
 
 class CompanyResponse(CompanyCreate):
+    model_config = ConfigDict(extra="ignore")
     id: UUID
     fit_score: int | None = None
     created_by: UUID | None = None
@@ -57,6 +62,25 @@ class CompanyResponse(CompanyCreate):
 
 
 class CompanyUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    website: Annotated[str | None, Field(max_length=500)] = None
+    company_size: Annotated[str | None, Field(max_length=80)] = None
+    employee_range: Annotated[str | None, Field(max_length=80)] = None
+    employee_count: Annotated[int | None, Field(ge=0)] = None
+    annual_revenue_eur: Annotated[float | None, Field(ge=0)] = None
+    headquarters_city: Annotated[str | None, Field(max_length=120)] = None
+    cloud_usage: list[str] | None = None
+    regulatory_context: list[str] | None = None
+    lead_source: Annotated[str | None, Field(max_length=120)] = None
+    owner_id: UUID | None = None
+    next_action: str | None = None
+    next_action_due_at: datetime | None = None
+    last_activity_at: datetime | None = None
+    tags: list[str] | None = None
+    lifecycle_stage: Annotated[
+        str | None, Field(pattern="^(prospect|qualified|customer|archived)$")
+    ] = None
+    strategic_importance: Annotated[int | None, Field(ge=0, le=5)] = None
     name: Annotated[str | None, Field(min_length=1, max_length=200)] = None
     domain: Annotated[str | None, Field(max_length=255)] = None
     industry: Annotated[str | None, Field(max_length=120)] = None

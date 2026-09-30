@@ -14,9 +14,9 @@ export type Opportunity = {
   stageId: string;
   name: string;
   service: string;
-  valueUsd: number;
+  valueEur: number;
   probability: number;
-  weightedValueUsd: number;
+  weightedValueEur: number;
   expectedCloseDate: string;
   ownerId: string | null;
   need: string;
@@ -40,7 +40,7 @@ export type OpportunityFormValues = {
   stageId: string;
   name: string;
   service: string;
-  valueUsd: string;
+  valueEur: string;
   probability: string;
   expectedCloseDate: string;
   need: string;

@@ -15,7 +15,9 @@ class IcpScore:
 class IcpScoringEngine:
     max_score = 100
 
-    def calculate(self, company: CompanyResponse) -> IcpScore:
+    def calculate(
+        self, company: CompanyResponse, weights: dict[str, int] | None = None
+    ) -> IcpScore:
         explanations = [
             self._score_industry(company),
             self._score_company_size(company),
@@ -26,6 +28,11 @@ class IcpScoringEngine:
             self._score_lead_source(company),
             self._score_lifecycle(company),
         ]
+        if weights is not None:
+            for item in explanations:
+                maximum = weights[item.rule_id]
+                item.points = int(item.points * maximum / item.max_points + 0.5)
+                item.max_points = maximum
         score = sum(item.points for item in explanations)
         return IcpScore(
             score=score,
@@ -81,7 +88,7 @@ class IcpScoringEngine:
         return self._explanation("company_size", "Company size", points, 20, reason)
 
     def _score_revenue(self, company: CompanyResponse) -> IcpRuleExplanation:
-        revenue = company.annual_revenue_usd
+        revenue = company.annual_revenue_eur
 
         if revenue is None:
             points = 5

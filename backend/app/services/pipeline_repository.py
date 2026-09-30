@@ -22,6 +22,7 @@ DEFAULT_PIPELINE_STAGES = [
     ("30000000-0000-4000-8000-000000000015", "On Hold", 150, 0, False, False),
 ]
 
+
 class InMemoryPipelineRepository:
     def __init__(self) -> None:
         self._opportunities: dict[str, dict] = {}
@@ -85,6 +86,9 @@ class InMemoryPipelineRepository:
             "updated_at": now,
         }
 
+        if collection == "tasks" and record.get("owner_id"):
+            record.update(assigned_by=user_id, assigned_at=now)
+
         if collection == "opportunities":
             record = self._with_weighted_value(record)
 
@@ -112,6 +116,16 @@ class InMemoryPipelineRepository:
             "updated_by": current_user.id,
             "updated_at": datetime.now(UTC),
         }
+
+        if (
+            collection == "tasks"
+            and "owner_id" in payload
+            and payload["owner_id"] != current.get("owner_id")
+        ):
+            updated.update(
+                assigned_by=current_user.id if payload["owner_id"] else None,
+                assigned_at=datetime.now(UTC) if payload["owner_id"] else None,
+            )
 
         if collection == "opportunities":
             updated = self._with_weighted_value(updated)
@@ -192,12 +206,16 @@ class InMemoryPipelineRepository:
         ]
         return sorted(records, key=lambda record: record["changed_at"])
 
+    def list_all_stage_history(self) -> list[dict]:
+        return list(self._stage_history.values())
+
     def stage_exists(self, stage_id: str | UUID) -> bool:
         return str(stage_id) in self._pipeline_stages
 
     def get_dashboard_summary(
         self,
         company_fit_scores: dict[str, int | None] | None = None,
+        company_context: dict | None = None,
     ) -> dict:
         now = datetime.now(UTC)
         fit_scores = company_fit_scores or {}
@@ -234,7 +252,9 @@ class InMemoryPipelineRepository:
 
         seven_days_from_now = now + timedelta(days=7)
         overdue_tasks = [
-            task for task in tasks if self._parse_datetime(task.get("due_at")) is not None
+            task
+            for task in tasks
+            if self._parse_datetime(task.get("due_at")) is not None
             and self._parse_datetime(task.get("due_at")) < now
         ]
         due_this_week_tasks = [
@@ -249,6 +269,7 @@ class InMemoryPipelineRepository:
             activities,
             fit_scores,
             now,
+            company_context or {},
         )
         inactive_opportunities = [
             opportunity
@@ -261,10 +282,10 @@ class InMemoryPipelineRepository:
             "open_opportunities": len(open_opportunities),
             "won_opportunities": len(won_opportunities),
             "lost_opportunities": len(lost_opportunities),
-            "pipeline_value_usd": self._sum_money(open_opportunities, "value_usd"),
-            "weighted_pipeline_value_usd": self._sum_money(
+            "pipeline_value_eur": self._sum_money(open_opportunities, "value_eur"),
+            "weighted_pipeline_value_eur": self._sum_money(
                 open_opportunities,
-                "weighted_value_usd",
+                "weighted_value_eur",
             ),
             "high_priority_opportunities": len(
                 [
@@ -296,14 +317,14 @@ class InMemoryPipelineRepository:
         return self._collection(collection).get(record_id)
 
     def _with_weighted_value(self, data: dict) -> dict:
-        value = data.get("value_usd")
+        value = data.get("value_eur")
         probability = data.get("probability")
 
         if value is None or probability is None:
-            data["weighted_value_usd"] = None
+            data["weighted_value_eur"] = None
             return data
 
-        data["weighted_value_usd"] = round(float(value) * int(probability) / 100, 2)
+        data["weighted_value_eur"] = round(float(value) * int(probability) / 100, 2)
         return data
 
     def _with_stage_duration(self, opportunity: dict, now: datetime | None = None) -> dict:
@@ -319,8 +340,7 @@ class InMemoryPipelineRepository:
         histories = [
             history
             for history in self._stage_history.values()
-            if history["opportunity_id"] == opportunity["id"]
-            and history["to_stage_id"] == stage_id
+            if history["opportunity_id"] == opportunity["id"] and history["to_stage_id"] == stage_id
         ]
 
         if not histories:
@@ -385,10 +405,10 @@ class InMemoryPipelineRepository:
                     "stage_id": stage["id"],
                     "stage_name": stage["name"],
                     "opportunity_count": len(stage_opportunities),
-                    "total_value_usd": self._sum_money(stage_opportunities, "value_usd"),
-                    "weighted_value_usd": self._sum_money(
+                    "total_value_eur": self._sum_money(stage_opportunities, "value_eur"),
+                    "weighted_value_eur": self._sum_money(
                         stage_opportunities,
-                        "weighted_value_usd",
+                        "weighted_value_eur",
                     ),
                 }
             )
@@ -402,6 +422,7 @@ class InMemoryPipelineRepository:
         activities: list[dict],
         company_fit_scores: dict[str, int | None],
         now: datetime,
+        company_context: dict,
     ) -> list[dict]:
         prioritized = [
             self._priority_opportunity_summary(
@@ -410,6 +431,7 @@ class InMemoryPipelineRepository:
                 activities,
                 company_fit_scores,
                 now,
+                company_context.get(str(opportunity["company_id"]), {}),
             )
             for opportunity in opportunities
         ]
@@ -418,7 +440,7 @@ class InMemoryPipelineRepository:
             prioritized,
             key=lambda opportunity: (
                 opportunity["priority_score"],
-                opportunity["weighted_value_usd"],
+                opportunity["weighted_value_eur"],
             ),
             reverse=True,
         )
@@ -430,14 +452,56 @@ class InMemoryPipelineRepository:
         activities: list[dict],
         company_fit_scores: dict[str, int | None],
         now: datetime,
+        context: dict,
     ) -> dict:
-        weighted_value = float(opportunity.get("weighted_value_usd") or 0)
+        weighted_value = float(opportunity.get("weighted_value_eur") or 0)
         value_points = min(30, int(weighted_value / 5000))
         fit_points = int((company_fit_scores.get(str(opportunity["company_id"])) or 0) * 0.3)
         task_points = self._task_priority_points(opportunity["id"], tasks, now)
         inactive = self._is_inactive_opportunity(opportunity, tasks, activities, now)
         inactivity_points = 20 if inactive else 0
         priority_score = min(100, value_points + fit_points + task_points + inactivity_points)
+        next_tasks = sorted(
+            [t for t in tasks if t.get("opportunity_id") == opportunity["id"]],
+            key=lambda t: self._parse_datetime(t.get("due_at")) or datetime.max.replace(tzinfo=UTC),
+        )
+        next_task = next_tasks[0] if next_tasks else {}
+        extra_reasons = []
+        strategic = int(context.get("strategic_importance") or 0)
+        if strategic:
+            priority_score += strategic
+            extra_reasons.append(f"strategic importance (+{strategic})")
+        if context.get("snapshot_observations"):
+            priority_score += 5
+            extra_reasons.append(
+                "approved snapshot observations to review (+5; not verified vulnerabilities)"
+            )
+        close_date = opportunity.get("expected_close_date")
+        if (
+            close_date
+            and 0 <= (datetime.fromisoformat(str(close_date)).date() - now.date()).days <= 30
+        ):
+            priority_score += 5
+            extra_reasons.append("expected close within 30 days (+5)")
+        recent = [
+            a
+            for a in activities
+            if a.get("opportunity_id") == opportunity["id"]
+            and now - timedelta(days=14)
+            <= (self._parse_datetime(a.get("occurred_at")) or datetime.min.replace(tzinfo=UTC))
+            <= now
+        ]
+        if recent:
+            priority_score += 5
+            extra_reasons.append("engagement in the last 14 days (+5)")
+        stage = self._pipeline_stages.get(str(opportunity["stage_id"]), {})
+        if (
+            stage.get("default_probability", 0) >= 75
+            and not stage.get("is_won")
+            and not stage.get("is_lost")
+        ):
+            priority_score += 5
+            extra_reasons.append("late pipeline stage (+5)")
 
         return {
             "opportunity_id": opportunity["id"],
@@ -445,15 +509,19 @@ class InMemoryPipelineRepository:
             "stage_id": opportunity["stage_id"],
             "stage_name": self._stage_name(opportunity["stage_id"]),
             "company_id": opportunity["company_id"],
-            "priority_score": priority_score,
-            "weighted_value_usd": round(weighted_value, 2),
+            "priority_score": min(100, priority_score),
+            "owner_id": next_task.get("owner_id") or opportunity.get("owner_id"),
+            "next_action": next_task.get("title") or opportunity.get("next_action"),
+            "due_at": next_task.get("due_at") or opportunity.get("next_action_due_at"),
+            "weighted_value_eur": round(weighted_value, 2),
             "days_in_current_stage": opportunity["days_in_current_stage"],
             "reason": self._priority_reason(
                 weighted_value,
                 fit_points,
                 task_points,
                 inactive,
-            ),
+            )
+            + ("; " + "; ".join(extra_reasons) if extra_reasons else ""),
         }
 
     def _task_priority_points(
@@ -462,9 +530,7 @@ class InMemoryPipelineRepository:
         tasks: list[dict],
         now: datetime,
     ) -> int:
-        opportunity_tasks = [
-            task for task in tasks if task.get("opportunity_id") == opportunity_id
-        ]
+        opportunity_tasks = [task for task in tasks if task.get("opportunity_id") == opportunity_id]
 
         if any(self._is_overdue_task(task, now) for task in opportunity_tasks):
             return 25
@@ -483,7 +549,7 @@ class InMemoryPipelineRepository:
 
         reason = opportunity["reason"]
         return (
-            opportunity["weighted_value_usd"] >= 50000
+            opportunity["weighted_value_eur"] >= 50000
             and "strong ICP fit" in reason
             and (
                 "follow-up due this week" in reason
@@ -506,9 +572,8 @@ class InMemoryPipelineRepository:
         fallback_activity_at = datetime.min.replace(tzinfo=UTC)
         has_recent_activity = any(
             activity.get("opportunity_id") == opportunity["id"]
-            and (
-                self._parse_datetime(activity.get("occurred_at")) or fallback_activity_at
-            ) >= recent_activity_cutoff
+            and (self._parse_datetime(activity.get("occurred_at")) or fallback_activity_at)
+            >= recent_activity_cutoff
             for activity in activities
         )
         has_open_task = any(

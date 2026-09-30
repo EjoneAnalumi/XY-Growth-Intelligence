@@ -1,8 +1,10 @@
 import { apiRequest } from "@/lib/api/client";
+import { allPages } from "@/lib/api/pagination";
 import type { Contact, ContactFormValues } from "@/types/company";
 
 type ContactApiResponse = {
   id: string;
+  created_at?: string;
   company_id: string;
   first_name: string;
   last_name: string;
@@ -11,14 +13,11 @@ type ContactApiResponse = {
   role: string | null;
 };
 
-type ContactListApiResponse = {
-  items: ContactApiResponse[];
-  total: number;
-};
 
 function mapContact(contact: ContactApiResponse): Contact {
   return {
     id: contact.id,
+    createdAt: contact.created_at ?? "",
     companyId: contact.company_id,
     firstName: contact.first_name,
     lastName: contact.last_name,
@@ -28,8 +27,7 @@ function mapContact(contact: ContactApiResponse): Contact {
 }
 
 export async function getContacts(): Promise<Contact[]> {
-  const response = await apiRequest<ContactListApiResponse>("/contacts");
-  return response.items.map(mapContact);
+  return (await allPages<ContactApiResponse>("/contacts")).map(mapContact);
 }
 
 export async function createContact(payload: ContactFormValues): Promise<Contact> {

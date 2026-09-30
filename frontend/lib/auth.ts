@@ -32,12 +32,13 @@ export function getSession(): AuthSession | null {
   try { return JSON.parse(value) as AuthSession; } catch { clearSession(); return null; }
 }
 
-function saveTokenResponse(response: TokenResponse): AuthSession {
+function saveTokenResponse(response: TokenResponse, profile?: AuthProfile): AuthSession {
   const session: AuthSession = {
     accessToken: response.access_token,
     refreshToken: response.refresh_token,
     expiresAt: Date.now() + response.expires_in * 1000,
     email: response.user.email ?? "",
+    profile,
   };
   window.localStorage.setItem(sessionKey, JSON.stringify(session));
   return session;
@@ -65,7 +66,7 @@ export async function getAccessToken(): Promise<string | null> {
     body: JSON.stringify({ refresh_token: session.refreshToken }),
   });
   if (!response.ok) { clearSession(); return null; }
-  return saveTokenResponse(await response.json()).accessToken;
+  return saveTokenResponse(await response.json(), session.profile).accessToken;
 }
 
 export function setProfile(profile: AuthProfile) {

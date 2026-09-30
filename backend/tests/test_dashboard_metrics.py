@@ -39,7 +39,7 @@ def test_dashboard_summary_returns_verified_pipeline_metrics() -> None:
             "contact_id": contact_id,
             "stage_id": identified_stage_id,
             "name": "Known open deal",
-            "value_usd": 100000,
+            "value_eur": 100000,
             "probability": 50,
         },
     )
@@ -50,7 +50,7 @@ def test_dashboard_summary_returns_verified_pipeline_metrics() -> None:
             "company_id": company_id,
             "stage_id": proposal_stage_id,
             "name": "Known proposal deal",
-            "value_usd": 40000,
+            "value_eur": 40000,
             "probability": 75,
         },
     )
@@ -61,7 +61,7 @@ def test_dashboard_summary_returns_verified_pipeline_metrics() -> None:
             "company_id": company_id,
             "stage_id": won_stage_id,
             "name": "Known won deal",
-            "value_usd": 25000,
+            "value_eur": 25000,
             "probability": 100,
         },
     )
@@ -72,7 +72,7 @@ def test_dashboard_summary_returns_verified_pipeline_metrics() -> None:
             "company_id": company_id,
             "stage_id": lost_stage_id,
             "name": "Known lost deal",
-            "value_usd": 80000,
+            "value_eur": 80000,
             "probability": 20,
         },
     )
@@ -120,8 +120,8 @@ def test_dashboard_summary_returns_verified_pipeline_metrics() -> None:
     assert body["open_opportunities"] == 2
     assert body["won_opportunities"] == 1
     assert body["lost_opportunities"] == 1
-    assert body["pipeline_value_usd"] == 140000
-    assert body["weighted_pipeline_value_usd"] == 80000
+    assert body["pipeline_value_eur"] == 140000
+    assert body["weighted_pipeline_value_eur"] == 80000
     assert body["open_tasks"] == 2
     assert body["overdue_tasks"] == 1
     assert body["due_this_week_tasks"] == 1
@@ -134,8 +134,8 @@ def test_dashboard_summary_returns_verified_pipeline_metrics() -> None:
         if summary["stage_id"] == identified_stage_id
     )
     assert identified_summary["opportunity_count"] == 1
-    assert identified_summary["total_value_usd"] == 100000
-    assert identified_summary["weighted_value_usd"] == 50000
+    assert identified_summary["total_value_eur"] == 100000
+    assert identified_summary["weighted_value_eur"] == 50000
 
 
 def test_sales_workflow_updates_dashboard_priority_tasks_and_inactivity() -> None:
@@ -147,7 +147,7 @@ def test_sales_workflow_updates_dashboard_priority_tasks_and_inactivity() -> Non
             "name": "Blue Harbor Finance",
             "industry": "Financial Services",
             "employee_count": 650,
-            "annual_revenue_usd": 75000000,
+            "annual_revenue_eur": 75000000,
             "headquarters_country": "United States",
             "cloud_usage": ["Azure", "AWS"],
             "regulatory_context": ["PCI DSS", "SOX"],
@@ -167,7 +167,7 @@ def test_sales_workflow_updates_dashboard_priority_tasks_and_inactivity() -> Non
             "company_id": company["id"],
             "stage_id": proposal_stage_id,
             "name": "High priority scored deal",
-            "value_usd": 200000,
+            "value_eur": 200000,
             "probability": 80,
         },
     ).json()
@@ -178,7 +178,7 @@ def test_sales_workflow_updates_dashboard_priority_tasks_and_inactivity() -> Non
             "company_id": company["id"],
             "stage_id": identified_stage_id,
             "name": "Inactive early deal",
-            "value_usd": 10000,
+            "value_eur": 10000,
             "probability": 10,
         },
     ).json()
@@ -207,7 +207,9 @@ def test_sales_workflow_updates_dashboard_priority_tasks_and_inactivity() -> Non
     assert body["inactive_opportunities"] == 1
     assert body["high_priority_opportunities"] == 1
     assert body["priority_opportunities"][0]["opportunity_id"] == priority_opportunity["id"]
-    assert body["priority_opportunities"][0]["priority_score"] == 75
+    # Value 30 + ICP 30 + due follow-up 15 + late stage 5.
+    assert body["priority_opportunities"][0]["priority_score"] == 80
+    assert "late pipeline stage (+5)" in body["priority_opportunities"][0]["reason"]
     assert "strong ICP fit" in body["priority_opportunities"][0]["reason"]
     assert "follow-up due this week" in body["priority_opportunities"][0]["reason"]
 
@@ -232,7 +234,7 @@ def test_opportunity_response_includes_stage_duration() -> None:
             "company_id": company_id,
             "stage_id": identified_stage_id,
             "name": "Aged stage deal",
-            "value_usd": 10000,
+            "value_eur": 10000,
             "probability": 25,
         },
     ).json()

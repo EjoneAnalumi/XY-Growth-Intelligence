@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixture-cleanup";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -38,6 +39,10 @@ test("real login, CRM, pipeline, follow-up, snapshot, approval and PDF", async (
   // Obtain the signed-in token solely for independent read-only API comparisons.
   const token = await page.evaluate(() => JSON.parse(localStorage.getItem("xy-growth-intelligence:supabase-session")!).accessToken);
   const headers = { Authorization: `Bearer ${token}` };
+  await page.goto("/reports");
+  await expect(page.getByRole("button", { name: "Download", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Submit for review", exact: true })).toHaveCount(0);
+  await expect(page.getByText("Preview reports", { exact: true })).toBeVisible();
   const before = await (await page.request.get(`${api}/dashboard/summary`, { headers })).json();
   await page.goto("/companies");
   await page.getByRole("button", { name: "Add Company", exact: true }).click();
@@ -46,6 +51,7 @@ test("real login, CRM, pipeline, follow-up, snapshot, approval and PDF", async (
   await page.getByLabel("Industry", { exact: true }).fill("Technology");
   await page.getByLabel("Country", { exact: true }).fill("Germany");
   const company = await saved(page, "/companies", () => page.getByRole("button", { name: "Save company", exact: true }).click());
+  await expect(page.getByRole("article").filter({ hasText: companyName }).locator("time")).toBeVisible();
   await page.getByLabel("Company for ICP scoring").selectOption(company.id);
   await saved(page, `/companies/${company.id}/calculate-icp`, () => page.getByRole("button", { name: "Calculate", exact: true }).click());
   await shot(page, "02-company-icp");
@@ -57,11 +63,12 @@ test("real login, CRM, pipeline, follow-up, snapshot, approval and PDF", async (
   await page.getByLabel("Email", { exact: true }).fill(`reviewer-${suffix}@example.test`);
   await page.getByLabel("Role", { exact: true }).fill("champion");
   await saved(page, "/contacts", () => page.getByRole("button", { name: "Save contact", exact: true }).click());
+  await expect(page.getByRole("article").filter({ hasText: `reviewer-${suffix}@example.test` }).locator("time")).toBeVisible();
   await page.goto("/opportunities");
   await page.getByRole("button", { name: "New Opportunity", exact: true }).click();
   await page.getByLabel("Company", { exact: true }).selectOption(company.id);
   await page.getByLabel("Opportunity name", { exact: true }).fill(opportunityName);
-  await page.getByLabel("Value USD", { exact: true }).fill("10000");
+  await page.getByLabel("Value EUR", { exact: true }).fill("10000");
   await page.getByLabel("Probability", { exact: true }).fill("50");
   const opportunity = await saved(page, "/opportunities", () => page.getByRole("button", { name: "Create opportunity", exact: true }).click());
   const move = page.getByRole("combobox", { name: `Move ${opportunityName} to another stage` });
@@ -79,7 +86,7 @@ test("real login, CRM, pipeline, follow-up, snapshot, approval and PDF", async (
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "Growth Intelligence dashboard" })).toBeVisible();
   const after = await (await page.request.get(`${api}/dashboard/summary`, { headers })).json();
-  expect(after.pipeline_value_usd - before.pipeline_value_usd).toBe(10000);
+  expect(after.pipeline_value_eur - before.pipeline_value_eur).toBe(10000);
   expect(after.activities_count - before.activities_count).toBe(1);
   expect(after.overdue_tasks - before.overdue_tasks).toBe(1);
   await writeFile(path.join(evidence, "dashboard-comparison.json"), JSON.stringify({ before, after }, null, 2));
@@ -95,7 +102,7 @@ test("real login, CRM, pipeline, follow-up, snapshot, approval and PDF", async (
   await page.goto(`/reports?security_scan_id=${scan.id}`);
   const report = await saved(page, "/reports/generate", () => page.getByRole("button", { name: "Generate from snapshot", exact: true }).click());
   const reportCard = page.locator("article").filter({ hasText: companyName });
-  await saved(page, `/reports/${report.id}/review`, () => reportCard.getByRole("button", { name: "Review", exact: true }).click());
+  await saved(page, `/reports/${report.id}/review`, () => reportCard.getByRole("button", { name: "Submit for review", exact: true }).click());
   await saved(page, `/reports/${report.id}/approve`, () => reportCard.getByRole("button", { name: "Approve", exact: true }).click());
   const downloading = page.waitForEvent("download");
   await reportCard.getByRole("button", { name: "Download", exact: true }).click();
@@ -110,7 +117,7 @@ test("real login, CRM, pipeline, follow-up, snapshot, approval and PDF", async (
   const denied = await page.request.post(`${api}/companies`, { headers: { Authorization: `Bearer ${readonlyToken}` }, data: { name: "Denied Synthetic" } });
   expect(denied.status()).toBe(403);
   await page.goto("/reports");
-  await expect(page.getByRole("button", { name: "Download", exact: true }).first()).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Download", exact: true })).toHaveCount(0);
   await shot(page, "07-read-only-permissions");
 });
 

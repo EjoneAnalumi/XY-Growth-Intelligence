@@ -1,8 +1,27 @@
 from io import BytesIO
 
+import pytest
 from app.reporting.assembly import assemble_report_html
 from app.reporting.pdf import render_pdf_bytes
 from pypdf import PdfReader
+
+
+def test_pdf_embeds_fonts_and_preserves_accented_company_names():
+    pdf = PdfReader(
+        BytesIO(
+            render_pdf_bytes("Synthetic résumé", "<h1>XY CYBER</h1><p>Société Zürich – façade</p>")
+        )
+    )
+    text = " ".join(page.extract_text() for page in pdf.pages)
+    assert "Société Zürich" in text
+    assert "façade" in text
+    fonts = pdf.pages[0]["/Resources"]["/Font"]
+    assert any("Vera" in str(font.get_object().get("/BaseFont")) for font in fonts.values())
+
+
+def test_pdf_rejects_external_assets():
+    with pytest.raises(ValueError, match="External PDF resources"):
+        render_pdf_bytes("Synthetic", '<img src="http://127.0.0.1/private" />')
 
 
 def test_required_report_sections_and_unknown_coverage_survive_pdf_conversion() -> None:

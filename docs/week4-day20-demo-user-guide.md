@@ -1,7 +1,7 @@
 # Week 4 Day 20 Operator Guide and Final Demonstration
 
-Date: 24-09-2026
-Branch: `feature/week4-day20-final-handover`
+Date: 30-09-2026
+Branch: `feature/week4-day20-mvp-completion`
 
 ## Before the demonstration
 
@@ -17,21 +17,24 @@ third-party domain, sends an email externally, or deploys publicly.
 | 0?1 min | Show architecture and problem | One internal prospect-to-report workflow; Python API, Supabase Auth/RLS/Storage, Next.js |
 | 1?3 min | Sign in as Business Development; Companies ? Add Company; Contacts ? Add Contact | Fictional name and `.example` domain; link contact to company; refresh to confirm persistence |
 | 3?5 min | Select company in ICP Score Breakdown ? Calculate | Explain stored rule contributions, service recommendation and next step |
-| 5?7 min | Opportunities ? New Opportunity; set value/probability; move in Kanban; Details ? Record activity / Schedule task | USD 10,000 ? 50% = USD 5,000 before stage change; stage movement may replace probability with stage default; show history and attribution |
+| 5?7 min | Opportunities ? New Opportunity; set value/probability; move in Kanban; Details ? Record activity / Schedule task | EUR 10,000 ? 50% = EUR 5,000 before stage change; stage movement may replace probability with stage default; show history and attribution |
 | 7?9 min | Dashboard | Compare before/after pipeline +10,000, activity +1, overdue task +1; show priority and follow-up panels |
 | 9?12 min | Sign out; sign in as Management or Technical Analyst; Security Scans ? confirm synthetic scope ? Run snapshot scan | Findings, evidence and failed checks are distinct; only approved mock target |
 | 12?14 min | Generate report from scan; Review; Management approves; Download | Inspect required report sections, cautious exposure heuristic, private stored PDF; demonstrate Read Only denial |
 | 14?15 min | Companies ? Import CSV / Export CSV; show tests and handover | Use a unique fictional row for import; duplicate import is rejected; disclose limitations and next-phase backlog |
 
-Technical Analyst can generate/review; Admin or Management approves/downloads.
-Shared is an internal status only. Download before marking Shared. Archive follows Shared.
+From Reports, Create report from a snapshot runs the scan and creates/opens a draft.
+Standalone scans provide Create report from this snapshot. Scan/report dates use local time.
+
+Technical Analyst can generate/submit for review; Admin or Management approves/downloads.
+Shared is an internal tracking status required by the brief; it sends no email. PDF download currently requires Approved status. Admin/Management can archive any active report directly.
 Never represent the synthetic workflow approval as a real security assessment approval.
 
 ## Operator reference
 
 - Company/contact Edit updates a record; Archive requires confirmation and preserves history.
 - Opportunity Details contains activity, task and staff-note forms, plus stage history.
-- Schedule an overdue task to see the dashboard count change; Mark complete removes it from open work.
+- Use Tasks or opportunity Details to schedule an overdue task and see the dashboard count change; Mark complete removes it from open work.
 - Company CSV accepts UTF-8, the exported header set and pipe-delimited list values. Use the sample file as a format reference; do not reimport existing seed names/domains.
 - On an API error, inspect the displayed message, verify both local services and the active account role, then retry. Never disable RLS to resolve a permission error.
 - Admin Users provides invitation and account management; no public registration is intended.
@@ -56,5 +59,5 @@ route/mock network responses. Responsive tests use separate deterministic mock f
 ## Receiver acceptance
 
 The receiver should run this script from the tagged source on a fresh clone, retain its
-own installation evidence, and review the required gaps in the backlog. Supervisor
+own installation evidence, and review the latest submission readiness record. Supervisor
 sign-off and organizational repository ownership transfer remain receiver actions.

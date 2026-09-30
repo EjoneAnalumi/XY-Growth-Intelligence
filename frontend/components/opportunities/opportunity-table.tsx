@@ -13,7 +13,7 @@ type OpportunityTableProps = {
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
-  currency: "USD",
+  currency: "EUR",
   maximumFractionDigits: 0,
 });
 
@@ -54,10 +54,10 @@ export default function OpportunityTable({
                     {stageById.get(opportunity.stageId) ?? "Unknown stage"}
                   </span>
                 </td>
-                <td className="px-4 py-4">{currencyFormatter.format(opportunity.valueUsd)}</td>
+                <td className="px-4 py-4">{currencyFormatter.format(opportunity.valueEur)}</td>
                 <td className="px-4 py-4">{opportunity.probability}%</td>
                 <td className="px-4 py-4">
-                  {currencyFormatter.format(opportunity.weightedValueUsd)}
+                  {currencyFormatter.format(opportunity.weightedValueEur)}
                 </td>
                 <td className="max-w-56 truncate px-4 py-4 text-muted-foreground">
                   {opportunity.nextAction || "No next action"}

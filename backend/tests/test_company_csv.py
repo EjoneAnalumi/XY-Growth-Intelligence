@@ -127,7 +127,7 @@ def test_company_csv_rejects_unknown_and_duplicate_headers() -> None:
 
 def test_company_csv_handles_utf8_quoting_nulls_numbers_and_dates() -> None:
     payload = (
-        "name,domain,industry,employee_count,annual_revenue_usd,last_activity_at,"
+        "name,domain,industry,employee_count,annual_revenue_eur,last_activity_at,"
         "next_action_due_at,headquarters_city,lead_source\n"
         'München Systems,muenchen.example,"Research, Development",0,0,'
         '2026-08-19T10:00:00Z,,"Munich, Bavaria",\n'
@@ -144,7 +144,7 @@ def test_company_csv_handles_utf8_quoting_nulls_numbers_and_dates() -> None:
     assert rows[0]["industry"] == "Research, Development"
     assert rows[0]["headquarters_city"] == "Munich, Bavaria"
     assert rows[0]["employee_count"] == "0"
-    assert rows[0]["annual_revenue_usd"] == "0.0"
+    assert rows[0]["annual_revenue_eur"] == "0.0"
     assert rows[0]["next_action_due_at"] == ""
 
 

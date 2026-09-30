@@ -17,7 +17,7 @@ type OpportunityKanbanProps = {
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
-  currency: "USD",
+  currency: "EUR",
   maximumFractionDigits: 0,
 });
 
@@ -134,7 +134,7 @@ export default function OpportunityKanban({
 
                         <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                           <div className="rounded-md bg-muted px-2 py-1">
-                            {currencyFormatter.format(opportunity.valueUsd)}
+                            {currencyFormatter.format(opportunity.valueEur)}
                           </div>
                           <div className="rounded-md bg-muted px-2 py-1">
                             {opportunity.probability}% probability

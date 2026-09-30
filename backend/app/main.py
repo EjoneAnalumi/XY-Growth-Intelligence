@@ -2,13 +2,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.activities import router as activities_router
+from app.api.administration import router as administration_router
 from app.api.companies import router as companies_router
 from app.api.contacts import router as contacts_router
 from app.api.dashboard import router as dashboard_router
+from app.api.data_exchange import router as data_exchange_router
 from app.api.health import router as health_router
+from app.api.inbox import router as inbox_router
 from app.api.notes import router as notes_router
 from app.api.opportunities import router as opportunities_router
 from app.api.pipeline_stages import router as pipeline_stages_router
+from app.api.profiles import router as profiles_router
 from app.api.reports import router as reports_router
 from app.api.security_scans import router as security_scans_router
 from app.api.tasks import router as tasks_router
@@ -39,6 +43,10 @@ app.add_middleware(
 
 
 app.include_router(health_router)
+app.include_router(inbox_router)
+app.include_router(administration_router)
+app.include_router(profiles_router)
+app.include_router(data_exchange_router)
 app.include_router(users_router)
 app.include_router(companies_router)
 app.include_router(contacts_router)

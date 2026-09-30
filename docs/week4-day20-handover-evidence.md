@@ -1,5 +1,7 @@
 # Week 4 Day 20 Handover Evidence and Status
 
+> Update 28-09-2026: this is historical release evidence. See [MVP completion evidence](week4-day20-mvp-completion-evidence.md) for the implemented follow-up and current remaining work.
+
 Date: 24-09-2026
 Branch: `feature/week4-day20-final-handover`
 Baseline: fetched `origin/main` at `9621379`; incorporates colleague PR #30 at `15f51f1`.

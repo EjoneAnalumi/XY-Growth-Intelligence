@@ -197,12 +197,56 @@ def test_rls_enabled_on_week2_tables(db) -> None:
                     "notes",
                     "icp_rules",
                     "icp_score_results",
+                    "services",
+                    "inbox_reads",
                 ],
             ),
         )
         missing = [row[0] for row in cursor.fetchall()]
         assert missing == []
     db.commit()
+
+
+@pytest.mark.parametrize("user_id", [ADMIN_ID, BD_ID, RO_ID, TA_ID])
+def test_service_catalogue_is_readable_but_direct_writes_are_denied(db, user_id):
+    with db.cursor() as cursor:
+        _as_role(cursor, user_id, "authenticated")
+        cursor.execute("select count(*) from public.services")
+        assert cursor.fetchone()[0] >= 7
+        _expect_denied(db, cursor, "insert into public.services(name) values ('Denied synthetic')")
+        _expect_denied(db, cursor, "update public.icp_rules set max_points=99")
+        cursor.execute("RESET ROLE")
+    db.rollback()
+
+
+def test_anonymous_cannot_read_service_catalogue(db):
+    with db.cursor() as cursor:
+        _as_role(cursor, None, "anon")
+        _expect_denied(db, cursor, "select * from public.services")
+        cursor.execute("RESET ROLE")
+    db.rollback()
+
+
+def test_inbox_receipts_are_isolated_by_user(db):
+    with db.cursor() as cursor:
+        record_id = str(uuid4())
+        _as_role(cursor, ADMIN_ID, "authenticated")
+        cursor.execute(
+            "insert into public.inbox_reads(user_id,kind,record_id) values(%s,'notes',%s)",
+            (ADMIN_ID, record_id),
+        )
+        _as_role(cursor, TA_ID, "authenticated")
+        cursor.execute("select count(*) from public.inbox_reads where record_id=%s", (record_id,))
+        assert cursor.fetchone()[0] == 0
+        _expect_denied(
+            db,
+            cursor,
+            "insert into public.inbox_reads(user_id,kind,record_id) values(%s,'tasks',%s)",
+            (ADMIN_ID, record_id),
+        )
+        _as_role(cursor, None, "anon")
+        _expect_denied(db, cursor, "select * from public.inbox_reads")
+    db.rollback()
 
 
 def test_anon_cannot_read_business_tables(db) -> None:
@@ -321,9 +365,7 @@ def test_business_development_writer_allow_and_admin_only_deny(db) -> None:
     opportunity_name = f"BD Opp {uuid4().hex[:8]}"
 
     with db.cursor() as cursor:
-        cursor.execute(
-            "SELECT id FROM public.pipeline_stages WHERE name = 'Identified' LIMIT 1"
-        )
+        cursor.execute("SELECT id FROM public.pipeline_stages WHERE name = 'Identified' LIMIT 1")
         stage_id = cursor.fetchone()[0]
 
         _as_role(cursor, BD_ID, "authenticated")
@@ -345,7 +387,7 @@ def test_business_development_writer_allow_and_admin_only_deny(db) -> None:
         cursor.execute(
             """
             INSERT INTO public.opportunities (
-                company_id, stage_id, name, value_usd, probability,
+                company_id, stage_id, name, value_eur, probability,
                 created_by, updated_by
             )
             VALUES (%s::uuid, %s::uuid, %s, 10000, 20, %s::uuid, %s::uuid)
@@ -470,3 +512,35 @@ def test_authenticated_can_read_icp_rules_and_writers_can_insert_scores(db) -> N
         )
         cursor.execute("RESET ROLE")
     db.commit()
+
+
+def test_note_dismissals_are_personal_and_shared_deletion_cannot_bypass_api(db):
+    with db.cursor() as cursor:
+        cursor.execute(
+            "insert into public.notes(body,created_by) "
+            "values('Personal visibility fixture',%s) returning id",
+            (ADMIN_ID,),
+        )
+        note_id = cursor.fetchone()[0]
+        _as_role(cursor, RO_ID, "authenticated")
+        cursor.execute(
+            "insert into public.note_dismissals(user_id,note_id) values(%s,%s)", (RO_ID, note_id)
+        )
+        cursor.execute("select count(*) from public.note_dismissals where note_id=%s", (note_id,))
+        assert cursor.fetchone()[0] == 1
+        _as_role(cursor, BD_ID, "authenticated")
+        cursor.execute("select count(*) from public.note_dismissals where note_id=%s", (note_id,))
+        assert cursor.fetchone()[0] == 0
+        _expect_denied(
+            db,
+            cursor,
+            "insert into public.note_dismissals(user_id,note_id) values(%s,%s)",
+            (ADMIN_ID, note_id),
+        )
+        _expect_denied(
+            db, cursor, "update public.notes set archived_at=now() where id=%s", (note_id,)
+        )
+        _expect_denied(db, cursor, "delete from public.notes where id=%s", (note_id,))
+        _as_role(cursor, None, "anon")
+        _expect_denied(db, cursor, "select * from public.note_dismissals")
+    db.rollback()

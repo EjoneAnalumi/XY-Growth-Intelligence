@@ -2,8 +2,8 @@ export type PipelineStageSummary = {
   stageId: string;
   stageName: string;
   opportunityCount: number;
-  totalValueUsd: number;
-  weightedValueUsd: number;
+  totalValueEur: number;
+  weightedValueEur: number;
 };
 
 export type PriorityOpportunitySummary = {
@@ -13,9 +13,12 @@ export type PriorityOpportunitySummary = {
   stageName: string;
   companyId: string;
   priorityScore: number;
-  weightedValueUsd: number;
+  weightedValueEur: number;
   daysInCurrentStage: number;
   reason: string;
+  ownerId?: string | null;
+  nextAction?: string | null;
+  dueAt?: string | null;
 };
 
 export type DashboardSummary = {
@@ -23,8 +26,8 @@ export type DashboardSummary = {
   openOpportunities: number;
   wonOpportunities: number;
   lostOpportunities: number;
-  pipelineValueUsd: number;
-  weightedPipelineValueUsd: number;
+  pipelineValueEur: number;
+  weightedPipelineValueEur: number;
   highPriorityOpportunities: number;
   inactiveOpportunities: number;
   openTasks: number;

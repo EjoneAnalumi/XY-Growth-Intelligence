@@ -58,6 +58,10 @@ export async function updateNote(id: string, body: string): Promise<Note> {
   }));
 }
 
-export async function archiveNote(id: string): Promise<void> {
+export async function deleteNote(id: string): Promise<void> {
   await apiRequest(`/notes/${id}`, { method: "DELETE" });
+}
+
+export async function deleteNoteForMe(id: string): Promise<void> {
+  await apiRequest(`/notes/${id}/for-me`, { method: "DELETE" });
 }

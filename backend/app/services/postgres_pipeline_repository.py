@@ -1,5 +1,4 @@
 from contextlib import closing
-from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -17,7 +16,7 @@ TABLE_COLUMNS = {
         "stage_id",
         "name",
         "service",
-        "value_usd",
+        "value_eur",
         "probability",
         "expected_close_date",
         "owner_id",
@@ -94,7 +93,7 @@ class PostgresPipelineRepository(InMemoryPipelineRepository):
     def create_record(self, collection: str, payload: dict, current_user: CurrentUser) -> dict:
         values = self._clean_values(collection, payload)
         if collection == "opportunities":
-            values["weighted_value_usd"] = self._weighted_value(values)
+            values["weighted_value_eur"] = self._weighted_value(values)
         if collection != "pipeline_stages":
             values.update(created_by=current_user.id, updated_by=current_user.id)
         columns = list(values)
@@ -116,9 +115,7 @@ class PostgresPipelineRepository(InMemoryPipelineRepository):
         if current is None:
             return None
         if collection == "opportunities":
-            values["weighted_value_usd"] = self._weighted_value({**current, **values})
-        if collection == "tasks" and values.get("status") == "completed":
-            values["completed_at"] = datetime.now(UTC)
+            values["weighted_value_eur"] = self._weighted_value({**current, **values})
         if collection != "pipeline_stages":
             values["updated_by"] = current_user.id
         if not values:
@@ -187,9 +184,14 @@ class PostgresPipelineRepository(InMemoryPipelineRepository):
     def stage_exists(self, stage_id: str | UUID) -> bool:
         return self.get_record("pipeline_stages", str(stage_id)) is not None
 
-    def get_dashboard_summary(self, company_fit_scores=None) -> dict:
+    def list_all_stage_history(self) -> list[dict]:
+        with self._connection() as connection:
+            rows = connection.execute("select * from public.opportunity_stage_history").fetchall()
+            return [self._normalize(row) for row in rows]
+
+    def get_dashboard_summary(self, company_fit_scores=None, company_context=None) -> dict:
         self._refresh_all()
-        return super().get_dashboard_summary(company_fit_scores)
+        return super().get_dashboard_summary(company_fit_scores, company_context)
 
     def _refresh_all(self) -> None:
         for collection in TABLE_COLUMNS:
@@ -217,9 +219,9 @@ class PostgresPipelineRepository(InMemoryPipelineRepository):
 
     @staticmethod
     def _weighted_value(values: dict):
-        if values.get("value_usd") is None or values.get("probability") is None:
+        if values.get("value_eur") is None or values.get("probability") is None:
             return None
-        return round(float(values["value_usd"]) * int(values["probability"]) / 100, 2)
+        return round(float(values["value_eur"]) * int(values["probability"]) / 100, 2)
 
     def _normalize(self, value):
         if isinstance(value, dict):

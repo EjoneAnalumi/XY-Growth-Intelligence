@@ -13,6 +13,10 @@ class Settings:
         self.app_name = getenv("APP_NAME", "XY CYBER Growth Intelligence API")
         self.app_env = getenv("APP_ENV", "local")
         self.auth_mode = getenv("AUTH_MODE", "local")
+        if self.auth_mode not in {"local", "supabase"}:
+            raise RuntimeError("AUTH_MODE must be local or supabase.")
+        if self.auth_mode == "local" and self.app_env != "local":
+            raise RuntimeError("Local development tokens are forbidden outside APP_ENV=local.")
         self.log_level = getenv("LOG_LEVEL", "INFO")
         self.database_url = getenv("DATABASE_URL")
         self.supabase_url = getenv("SUPABASE_URL")

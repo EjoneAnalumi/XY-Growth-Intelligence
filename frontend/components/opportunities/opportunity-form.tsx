@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { apiRequest } from "@/lib/api/client";
 import type { Company, Contact } from "@/types/company";
 import type { OpportunityFormValues, PipelineStage } from "@/types/opportunity";
 
@@ -14,7 +15,7 @@ const emptyValues: OpportunityFormValues = {
   stageId: "",
   name: "",
   service: "",
-  valueUsd: "0",
+  valueEur: "0",
   probability: "0",
   expectedCloseDate: "",
   need: "",
@@ -45,6 +46,12 @@ export default function OpportunityForm({
   const [values, setValues] = useState<OpportunityFormValues>(initialValues ?? emptyValues);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serviceNames, setServiceNames] = useState<string[]>([]);
+  useEffect(() => {
+    void apiRequest<{ items: { name: string; active: boolean }[] }>("/services")
+      .then((result) => setServiceNames(result.items.filter((s) => s.active).map((s) => s.name)))
+      .catch(() => setServiceNames([]));
+  }, []);
   const eligibleContacts = contacts.filter(
     (contact) => !values.companyId || contact.companyId === values.companyId,
   );
@@ -81,14 +88,14 @@ export default function OpportunityForm({
     event.preventDefault();
 
     const probability = Number(values.probability);
-    const valueUsd = Number(values.valueUsd);
+    const valueEur = Number(values.valueEur);
 
     if (!values.companyId || !values.stageId || !values.name.trim()) {
       setError("Company, stage, and opportunity name are required.");
       return;
     }
 
-    if (Number.isNaN(valueUsd) || valueUsd < 0) {
+    if (Number.isNaN(valueEur) || valueEur < 0) {
       setError("Value must be zero or greater.");
       return;
     }
@@ -214,21 +221,23 @@ export default function OpportunityForm({
           <Label htmlFor="opportunity-service">Service</Label>
           <Input
             id="opportunity-service"
+            list="service-catalogue"
             value={values.service}
             onChange={(event) => updateField("service", event.target.value)}
           />
+          <datalist id="service-catalogue">{serviceNames.map((name) => <option value={name} key={name} />)}</datalist>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
-          <Label htmlFor="opportunity-value">Value USD</Label>
+          <Label htmlFor="opportunity-value">Value EUR</Label>
           <Input
             id="opportunity-value"
             type="number"
             min="0"
-            value={values.valueUsd}
-            onChange={(event) => updateField("valueUsd", event.target.value)}
+            value={values.valueEur}
+            onChange={(event) => updateField("valueEur", event.target.value)}
           />
         </div>
 

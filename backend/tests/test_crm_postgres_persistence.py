@@ -45,7 +45,7 @@ def test_core_crm_records_survive_repository_restart():
             "contact_id": str(contact.id),
             "stage_id": stage["id"],
             "name": f"Restart-safe opportunity {suffix}",
-            "value_usd": 10000,
+            "value_eur": 10000,
             "probability": 20,
         },
         user,

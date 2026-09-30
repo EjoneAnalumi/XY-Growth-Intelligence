@@ -1,8 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { generateReport } from "@/lib/api/reports";
+import { formatLocalDateTime } from "@/lib/date-time";
 import { AlertTriangle, CheckCircle2, Clock, FileText, Filter, Radar, ShieldCheck } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +38,19 @@ function detailsToLines(details: SnapshotScan["results"][number]["details"]) {
 }
 
 export default function SecurityScansPage() {
+  const router = useRouter();
+  const [createAfterScan, setCreateAfterScan] = useState(false);
+  const [creatingReport, setCreatingReport] = useState(false);
+  useEffect(() => { setCreateAfterScan(new URLSearchParams(window.location.search).get("create_report") === "1"); }, []);
+  async function createDraft(snapshot: SnapshotScan) {
+    setCreatingReport(true); setError(null);
+    try {
+      const report = await generateReport(snapshot.id);
+      router.push(`/reports?report_id=${encodeURIComponent(report.id)}`);
+    } catch (caught) {
+      setError(`Scan saved, but the report could not be created. Retry using Create report from this snapshot. ${caught instanceof Error ? caught.message : ""}`);
+    } finally { setCreatingReport(false); }
+  }
   const [values, setValues] = useState<SnapshotRequestValues>({
     companyId: "10000000-0000-4000-8000-000000000001",
     domain: "https://northstar-robotics.example/snapshot",
@@ -80,16 +95,16 @@ export default function SecurityScansPage() {
       setStatus("validating");
       const timeoutSeconds = Number(values.timeoutSeconds || 1);
       setStatus("running");
-      setScan(
-        await runSnapshotScan({
-          companyId: values.companyId,
-          domain: values.domain.trim(),
-          approved: values.approved,
-          approvalNote: values.approvalNote.trim(),
-          timeoutSeconds,
-        }),
-      );
+      const completedScan = await runSnapshotScan({
+        companyId: values.companyId,
+        domain: values.domain.trim(),
+        approved: values.approved,
+        approvalNote: values.approvalNote.trim(),
+        timeoutSeconds,
+      });
+      setScan(completedScan);
       setStatus("complete");
+      if (createAfterScan) await createDraft(completedScan);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Snapshot scan failed.");
       setStatus("failed");
@@ -108,6 +123,7 @@ export default function SecurityScansPage() {
         </p>
       </div>
 
+      {createAfterScan && <p className="rounded-md border bg-card p-4 text-sm">Create a draft report: run the approved snapshot below. After the scan succeeds, your draft will be created and opened in Reports.</p>}
       <aside className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
         <strong className="text-foreground">What is being scanned?</strong> A company&apos;s explicitly approved public demo domain. The snapshot performs limited DNS/TLS checks; it is not a vulnerability exploit or an internal-network scan. Select the company whose public exposure you are assessing and use only synthetic or authorized targets.
       </aside>
@@ -193,9 +209,9 @@ export default function SecurityScansPage() {
             </p>
           ) : null}
 
-          <Button type="submit" disabled={status === "running"} className="w-full gap-2">
+          <Button type="submit" disabled={status === "running" || creatingReport} className="w-full gap-2">
             <Radar className="h-4 w-4" />
-            {status === "running" ? "Running scan..." : "Run snapshot scan"}
+            {creatingReport ? "Creating draft report..." : status === "running" ? "Running scan..." : createAfterScan ? "Run snapshot and create report" : "Run snapshot scan"}
           </Button>
         </form>
 
@@ -239,11 +255,11 @@ export default function SecurityScansPage() {
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Started</dt>
-                  <dd>{scan.startedAt}</dd>
+                  <dd><time dateTime={scan.startedAt}>{formatLocalDateTime(scan.startedAt)}</time></dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Completed</dt>
-                  <dd>{scan.completedAt}</dd>
+                  <dd><time dateTime={scan.completedAt}>{formatLocalDateTime(scan.completedAt)}</time></dd>
                 </div>
               </dl>
             ) : (
@@ -253,12 +269,13 @@ export default function SecurityScansPage() {
             )}
           </div>
           {scan ? (
-            <Button asChild className="mt-4 w-full gap-2">
-              <Link href={`/reports?security_scan_id=${scan.id}`}>
+            <div className="mt-4 space-y-2">
+              <p className="text-sm text-muted-foreground">{creatingReport ? "Snapshot saved. Creating your draft report..." : "Snapshot saved. A scan is evidence; use the button below to create its draft report."}</p>
+              <Button disabled={creatingReport || status === "running"} onClick={() => createDraft(scan)} className="w-full gap-2">
                 <FileText className="size-4" aria-hidden="true" />
-                Create report from this snapshot
-              </Link>
-            </Button>
+                {creatingReport ? "Creating draft report..." : "Create report from this snapshot"}
+              </Button>
+            </div>
           ) : null}
         </section>
       </section>

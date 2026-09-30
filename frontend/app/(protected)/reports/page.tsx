@@ -1,327 +1,117 @@
 "use client";
 
-import {
-  AlertCircle,
-  Archive,
-  CheckCircle2,
-  Download,
-  FileText,
-  LoaderCircle,
-  RefreshCw,
-  Send,
-  Share2,
-} from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-
+import Link from "next/link";
+import { formatLocalDateTime } from "@/lib/date-time";
+import { useEffect, useRef, useState } from "react";
 import { CyberRiskReportPreview } from "@/components/reports/cyber-risk-report-preview";
 import { Button } from "@/components/ui/button";
-import { ApiError } from "@/lib/api/client";
-import {
-  approveReport,
-  archiveReport,
-  downloadReport,
-  generateReport,
-  listReports,
-  Report,
-  submitReportForReview,
-  shareReport,
-} from "@/lib/api/reports";
-import { runSnapshotScan } from "@/lib/api/security-scans";
+import { Input } from "@/components/ui/input";
+import { approveReport, archiveReport, downloadReport, generateReport, listReports, submitReportForReview, shareReport, type Report } from "@/lib/api/reports";
 import { getSession } from "@/lib/auth";
 
-type LoadState = "loading" | "ready" | "error";
-
-const statusStyles = {
-  draft: "border-muted bg-muted text-muted-foreground",
-  review: "border-orange-300 bg-orange-50 text-orange-800",
-  approved: "border-primary/30 bg-primary/10 text-primary",
-  shared: "border-sky-300 bg-sky-50 text-sky-800",
-  archived: "border-muted bg-muted text-muted-foreground",
-};
-
-const demoSnapshotRequest = {
-  companyId: "10000000-0000-4000-8000-000000000001",
-  domain: "https://northstar-robotics.example/snapshot",
-  approved: true,
-  approvalNote: "Approved internal synthetic demo target.",
-  timeoutSeconds: 1,
-};
-
+function reportExplanation(status: Report["status"], canPrepare: boolean, canApprove: boolean) {
+  if (status === "archived") return "Archived: you can preview this report for reference. No further workflow actions are available.";
+  if (!canPrepare) return {
+    draft: "Draft: you can preview the findings. The report is not yet reviewed or approved.",
+    review: "In review: you can preview the findings while Admin or Management checks the report.",
+    approved: "Approved: you can preview the approved findings. Ask Admin or Management if you need the PDF.",
+    shared: "Shared: you can preview the findings. This status records internal sharing; no email was sent.",
+  }[status];
+  if (status === "draft") return "Draft: check the preview, then submit it for review.";
+  if (status === "review") return canApprove ? "In review: check the preview, then approve the report when it is ready. Download becomes available after approval." : "Submitted for review: you can preview the findings. Admin or Management must approve the report.";
+  if (status === "approved") return canApprove ? "Approved: you can download the PDF, mark it shared internally, or archive it." : "Approved: you can preview the approved findings. Admin or Management handles PDF downloads and sharing.";
+  return canApprove ? "Shared internally: you can preview or archive this report. No email was sent; downloads are available only in Approved status." : "Shared internally: you can preview this report. Admin or Management handles sharing and archiving.";
+}
 export default function ReportsPage() {
   const [reports, setReports] = useState<Report[]>([]);
-  const [state, setState] = useState<LoadState>("loading");
-  const [message, setMessage] = useState<string | null>(null);
-  const [busyAction, setBusyAction] = useState<string | null>(null);
-  const [selectedScanId, setSelectedScanId] = useState<string | null>(null);
-  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
-  const session = getSession();
-  const canGenerate = ["admin", "technical_analyst", "management"].includes(session?.profile?.role ?? "");
-  const canApprove = ["admin", "management"].includes(session?.profile?.role ?? "");
-  const latestReport = useMemo(() => reports[reports.length - 1] ?? null, [reports]);
-  const selectedReport = useMemo(
-    () => reports.find((report) => report.id === selectedReportId) ?? latestReport,
-    [latestReport, reports, selectedReportId],
-  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [scanId, setScanId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hidden, setHidden] = useState(false);
+  const [sort, setSort] = useState("newest");
+  const [status, setStatus] = useState("active");
+  const [query, setQuery] = useState("");
+  const preview = useRef<HTMLElement>(null);
+  const focusPreview = useRef(false);
+  const role = getSession()?.profile?.role ?? "";
+  const canGenerate = ["admin", "management", "technical_analyst"].includes(role);
+  const canApprove = ["admin", "management"].includes(role);
+  const selected = reports.find((report) => report.id === selectedId);
 
+  async function refresh() {
+    setLoading(true); setError("");
+    try {
+      const items = (await listReports()).items;
+      setReports(items);
+      const requested = new URLSearchParams(window.location.search).get("report_id");
+      const report = items.find((item) => item.id === requested);
+      if (report) { focusPreview.current = true; setSelectedId(report.id); setMessage("Your draft report is ready. Preview it below before submitting for review."); }
+    }
+    catch (caught) { setError(caught instanceof Error ? caught.message : "Reports could not be loaded."); }
+    finally { setLoading(false); }
+  }
+  useEffect(() => { setScanId(new URLSearchParams(window.location.search).get("security_scan_id")); void refresh(); }, []);
   useEffect(() => {
-    setSelectedScanId(new URLSearchParams(window.location.search).get("security_scan_id"));
-    void refreshReports();
-  }, []);
-
-  async function refreshReports() {
-    try {
-      setState("loading");
-      setMessage(null);
-      const response = await listReports();
-      setReports(response.items);
-      setSelectedReportId((current) => current ?? response.items.at(-1)?.id ?? null);
-      setState("ready");
-    } catch (error) {
-      setState("error");
-      setMessage(error instanceof ApiError ? error.message : "Reports could not be loaded.");
-    }
+    if (selectedId && focusPreview.current) { preview.current?.scrollIntoView({ behavior: "smooth", block: "start" }); preview.current?.focus({ preventScroll: true }); focusPreview.current = false; }
+  }, [selectedId]);
+  function openPreview(report: Report) {
+    focusPreview.current = true; setSelectedId(report.id);
+    setMessage(`Preview opened: ${report.title}`);
+    if (selectedId === report.id) { preview.current?.scrollIntoView({ behavior: "smooth" }); preview.current?.focus({ preventScroll: true }); }
   }
-
-  async function runAction(actionName: string, action: () => Promise<Report | void>) {
+  async function action(operation: () => Promise<Report | void>, success: string) {
+    setBusy(true); setError(""); setMessage("");
     try {
-      setBusyAction(actionName);
-      setMessage(null);
-      const result = await action();
+      const result = await operation();
       if (result) {
-        setSelectedReportId(result.id);
-        setReports((current) => {
-          const exists = current.some((report) => report.id === result.id);
-          return exists
-            ? current.map((report) => (report.id === result.id ? result : report))
-            : [...current, result];
-        });
+        setReports((items) => items.some((item) => item.id === result.id) ? items.map((item) => item.id === result.id ? result : item) : [result, ...items]);
+        focusPreview.current = true; setSelectedId(result.id);
       }
-    } catch (error) {
-      setMessage(error instanceof ApiError ? error.message : "Report action failed.");
-    } finally {
-      setBusyAction(null);
-    }
+      setMessage(success);
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Report action failed."); }
+    finally { setBusy(false); }
   }
-
-  async function generateSnapshotReport() {
-    if (selectedScanId) {
-      return generateReport(selectedScanId);
-    }
-
-    const scan = await runSnapshotScan(demoSnapshotRequest);
-    setSelectedScanId(scan.id);
-    return generateReport(scan.id);
+  async function download(report: Report) {
+    const result = await downloadReport(report.id);
+    const bytes = Uint8Array.from(atob(result.contentBase64), (character) => character.charCodeAt(0));
+    const url = URL.createObjectURL(new Blob([bytes], { type: result.contentType }));
+    const link = document.createElement("a"); link.href = url; link.download = result.filename; link.click(); URL.revokeObjectURL(url);
   }
-
-  function saveDownload(download: Awaited<ReturnType<typeof downloadReport>>) {
-    const binary = atob(download.contentBase64);
-    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
-    const blob = new Blob([bytes], { type: download.contentType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = download.filename;
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
-  return (
-    <div className="space-y-6">
-      <aside className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
-        <strong className="text-foreground">What is a report?</strong> A client-ready summary of one completed security snapshot: its target, findings, severity, and recommended actions. Analysts generate a draft; management reviews and approves it before sharing or downloading.
-      </aside>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p className="text-sm font-medium text-primary">Reporting</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">Reports</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Generate a synthetic PDF report, submit it for review, approve it with Management, and
-            download only after approval.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" className="gap-2" onClick={refreshReports}>
-            <RefreshCw className="size-4" aria-hidden="true" />
-            Refresh
-          </Button>
-          <Button
-            type="button"
-            className="gap-2"
-            disabled={!canGenerate || busyAction === "generate"}
-            onClick={() => runAction("generate", generateSnapshotReport)}
-          >
-            {busyAction === "generate" ? (
-              <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <FileText className="size-4" aria-hidden="true" />
-            )}
-            {selectedScanId ? "Generate from snapshot" : "Generate demo report"}
-          </Button>
-        </div>
-      </div>
-
-      {message ? (
-        <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {message}
-        </p>
-      ) : null}
-
-      {!canGenerate ? (
-        <p className="rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground">
-          This role can review report content but cannot generate, approve, archive, or download PDFs.
-        </p>
-      ) : null}
-
-      {state === "loading" ? (
-        <section className="flex min-h-48 items-center justify-center rounded-md border bg-card">
-          <LoaderCircle className="size-7 animate-spin text-primary" aria-hidden="true" />
-        </section>
-      ) : null}
-
-      {state === "error" ? (
-        <section className="rounded-md border border-destructive/30 bg-card p-6" role="alert">
-          <div className="flex items-center gap-2 font-semibold text-destructive">
-            <AlertCircle className="size-5" aria-hidden="true" />
-            Reports could not be loaded
+  const visible = reports.filter((r) => (status === "all" || (status === "active" ? r.status !== "archived" : r.status === status)) && `${r.title} ${r.companyName} ${r.domain}`.toLowerCase().includes(query.toLowerCase()))
+    .sort((a, b) => sort === "newest" || sort === "oldest" ? (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) * (sort === "oldest" ? -1 : 1) : a.title.localeCompare(b.title) * (sort === "za" ? -1 : 1));
+  return <div className="space-y-5">
+    <div><h1 className="text-3xl font-semibold">Reports</h1><p className="mt-2 text-sm text-muted-foreground">A report summarizes one security snapshot. Open its preview to read the findings before taking the next action.</p></div>
+    <div className="rounded-md border bg-card p-4 text-sm"><p className="font-semibold">{canApprove ? "Prepare, review and approve reports" : canGenerate ? "Prepare reports for review" : "Preview reports"}</p><p className="mt-1">{canApprove ? "You can create drafts, submit them for review, approve reviewed reports, and download approved PDFs. You can also archive active reports." : canGenerate ? "You can create drafts, preview findings and submit reports for review. Admin or Management handles approval, PDF downloads, sharing and archiving." : "You can preview reports and check their status. Report preparation, approval and PDF downloads are handled by the authorized team members."}</p></div>
+    <div className="flex flex-wrap gap-2"><Button variant="outline" disabled={busy} onClick={refresh}>Refresh reports</Button><Button variant="outline" aria-expanded={!hidden} aria-controls="report-list" onClick={() => setHidden(!hidden)}>{hidden ? "Show reports" : "Hide reports"}</Button>{canGenerate && (scanId ? <Button disabled={busy} onClick={() => action(() => generateReport(scanId), "Draft generated. Check the preview before submitting for review.")}>Generate from snapshot</Button> : <Button asChild><Link href="/security-scans?create_report=1">Create report from a snapshot</Link></Button>)}</div>
+    {!canGenerate && <p className="text-sm text-muted-foreground">Your role can preview reports. Workflow changes and PDF downloads are restricted to the roles described above.</p>}
+    {error && <p role="alert" className="rounded-md border border-destructive p-3 text-destructive">{error}</p>}
+    {message && <p role="status" className="rounded-md border bg-card p-3 text-sm">{message}</p>}
+    {loading && <p role="status">Loading reports...</p>}
+    {!hidden && <section id="report-list" aria-label="Report list" className="space-y-3">
+      <div className="flex flex-wrap items-center gap-3"><Input aria-label="Search reports" placeholder="Search reports" className="max-w-sm" value={query} onChange={(e) => setQuery(e.target.value)} /><label>Sort reports <select aria-label="Sort reports" className="h-10 rounded-md border bg-background px-3" value={sort} onChange={(e) => setSort(e.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="az">A-Z</option><option value="za">Z-A</option></select></label><label>Status <select aria-label="Report status" className="h-10 rounded-md border bg-background px-3" value={status} onChange={(e) => setStatus(e.target.value)}>{["active", "all", "draft", "review", "approved", "shared", "archived"].map((s) => <option key={s} value={s}>{s === "active" ? "Active reports" : s}</option>)}</select></label></div>
+      <p className="text-sm text-muted-foreground">{visible.length} reports. Preview opens the selected report below; Hide reports collapses this list without archiving anything.</p>
+      <div className="max-h-[32rem] space-y-3 overflow-y-auto pr-1">
+        {!loading && !visible.length && <p className="rounded-md border p-4">No reports match these filters.</p>}
+        {visible.map((report) => <article key={report.id} data-report-id={report.id} className={`rounded-md border bg-card p-4 ${selectedId === report.id ? "border-primary ring-1 ring-primary" : ""}`}>
+          <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold">{report.title}</h2><span className="rounded-full bg-muted px-2 py-1 text-xs uppercase">{report.status}</span>{selectedId === report.id && <span className="text-xs text-primary">Preview selected</span>}</div>
+          <p className="mt-1 text-sm">{report.companyName} | {report.domain}</p><p className="mt-1 text-xs text-muted-foreground">Created {formatLocalDateTime(report.createdAt)}</p>
+          <p className="my-3 text-sm text-muted-foreground">{reportExplanation(report.status, canGenerate, canApprove)} {report.isLegacy && "Legacy report: no linked snapshot."}</p>
+          <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => openPreview(report)}>Preview</Button>
+            {canGenerate && report.status === "draft" && <Button size="sm" disabled={busy} onClick={() => action(() => submitReportForReview(report.id), "Submitted for review. Admin or Management can now approve.")}>Submit for review</Button>}
+            {canApprove && report.status === "review" && <Button size="sm" disabled={busy} onClick={() => action(() => approveReport(report.id), "Report approved. Its PDF is ready to download.")}>Approve</Button>}
+            {canApprove && <Button variant="outline" size="sm" disabled={report.status !== "approved" || busy} title={report.status !== "approved" ? "Download requires Approved status" : "Download approved PDF"} onClick={() => action(() => download(report), "PDF downloaded.")}>Download</Button>}
+            {canApprove && report.status === "approved" && <Button variant="outline" size="sm" disabled={busy} onClick={() => action(() => shareReport(report.id), "Marked shared internally; no email was sent.")}>Mark shared internally</Button>}
+            {canApprove && report.status !== "archived" && <Button variant="outline" size="sm" disabled={busy} onClick={() => { if (window.confirm(`Archive ${report.title}? The preview will remain available under Archived; downloading will be disabled.`)) void action(() => archiveReport(report.id), "Report archived. Find it with the Archived status filter."); }}>Archive</Button>}
           </div>
-        </section>
-      ) : null}
-
-      {state === "ready" ? (
-        <section className="grid gap-4">
-          {reports.length === 0 ? (
-            <div className="rounded-md border bg-card p-6 text-sm text-muted-foreground">
-              No generated reports yet. Generate a demo report here, or run an approved synthetic
-              snapshot first and create its report from the scan page.
-            </div>
-          ) : null}
-
-          {reports.map((report) => (
-            <article key={report.id} className="rounded-md border bg-card p-4 shadow-sm">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="font-semibold">{report.title}</h2>
-                    <span
-                      className={`rounded-full border px-2.5 py-1 text-xs font-semibold uppercase ${statusStyles[report.status]}`}
-                    >
-                      {report.status}
-                    </span>
-                    {report.isLegacy ? (
-                      <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold uppercase text-amber-800">
-                        Legacy - no snapshot link
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {report.companyName} - {report.domain}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Stored at {report.storageBucket}/{report.storagePath}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedReportId(report.id)}
-                  >
-                    Preview
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    disabled={report.status !== "draft" || !canGenerate || busyAction === report.id}
-                    onClick={() =>
-                      runAction(report.id, () => submitReportForReview(report.id))
-                    }
-                  >
-                    <Send className="size-4" aria-hidden="true" />
-                    Review
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    disabled={report.status !== "approved" || !canApprove || busyAction === report.id}
-                    onClick={() => runAction(report.id, () => shareReport(report.id))}
-                  >
-                    <Share2 className="size-4" aria-hidden="true" />
-                    Share internally
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="gap-2"
-                    disabled={report.status !== "review" || !canApprove || busyAction === report.id}
-                    onClick={() => runAction(report.id, () => approveReport(report.id))}
-                  >
-                    <CheckCircle2 className="size-4" aria-hidden="true" />
-                    Approve
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    disabled={report.status !== "approved" || !canApprove || busyAction === report.id}
-                    onClick={() =>
-                      runAction(report.id, async () => {
-                        saveDownload(await downloadReport(report.id));
-                      })
-                    }
-                  >
-                    <Download className="size-4" aria-hidden="true" />
-                    Download
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    disabled={report.status !== "shared" || !canApprove || busyAction === report.id}
-                    onClick={() => {
-                      if (window.confirm("Archive this shared report? It will no longer be downloadable.")) {
-                        void runAction(report.id, () => archiveReport(report.id));
-                      }
-                    }}
-                  >
-                    <Archive className="size-4" aria-hidden="true" />
-                    Archive
-                  </Button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </section>
-      ) : null}
-
-      <section aria-labelledby="latest-preview" className="space-y-3">
-        <div>
-          <h2 id="latest-preview" className="text-lg font-semibold">
-            Report preview
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {selectedReport
-              ? selectedReport.isLegacy
-                ? `Legacy report preview: ${selectedReport.title}. This report is not linked to a Day 14 snapshot.`
-                : `Server-generated snapshot preview: ${selectedReport.title}`
-              : "Generate a report from an approved snapshot to preview it."}
-          </p>
-        </div>
-        <CyberRiskReportPreview htmlPreview={selectedReport?.htmlPreview ?? null} />
-        {selectedReport ? (
-          <p className="rounded-md border bg-card px-3 py-2 text-xs text-muted-foreground">
-            Backend generated and stored the PDF source for this report at{" "}
-            {selectedReport.storageBucket}/{selectedReport.storagePath}.
-          </p>
-        ) : null}
-      </section>
-    </div>
-  );
+        </article>)}
+      </div>
+    </section>}
+    <section ref={preview} tabIndex={-1} aria-labelledby="selected-preview" className="scroll-mt-24 space-y-3 rounded-md border bg-card p-4 focus:outline-primary">
+      <h2 id="selected-preview" className="text-xl font-semibold">{selected ? `Report preview: ${selected.title}` : "Report preview"}</h2>
+      {selected ? <><p className="text-sm text-muted-foreground">{selected.companyName} | {selected.status} | Created {formatLocalDateTime(selected.createdAt)}</p><CyberRiskReportPreview key={selected.id} htmlPreview={selected.htmlPreview} /></> : <p className="text-sm text-muted-foreground">Choose Preview on a report above. Its title and contents will appear here.</p>}
+    </section>
+  </div>;
 }

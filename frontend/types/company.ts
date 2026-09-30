@@ -1,5 +1,6 @@
 export type Company = {
   id: string;
+  createdAt?: string;
   name: string;
   domain: string;
   industry: string;
@@ -16,6 +17,7 @@ export type CompanyFormValues = {
 
 export type Contact = {
   id: string;
+  createdAt?: string;
   companyId: string;
   firstName: string;
   lastName: string;

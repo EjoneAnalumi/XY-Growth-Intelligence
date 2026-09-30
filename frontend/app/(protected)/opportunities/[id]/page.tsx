@@ -28,7 +28,7 @@ import type {
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
-  currency: "USD",
+  currency: "EUR",
   maximumFractionDigits: 0,
 });
 
@@ -129,9 +129,9 @@ export default function OpportunityDetailPage() {
     ["Contact", opportunity.contactId ? contactById.get(opportunity.contactId) ?? "Unknown contact" : "None"],
     ["Stage", stageById.get(opportunity.stageId) ?? "Unknown stage"],
     ["Service", opportunity.service || "Not set"],
-    ["Value", currencyFormatter.format(opportunity.valueUsd)],
+    ["Value", currencyFormatter.format(opportunity.valueEur)],
     ["Probability", `${opportunity.probability}%`],
-    ["Weighted Value", currencyFormatter.format(opportunity.weightedValueUsd)],
+    ["Weighted Value", currencyFormatter.format(opportunity.weightedValueEur)],
     ["Days in Current Stage", String(opportunity.daysInCurrentStage)],
     ["Current Stage Entered", opportunity.currentStageEnteredAt || "Not set"],
     ["Expected Close", opportunity.expectedCloseDate || "Not set"],

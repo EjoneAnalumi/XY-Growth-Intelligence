@@ -1,13 +1,18 @@
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import type { Contact } from "@/types/company";
 
 type ContactCardProps = Pick<Contact, "firstName" | "lastName" | "email" | "role"> & {
+  id?: string;
+  createdAt?: string;
   companyName?: string;
   onEdit?: () => void;
   onArchive?: () => void;
 };
 
 export default function ContactCard({
+  id,
+  createdAt,
   firstName,
   lastName,
   email,
@@ -31,7 +36,9 @@ export default function ContactCard({
       </div>
 
       {companyName ? <p className="mt-3 text-sm text-muted-foreground">{companyName}</p> : null}
+      {createdAt && <p className="mt-2 text-xs text-muted-foreground">Created <time dateTime={createdAt}>{new Date(createdAt).toLocaleString()}</time></p>}
       <div className="mt-4 flex gap-2">
+        {id && <Button asChild variant="outline"><Link href={`/contacts/${id}`}>Profile</Link></Button>}
         <Button type="button" variant="outline" onClick={onEdit}>Edit</Button>
         <Button type="button" variant="outline" onClick={onArchive}>Archive</Button>
       </div>

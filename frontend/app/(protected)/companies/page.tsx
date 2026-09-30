@@ -12,12 +12,14 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/ui/async-stat
 import { useCompanies } from "@/hooks/use-companies";
 import { archiveCompany, createCompany, updateCompany } from "@/lib/api/companies";
 import type { Company, CompanyFormValues } from "@/types/company";
+import { useRecordList } from "@/components/record-list-controls";
 
 export default function CompaniesPage() {
   const { companies, loading, error, setCompanies, refreshCompanies } = useCompanies();
   const [showForm, setShowForm] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Company | null>(null);
+  const list = useRecordList(companies, (c) => `${c.name} ${c.industry} ${c.country} ${c.status} ${c.domain}`, "companies");
 
   async function handleAdd(company: CompanyFormValues) {
     try {
@@ -96,6 +98,7 @@ export default function CompaniesPage() {
       <IcpScorePanel companies={companies} />
 
       <section className="rounded-md border bg-card p-4 shadow-sm sm:p-6" aria-labelledby="company-list-heading">
+        {!loading && !error && list.controls}
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
             <Building2 className="h-5 w-5 text-primary" />
@@ -117,8 +120,10 @@ export default function CompaniesPage() {
 
         {!loading && !error && companies.length > 0 ? (
           <div className="space-y-4">
-            {companies.map((company) => (
+            {list.visible.map((company) => (
               <CompanyCard
+                id={company.id}
+                createdAt={company.createdAt}
                 key={company.id}
                 name={company.name}
                 domain={company.domain}

@@ -11,6 +11,7 @@ import { useCompanies } from "@/hooks/use-companies";
 import { useContacts } from "@/hooks/use-contacts";
 import { archiveContact, createContact, updateContact } from "@/lib/api/contacts";
 import type { Contact, ContactFormValues } from "@/types/company";
+import { useRecordList } from "@/components/record-list-controls";
 
 export default function ContactsPage() {
   const { contacts, loading, error, setContacts, refreshContacts } = useContacts();
@@ -18,6 +19,7 @@ export default function ContactsPage() {
   const [showForm, setShowForm] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Contact | null>(null);
+  const list = useRecordList(contacts, (c) => `${c.firstName} ${c.lastName} ${c.email} ${c.role} ${companies.find((item) => item.id === c.companyId)?.name ?? ""}`, "contacts");
 
   async function handleAdd(contact: ContactFormValues) {
     try {
@@ -93,6 +95,7 @@ export default function ContactsPage() {
       ) : null}
 
       <section className="rounded-md border bg-card p-4 shadow-sm sm:p-6" aria-labelledby="contact-list-heading">
+        {!loading && !error && list.controls}
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
             <Users className="h-5 w-5 text-primary" />
@@ -114,8 +117,10 @@ export default function ContactsPage() {
 
         {!loading && !error && contacts.length > 0 ? (
           <div className="space-y-4">
-            {contacts.map((contact) => (
+            {list.visible.map((contact) => (
               <ContactCard
+                id={contact.id}
+                createdAt={contact.createdAt}
                 key={contact.id}
                 firstName={contact.firstName}
                 lastName={contact.lastName}

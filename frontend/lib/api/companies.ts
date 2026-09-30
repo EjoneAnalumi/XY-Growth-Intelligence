@@ -1,9 +1,11 @@
 import { ApiError, apiRequest, getApiBaseUrl } from "@/lib/api/client";
 import { getAccessToken } from "@/lib/auth";
+import { allPages } from "@/lib/api/pagination";
 import type { Company, CompanyFormValues } from "@/types/company";
 
 type CompanyApiResponse = {
   id: string;
+  created_at?: string;
   name: string;
   domain: string | null;
   industry: string | null;
@@ -11,14 +13,11 @@ type CompanyApiResponse = {
   status: string;
 };
 
-type CompanyListApiResponse = {
-  items: CompanyApiResponse[];
-  total: number;
-};
 
 function mapCompany(company: CompanyApiResponse): Company {
   return {
     id: company.id,
+    createdAt: company.created_at ?? "",
     name: company.name,
     domain: company.domain ?? "",
     industry: company.industry ?? "",
@@ -28,8 +27,7 @@ function mapCompany(company: CompanyApiResponse): Company {
 }
 
 export async function getCompanies(): Promise<Company[]> {
-  const response = await apiRequest<CompanyListApiResponse>("/companies");
-  return response.items.map(mapCompany);
+  return (await allPages<CompanyApiResponse>("/companies")).map(mapCompany);
 }
 
 export async function createCompany(payload: CompanyFormValues): Promise<Company> {

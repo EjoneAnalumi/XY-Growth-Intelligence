@@ -4,6 +4,7 @@ import { BarChart3, Lightbulb, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/api/client";
 import { calculateIcpScore } from "@/lib/api/icp";
 import type { Company } from "@/types/company";
 import type { IcpScore, ServiceRecommendation } from "@/types/icp";
@@ -16,50 +17,6 @@ function formatTier(tier: string) {
   return tier.replaceAll("_", " ");
 }
 
-function buildRecommendation(score: IcpScore | null): ServiceRecommendation | null {
-  if (!score) {
-    return null;
-  }
-
-  const positiveRules = score.explanations
-    .filter((explanation) => explanation.points > 0)
-    .map((explanation) => explanation.ruleId);
-
-  if (positiveRules.includes("regulatory_context") || positiveRules.includes("cloud_usage")) {
-    return {
-      primary: "Cloud Security Assessment",
-      secondary: ["Compliance Readiness Review", "Managed SOC"],
-      reason: "The strongest score signals point to regulated cloud and control assurance needs.",
-      nextStep: "Schedule a discovery call focused on cloud environment, compliance scope, and evidence gaps.",
-    };
-  }
-
-  if (positiveRules.includes("industry_fit") || score.score >= 80) {
-    return {
-      primary: "Cyber Risk Snapshot",
-      secondary: ["External Attack Surface Review", "Executive Security Workshop"],
-      reason: "The company is a strong-fit prospect and should receive a concise executive risk view.",
-      nextStep: "Prepare a scoped snapshot and confirm the approved demo domain before outreach.",
-    };
-  }
-
-  if (score.score >= 60) {
-    return {
-      primary: "Security Discovery Workshop",
-      secondary: ["Cyber Risk Snapshot", "Compliance Readiness Review"],
-      reason: "The prospect has enough fit signals to justify qualification before a technical proposal.",
-      nextStep: "Book a qualification workshop and capture budget, timeline, and decision-maker details.",
-    };
-  }
-
-  return {
-    primary: "Nurture Follow-up",
-    secondary: ["Introductory Security Briefing"],
-    reason: "The current ICP score needs stronger commercial or technical signals before proposal work.",
-    nextStep: "Create a low-effort follow-up task and gather missing qualification information.",
-  };
-}
-
 export default function IcpScorePanel({ companies }: IcpScorePanelProps) {
   const [selectedCompanyId, setSelectedCompanyId] = useState(companies[0]?.id ?? "");
   const [score, setScore] = useState<IcpScore | null>(null);
@@ -70,7 +27,7 @@ export default function IcpScorePanel({ companies }: IcpScorePanelProps) {
     () => companies.find((company) => company.id === selectedCompanyId) ?? null,
     [companies, selectedCompanyId],
   );
-  const recommendation = buildRecommendation(score);
+  const [recommendation, setRecommendation] = useState<ServiceRecommendation | null>(null);
 
   useEffect(() => {
     if (!selectedCompanyId && companies.length > 0) {
@@ -89,6 +46,7 @@ export default function IcpScorePanel({ companies }: IcpScorePanelProps) {
       setError(null);
       const result = await calculateIcpScore(selectedCompanyId);
       setScore(result);
+      setRecommendation(await apiRequest<ServiceRecommendation>(`/companies/${selectedCompanyId}/recommendations`));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Failed to calculate ICP score.");
     } finally {

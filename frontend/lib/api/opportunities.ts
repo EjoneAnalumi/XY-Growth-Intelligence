@@ -27,9 +27,9 @@ type OpportunityApiResponse = {
   stage_id: string;
   name: string;
   service: string | null;
-  value_usd: number | null;
+  value_eur: number | null;
   probability: number | null;
-  weighted_value_usd: number | null;
+  weighted_value_eur: number | null;
   expected_close_date: string | null;
   owner_id: string | null;
   need: string | null;
@@ -87,9 +87,9 @@ function mapOpportunity(opportunity: OpportunityApiResponse): Opportunity {
     stageId: opportunity.stage_id,
     name: opportunity.name,
     service: opportunity.service ?? "",
-    valueUsd: opportunity.value_usd ?? 0,
+    valueEur: opportunity.value_eur ?? 0,
     probability: opportunity.probability ?? 0,
-    weightedValueUsd: opportunity.weighted_value_usd ?? 0,
+    weightedValueEur: opportunity.weighted_value_eur ?? 0,
     expectedCloseDate: opportunity.expected_close_date ?? "",
     ownerId: opportunity.owner_id,
     need: opportunity.need ?? "",
@@ -127,7 +127,7 @@ function buildOpportunityPayload(values: OpportunityFormValues) {
     stage_id: values.stageId,
     name: values.name,
     service: values.service || null,
-    value_usd: Number(values.valueUsd || 0),
+    value_eur: Number(values.valueEur || 0),
     probability: Number(values.probability || 0),
     expected_close_date: values.expectedCloseDate || null,
     need: values.need || null,
@@ -146,7 +146,7 @@ export function opportunityToFormValues(opportunity: Opportunity): OpportunityFo
     stageId: opportunity.stageId,
     name: opportunity.name,
     service: opportunity.service,
-    valueUsd: String(opportunity.valueUsd),
+    valueEur: String(opportunity.valueEur),
     probability: String(opportunity.probability),
     expectedCloseDate: opportunity.expectedCloseDate,
     need: opportunity.need,

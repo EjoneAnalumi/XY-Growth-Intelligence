@@ -138,10 +138,7 @@ def test_workflow_download_and_role_denials() -> None:
     assert 'class="cover"' in report["html_preview"]
     assert "penetration test" in report["html_preview"]
     for headers in (BD, READ_ONLY):
-        assert (
-            client.post("/reports/generate", headers=headers, json=_payload()).status_code
-            == 403
-        )
+        assert client.post("/reports/generate", headers=headers, json=_payload()).status_code == 403
     assert client.post("/reports/generate", headers=ADMIN, json=_payload()).status_code == 201
     assert (
         client.post(f"/reports/{report_id}/approve", headers=MANAGEMENT, json={}).status_code == 400
@@ -327,3 +324,17 @@ def test_openapi_documents_report_endpoints() -> None:
     assert "/reports/{report_id}/approve" in paths
     assert "/reports/{report_id}/share" in paths
     assert "/reports/{report_id}/download" in paths
+
+
+@pytest.mark.parametrize("state", ["draft", "review", "approved"])
+def test_management_can_archive_without_marking_shared(state):
+    report = _generate()
+    endpoint = f"/reports/{report['id']}"
+    if state in {"review", "approved"}:
+        assert client.post(f"{endpoint}/review", headers=ANALYST, json={}).status_code == 200
+    if state == "approved":
+        assert client.post(f"{endpoint}/approve", headers=MANAGEMENT, json={}).status_code == 200
+    result = client.post(f"{endpoint}/archive", headers=MANAGEMENT, json={})
+    assert result.status_code == 200
+    assert result.json()["status"] == "archived"
+    assert client.get(f"{endpoint}/download", headers=MANAGEMENT).status_code == 404

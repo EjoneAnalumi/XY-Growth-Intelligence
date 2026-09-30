@@ -30,7 +30,7 @@ def _create_company_and_contact() -> tuple[dict, dict]:
             "domain": "day-ten-finance.example",
             "industry": "Financial Services",
             "employee_count": 700,
-            "annual_revenue_usd": 80_000_000,
+            "annual_revenue_eur": 80_000_000,
             "headquarters_country": "United States",
             "cloud_usage": ["AWS", "Azure"],
             "regulatory_context": ["PCI DSS", "SOX"],
@@ -74,7 +74,7 @@ def test_week2_sales_workflow_gate_updates_dashboard() -> None:
             "stage_id": identified_stage_id,
             "name": "Week 2 Regression Managed SOC Pilot",
             "service": "Managed SOC",
-            "value_usd": 100000,
+            "value_eur": 100000,
             "probability": 50,
             "expected_close_date": "2026-09-30",
             "next_action": "Schedule technical discovery",
@@ -82,7 +82,7 @@ def test_week2_sales_workflow_gate_updates_dashboard() -> None:
     )
     assert opportunity.status_code == 201
     opportunity_body = opportunity.json()
-    assert opportunity_body["weighted_value_usd"] == 50000
+    assert opportunity_body["weighted_value_eur"] == 50000
 
     moved = client.patch(
         f"/opportunities/{opportunity_body['id']}/move-stage",
@@ -127,8 +127,8 @@ def test_week2_sales_workflow_gate_updates_dashboard() -> None:
     body = dashboard.json()
     assert body["total_opportunities"] == 1
     assert body["open_opportunities"] == 1
-    assert body["pipeline_value_usd"] == 100000
-    assert body["weighted_pipeline_value_usd"] == 50000
+    assert body["pipeline_value_eur"] == 100000
+    assert body["weighted_pipeline_value_eur"] == 50000
     assert body["activities_count"] == 1
     assert body["open_tasks"] == 1
     assert body["due_this_week_tasks"] == 1
@@ -224,7 +224,7 @@ def test_week2_non_writer_roles_cannot_mutate_sales_workflow(headers: dict[str, 
             json={"status": "completed"},
         ),
         client.delete(f"/tasks/{task['id']}", headers=headers),
-        client.post("/notes", headers=headers, json={"body": "Denied note."}),
+
         client.patch(
             f"/notes/{note['id']}",
             headers=headers,
@@ -234,6 +234,8 @@ def test_week2_non_writer_roles_cannot_mutate_sales_workflow(headers: dict[str, 
     ]
 
     assert {response.status_code for response in denied_requests} == {403}
+    created_note = client.post("/notes", headers=headers, json={"body": "Role note."})
+    assert created_note.status_code == (201 if headers == analyst_headers else 403)
 
     readable_paths = [
         "/companies",

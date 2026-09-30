@@ -65,7 +65,7 @@ def test_create_update_archive_opportunity_and_weighted_value() -> None:
             "stage_id": identified_stage_id,
             "name": "Managed SOC Pilot",
             "service": "Managed SOC",
-            "value_usd": 50000,
+            "value_eur": 50000,
             "probability": 40,
             "expected_close_date": "2026-09-30",
             "next_action": "Schedule pilot planning call",
@@ -74,16 +74,16 @@ def test_create_update_archive_opportunity_and_weighted_value() -> None:
 
     assert created.status_code == 201
     opportunity = created.json()
-    assert opportunity["weighted_value_usd"] == 20000
+    assert opportunity["weighted_value_eur"] == 20000
 
     updated = client.patch(
         f"/opportunities/{opportunity['id']}",
         headers=writer_headers,
-        json={"value_usd": 60000, "probability": 50},
+        json={"value_eur": 60000, "probability": 50},
     )
 
     assert updated.status_code == 200
-    assert updated.json()["weighted_value_usd"] == 30000
+    assert updated.json()["weighted_value_eur"] == 30000
 
     listed = client.get("/opportunities", headers=writer_headers)
     assert listed.status_code == 200

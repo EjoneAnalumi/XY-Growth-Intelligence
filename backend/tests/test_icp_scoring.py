@@ -25,7 +25,7 @@ def _create_strong_fit_company() -> dict:
             "domain": "blueharbor-finance.example",
             "industry": "Financial Services",
             "employee_count": 650,
-            "annual_revenue_usd": 75_000_000,
+            "annual_revenue_eur": 75_000_000,
             "headquarters_country": "United States",
             "cloud_usage": ["Azure", "AWS"],
             "regulatory_context": ["PCI DSS", "SOX"],

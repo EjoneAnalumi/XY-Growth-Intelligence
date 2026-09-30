@@ -3,7 +3,7 @@
 
 INSERT INTO public.companies (
     id, name, domain, website, industry, company_size, employee_range, employee_count,
-    annual_revenue_usd, headquarters_city, headquarters_country, cloud_usage, regulatory_context,
+    annual_revenue_eur, headquarters_city, headquarters_country, cloud_usage, regulatory_context,
     lead_source, tags, status, lifecycle_stage, fit_score, last_activity_at, next_action, next_action_due_at
 ) VALUES
     ('10000000-0000-4000-8000-000000000001', 'Northstar Robotics Labs', 'northstar-robotics.example', 'https://northstar-robotics.example', 'Manufacturing Technology', 'mid-market', '201-500', 420, 48000000.00, 'Austin', 'United States', ARRAY['AWS', 'Azure'], ARRAY['SOC 2'], 'conference', ARRAY['robotics', 'cloud'], 'qualified', 'qualified', 84, NOW() - INTERVAL '3 days', 'Book discovery workshop', NOW() + INTERVAL '4 days'),
@@ -126,8 +126,8 @@ ON CONFLICT (name) DO UPDATE SET
     updated_at = NOW();
 
 INSERT INTO public.opportunities (
-    id, company_id, contact_id, stage_id, name, service, value_usd, probability,
-    weighted_value_usd, expected_close_date, need, blockers, competitor, next_action,
+    id, company_id, contact_id, stage_id, name, service, value_eur, probability,
+    weighted_value_eur, expected_close_date, need, blockers, competitor, next_action,
     next_action_due_at, created_at, updated_at
 )
 SELECT
@@ -137,9 +137,9 @@ SELECT
     seed.stage_id,
     seed.name,
     seed.service,
-    seed.value_usd,
+    seed.value_eur,
     seed.probability,
-    ROUND(seed.value_usd * seed.probability / 100, 2),
+    ROUND(seed.value_eur * seed.probability / 100, 2),
     seed.expected_close_date,
     seed.need,
     seed.blockers,
@@ -171,15 +171,15 @@ FROM (
         ('60000000-0000-4000-8000-000000000019'::uuid, '10000000-0000-4000-8000-000000000019'::uuid, '20000000-0000-4000-8000-000000000029'::uuid, '30000000-0000-4000-8000-000000000011'::uuid, 'Ironclad legal negotiation', 'Security Assessment', 150000.00, 85, CURRENT_DATE + 138, 'Client data protection review', null, 'National consultancy', 'Confirm commercial approval', NOW() + INTERVAL '19 days', NOW() - INTERVAL '20 days'),
         ('60000000-0000-4000-8000-000000000020'::uuid, '10000000-0000-4000-8000-000000000020'::uuid, '20000000-0000-4000-8000-000000000031'::uuid, '30000000-0000-4000-8000-000000000013'::uuid, 'Jupiter edtech closed win', 'Cloud Security Review', 175000.00, 100, CURRENT_DATE - 1, 'FERPA review completed', null, null, 'Set renewal reminder', NOW() + INTERVAL '20 days', NOW() - INTERVAL '21 days')
 ) AS seed (
-    id, company_id, contact_id, stage_id, name, service, value_usd, probability,
+    id, company_id, contact_id, stage_id, name, service, value_eur, probability,
     expected_close_date, need, blockers, competitor, next_action, next_action_due_at,
     created_at
 )
 ON CONFLICT (id) DO UPDATE SET
     stage_id = EXCLUDED.stage_id,
-    value_usd = EXCLUDED.value_usd,
+    value_eur = EXCLUDED.value_eur,
     probability = EXCLUDED.probability,
-    weighted_value_usd = EXCLUDED.weighted_value_usd,
+    weighted_value_eur = EXCLUDED.weighted_value_eur,
     next_action = EXCLUDED.next_action,
     next_action_due_at = EXCLUDED.next_action_due_at,
     updated_at = NOW();

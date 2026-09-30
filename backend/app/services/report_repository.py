@@ -130,7 +130,7 @@ class InMemoryReportRepository:
             "archived",
             current_user,
             {"admin", "management"},
-            {"shared": "archived"},
+            {state: "archived" for state in ("draft", "review", "approved", "shared")},
         )
 
     def download_report(self, report_id: str, current_user: CurrentUser) -> dict[str, Any] | None:

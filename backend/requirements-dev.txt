@@ -1,6 +1,6 @@
 -r requirements.txt
-pytest==8.4.1
+pytest==9.0.3
 ruff==0.12.5
 httpx==0.28.1
 psycopg[binary]==3.2.9
-pypdf==5.9.0
+pypdf==6.16.1

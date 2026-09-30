@@ -41,7 +41,10 @@ export type TaskPriority = "low" | "medium" | "high" | "urgent";
 export type TaskStatus = "open" | "in_progress" | "completed" | "cancelled";
 
 export type Task = {
+  assignedBy?: string | null;
+  assignedAt?: string | null;
   id: string;
+  ownerId?: string | null;
   companyId: string | null;
   opportunityId: string | null;
   title: string;
@@ -59,6 +62,7 @@ export type Task = {
 };
 
 export type TaskFormValues = {
+  ownerId?: string;
   companyId: string;
   opportunityId: string;
   title: string;

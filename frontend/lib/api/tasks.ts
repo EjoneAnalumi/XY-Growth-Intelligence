@@ -2,7 +2,10 @@ import { apiRequest } from "@/lib/api/client";
 import type { Task, TaskFormValues } from "@/types/activity-task";
 
 type TaskApiResponse = {
+  assigned_by: string | null;
+  assigned_at: string | null;
   id: string;
+  owner_id: string | null;
   company_id: string | null;
   opportunity_id: string | null;
   title: string;
@@ -27,6 +30,9 @@ type TaskListApiResponse = {
 function mapTask(task: TaskApiResponse): Task {
   return {
     id: task.id,
+    assignedBy: task.assigned_by,
+    assignedAt: task.assigned_at,
+    ownerId: task.owner_id,
     companyId: task.company_id,
     opportunityId: task.opportunity_id,
     title: task.title,
@@ -46,6 +52,7 @@ function mapTask(task: TaskApiResponse): Task {
 
 function buildTaskPayload(values: TaskFormValues) {
   return {
+    owner_id: values.ownerId === "unassigned" ? null : values.ownerId || undefined,
     company_id: values.companyId || null,
     opportunity_id: values.opportunityId || null,
     title: values.title,
@@ -70,10 +77,10 @@ export async function createTask(values: TaskFormValues): Promise<Task> {
   return mapTask(response);
 }
 
-export async function completeTask(id: string): Promise<Task> {
+export async function completeTask(id: string, outcome = ""): Promise<Task> {
   return mapTask(await apiRequest<TaskApiResponse>(`/tasks/${id}`, {
     method: "PATCH",
-    body: JSON.stringify({ status: "completed" }),
+    body: JSON.stringify({ status: "completed", outcome }),
   }));
 }
 

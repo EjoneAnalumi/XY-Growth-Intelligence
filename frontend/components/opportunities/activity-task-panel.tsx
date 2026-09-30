@@ -8,8 +8,10 @@ import { ErrorState, LoadingState } from "@/components/ui/async-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { archiveActivity, createActivity, getActivities, updateActivity } from "@/lib/api/activities";
-import { archiveNote, createNote, getNotes, updateNote, type Note } from "@/lib/api/notes";
+import { deleteNote, deleteNoteForMe, createNote, getNotes, updateNote, type Note } from "@/lib/api/notes";
 import { archiveTask, completeTask, createTask, getTasks, updateTask } from "@/lib/api/tasks";
+import { getSession } from "@/lib/auth";
+import { refreshInbox } from "@/lib/api/inbox";
 import { getUsers } from "@/lib/api/users";
 import type {
   Activity,
@@ -49,6 +51,7 @@ export default function ActivityTaskPanel({
   companies,
   contacts,
 }: ActivityTaskPanelProps) {
+  const profile = getSession()?.profile;
   const [activities, setActivities] = useState<Activity[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -78,6 +81,18 @@ export default function ActivityTaskPanel({
     priority: "medium",
     status: "open",
   });
+
+  async function removeNote(note: Note, everyone: boolean) {
+    if (!window.confirm(everyone ? "Delete this note for everyone?" : "Delete this note for yourself? Everyone else can still see it.")) return;
+    try {
+      if (everyone) await deleteNote(note.id);
+      else await deleteNoteForMe(note.id);
+      setNotes((items) => items.filter((item) => item.id !== note.id));
+      refreshInbox();
+    } catch {
+      setError("Note could not be deleted.");
+    }
+  }
 
   const loadRecords = useCallback(async () => {
     try {
@@ -442,10 +457,8 @@ export default function ActivityTaskPanel({
                 const updated = await updateNote(note.id, body.trim());
                 setNotes((items) => items.map((item) => item.id === note.id ? updated : item));
               }}>Edit</Button>
-              <Button type="button" variant="outline" onClick={async () => {
-                await archiveNote(note.id);
-                setNotes((items) => items.filter((item) => item.id !== note.id));
-              }}>Archive</Button>
+              <Button type="button" variant="outline" onClick={() => removeNote(note, false)}>Delete for myself</Button>
+              {(profile?.role === "admin" || note.createdBy === profile?.id) && <Button type="button" variant="outline" onClick={() => removeNote(note, true)}>Delete for everyone</Button>}
             </div>
           </div>)}
         </div>

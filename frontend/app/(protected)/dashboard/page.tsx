@@ -13,10 +13,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/async-state";
 import { useDashboardSummary } from "@/hooks/use-dashboard-summary";
+import { ManagementAnalytics } from "@/components/management-analytics";
+import { useEffect, useState } from "react";
+import { getUsers } from "@/lib/api/users";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
-  currency: "USD",
+  currency: "EUR",
   maximumFractionDigits: 0,
 });
 
@@ -26,17 +29,19 @@ function formatCurrency(value: number) {
 
 export default function DashboardPage() {
   const { summary, loading, error, refreshSummary } = useDashboardSummary();
+  const [ownerNames, setOwnerNames] = useState<Record<string, string>>({});
+  useEffect(() => { void getUsers().then((users) => setOwnerNames(Object.fromEntries(users.map((u) => [u.id, u.full_name])))).catch(() => undefined); }, []);
 
   const kpis = [
     {
       label: "Open pipeline",
-      value: summary ? formatCurrency(summary.pipelineValueUsd) : "-",
+      value: summary ? formatCurrency(summary.pipelineValueEur) : "-",
       detail: `${summary?.openOpportunities ?? 0} active opportunities`,
       icon: TrendingUp,
     },
     {
       label: "Weighted pipeline",
-      value: summary ? formatCurrency(summary.weightedPipelineValueUsd) : "-",
+      value: summary ? formatCurrency(summary.weightedPipelineValueEur) : "-",
       detail: `${summary?.highPriorityOpportunities ?? 0} high-priority deals`,
       icon: Target,
     },
@@ -90,7 +95,7 @@ export default function DashboardPage() {
           <p><strong>Admin:</strong> full CRM access and pipeline configuration.</p>
           <p><strong>Management:</strong> CRM oversight, stage configuration, and report approval/sharing.</p>
           <p><strong>Business Development:</strong> companies, contacts, opportunities, activities, tasks, and notes.</p>
-          <p><strong>Technical Analyst:</strong> approved scans and draft technical reports; CRM records are read-only.</p>
+          <p><strong>Technical Analyst:</strong> approved scans, draft reports, own assigned task completion and team notes; sales records remain read-only.</p>
         </div>
       </section>
 
@@ -158,8 +163,11 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">{opportunity.reason}</p>
+                <p className="mt-2 text-sm">Owner: {ownerNames[opportunity.ownerId ?? ""] ?? opportunity.ownerId ?? "Unassigned"}</p>
+                <p className="text-sm">Next action: {opportunity.nextAction || "Not recorded"}</p>
+                <p className="text-sm">Due: {opportunity.dueAt ? new Date(opportunity.dueAt).toLocaleString() : "No due date"}</p>
                 <p className="mt-2 text-sm font-medium">
-                  {formatCurrency(opportunity.weightedValueUsd)} weighted
+                  {formatCurrency(opportunity.weightedValueEur)} weighted
                 </p>
               </Link>
             ))}
@@ -204,13 +212,14 @@ export default function DashboardPage() {
                     <p className="text-muted-foreground">{stage.opportunityCount}</p>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    {formatCurrency(stage.weightedValueUsd)} weighted
+                    {formatCurrency(stage.weightedValueEur)} weighted
                   </p>
                 </div>
               ))}
           </div>
         </article>
       </section>
+      <ManagementAnalytics />
     </div>
   );
 }

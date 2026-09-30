@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import { emptyInbox, getInbox } from "@/lib/api/inbox";
 
 import { Button } from "@/components/ui/button";
 import { getSession, signOut } from "@/lib/auth";
@@ -35,13 +36,16 @@ const navigation: NavigationItem[] = [
   { href: "/companies", label: "Companies", icon: Building2 },
   { href: "/contacts", label: "Contacts", icon: UsersRound },
   { href: "/opportunities", label: "Opportunities", icon: Target },
+  { href: "/tasks", label: "Tasks", icon: StickyNote },
+  { href: "/data", label: "Data exchange", icon: Building2 },
   { href: "/notes", label: "Staff Notes", icon: StickyNote },
   { href: "/users", label: "Users", icon: UsersRound, roles: ["admin"] },
+  { href: "/administration", label: "Administration", icon: KeyRound, roles: ["admin"] },
   {
     href: "/security-scans",
     label: "Security Scans",
     icon: Radar,
-    roles: ["technical_analyst"]
+    roles: ["admin", "management", "technical_analyst"]
   },
   { href: "/reports", label: "Reports", icon: BarChart3 }
 ];
@@ -59,6 +63,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const session = getSession();
+  const [inbox, setInbox] = useState(emptyInbox);
+  useEffect(() => {
+    const refresh = () => { void getInbox().then(setInbox).catch(() => setInbox(emptyInbox)); };
+    refresh();
+    window.addEventListener("inbox-changed", refresh);
+    window.addEventListener("focus", refresh);
+    return () => { window.removeEventListener("inbox-changed", refresh); window.removeEventListener("focus", refresh); };
+  }, [pathname]);
   const visibleNavigation = navigation.filter(
     (item) => !item.roles || (session?.profile && item.roles.includes(session.profile.role))
   );
@@ -131,6 +143,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {visibleNavigation.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
+              const unread = item.href === "/tasks" ? inbox.unread_task_ids.length : item.href === "/notes" ? inbox.unread_note_ids.length : 0;
 
               return (
                 <Link
@@ -147,10 +160,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                 >
                   <Icon className="size-4" aria-hidden="true" />
                   {item.label}
+                  {unread > 0 && <span className="ml-auto rounded-full bg-foreground px-2 py-0.5 text-xs text-background" aria-label={`${unread} unread`}>{unread}</span>}
                 </Link>
               );
             })}
           </nav>
+          {(inbox.overdue_tasks > 0 || inbox.due_soon_tasks > 0) && <Link href="/tasks" className="mt-4 block rounded-md border p-3 text-sm">Your deadlines: {inbox.overdue_tasks} overdue · {inbox.due_soon_tasks} due within 24 hours</Link>}
 
           <div className="mt-4 border-t pt-4 lg:hidden">
             <Button type="button" variant="outline" className="w-full" onClick={handleSignOut}>

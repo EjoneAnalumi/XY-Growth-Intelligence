@@ -1,301 +1,101 @@
 # XY CYBER Growth Intelligence
 
-Internal Growth Intelligence MVP for the XY CYBER one-month internship project. The monorepo contains a FastAPI backend, a Next.js frontend, Supabase PostgreSQL migrations and synthetic seed data, and local Docker configuration.
+An internal platform for managing prospects, tracking sales opportunities and follow-ups,
+and preparing reviewed Cyber Risk Snapshot reports. Built as a single monorepo for the
+XY CYBER internship MVP, using synthetic data.
 
-## Final internship handover
+## Features
 
-Start with the [submission readiness review, 30-09-2026](docs/week4-day20-submission-readiness.md)
-for current checks and outstanding release steps. The latest work is on the MVP completion feature branch; the existing release tag predates it.
+- Companies and contacts with editable profiles, search, sorting and activity timelines.
+- Opportunity pipeline with Kanban/table views, stage history and EUR values.
+- Configurable ICP scoring, service recommendations and management analytics.
+- Assigned tasks, deadline reminders, team notes and personal unread indicators.
+- Approved mock security snapshots, report previews, review/approval and PDF downloads.
+- Role-based access, user administration and CSV import/export.
 
-The latest review follow-up covers EUR, personal task/note unread counts, sorting and report usability:
-[review evidence, 29-09-2026](docs/week4-day20-review-usability-evidence.md).
+## Tech stack
 
-The implementation baseline and earlier validation record is
-[MVP completion evidence, 28-09-2026](docs/week4-day20-mvp-completion-evidence.md).
-It supersedes the functional gap status in the earlier handover below; the earlier
-release and its evidence remain historical records.
+| Layer | Technologies |
+| --- | --- |
+| Frontend | Next.js, TypeScript, Tailwind CSS, shadcn/ui |
+| Backend | Python 3.12, FastAPI, Pydantic |
+| Database and authentication | Supabase PostgreSQL, Auth, Row Level Security |
+| Report storage | Supabase Storage |
+| Development and testing | Docker, Docker Compose, pytest, Ruff, Vitest, Playwright |
 
-Start with [Day 20 handover and evidence](docs/week4-day20-handover-evidence.md),
-[operator/demo guide](docs/week4-day20-demo-user-guide.md), and
-[limitations and prioritized backlog](docs/week4-day20-limitations-backlog.md).
-The tagged internship release is a local synthetic MVP; the handover records remaining
-brief deviations explicitly and does not authorize production deployment.
+## Run locally
 
-## Current MVP status
+Requires **Python 3.12**, **Node.js 22.12+**, **Git**, and **Docker Desktop** running
+Linux containers. Commands below use Windows PowerShell.
 
-Implemented flows include editable company/contact profiles and timelines, searchable lists,
-opportunity pipelines, standalone tasks, configurable ICP scoring, backend service recommendations,
-management analytics, safe mock snapshots, branded PDF reports, and CSV exchange for companies,
-contacts, opportunities, activities and tasks. Administration includes ICP weights, service
-catalogue, stages, users and audit browsing.
-
-Important current limitations:
-
-- Staff authentication uses invitation-only Supabase Auth sessions. Public registration is disabled; Admin users invite staff and assign roles.
-- When `DATABASE_URL` is configured, companies, contacts, opportunities, activities, tasks, and notes use the Supabase PostgreSQL database and survive browser logout and backend restart. Unit tests without a database URL retain an isolated in-memory repository.
-- CSV, snapshot, and report paths also use PostgreSQL persistence.
-- Docker Compose starts the backend only. Run the frontend separately with npm.
-- Use synthetic data only. Never place hosted credentials, production keys, or real customer/prospect data in this repository.
-
-Local Supabase provides seeded synthetic accounts for development. Production must configure its own invited users, redirect URLs, SMTP provider, and scoped secrets.
-
-See [`docs/week4-day18-website-change-handoff.md`](docs/week4-day18-website-change-handoff.md) for the consolidated implementation, security, verification, and remaining-work record.
-
-## Prerequisites
-
-Install these before cloning:
-
-- Git
-- Python 3.12
-- Node.js 22 LTS (22.12 or newer) with npm
-- Docker Desktop configured for Linux containers
-
-The commands below are tested with Windows PowerShell. Use `npm.cmd` and `npx.cmd` because PowerShell may block the `npm.ps1` and `npx.ps1` shims.
-
-Verify the tools:
-
-```powershell
-git --version
-python --version
-node --version
-npm.cmd --version
-docker --version
-docker compose version
-docker info
-```
-
-`docker info` must show a running server. If it cannot connect to `dockerDesktopLinuxEngine`, start Docker Desktop and wait until the engine is ready.
-
-## Clean installation
-
-### 1. Clone and create the local environment file
+### 1. Install dependencies
 
 ```powershell
 git clone https://github.com/EjoneAnalumi/XY-Growth-Intelligence.git
-Set-Location XY-Growth-Intelligence
+cd XY-Growth-Intelligence
 Copy-Item .env.example .env
+
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements-dev.txt
+
+cd frontend
+npm.cmd ci
+cd ..
 ```
 
-`.env` is ignored by Git. Keep all generated local values and any hosted secrets out of commits, screenshots, documentation, and chat messages.
-
-### 2. Start local Supabase
-
-This project pins the tested CLI version in each command, so a global Supabase CLI installation is not required. The first start downloads several Docker images and can take multiple minutes.
+### 2. Start the database and app
 
 ```powershell
 npx.cmd --yes supabase@2.115.0 start
-```
-
-On Windows, Docker can report Auth and Mailpit as unhealthy even when their processes are serving. If the command times out after migrations and seed data complete, use the CLI-supported workaround and then inspect status:
-
-```powershell
-npx.cmd --yes supabase@2.115.0 start --ignore-health-check
-npx.cmd --yes supabase@2.115.0 status
-```
-
-Copy only these generated **local** values from `supabase status` into the matching placeholders in the ignored `.env` file:
-
-- `ANON_KEY` -> `SUPABASE_ANON_KEY` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SERVICE_ROLE_KEY` -> `SUPABASE_SERVICE_ROLE_KEY`
-
-Do not place `SERVICE_ROLE_KEY` in any `NEXT_PUBLIC_*` variable. Never use hosted or production keys for local development.
-
-For the first clean installation only, apply every tracked migration and recreate the synthetic dataset:
-
-```powershell
-npx.cmd --yes supabase@2.115.0 db reset
-```
-
-The configuration reads migrations from `database/migrations/**/*.sql` and seed data from `database/seed/seed.sql`.
-SQL creates the CRM fixtures and five scans. After backend dependencies and local environment
-variables are ready in step 3, complete the five report fixtures with `python -m app.seed_reports`.
-Reports require actual private Storage uploads, so SQL alone cannot complete them.
-
-> **Warning:** `supabase db reset` deletes locally created notes, users, and CRM changes. Do not run it during normal startup or after restarting the laptop.
-
-For normal daily use, run this single command from the repository root:
-
-```powershell
+.\.venv\Scripts\Activate.ps1
 powershell.exe -ExecutionPolicy Bypass -File .\scripts\start-local.ps1
 ```
 
-It starts the existing Supabase database without resetting it and launches both the backend and frontend with persistent PostgreSQL storage enabled.
+The startup script reads local Supabase configuration and starts the backend and frontend
+in separate terminals. It preserves existing local data. Both services must be running.
+For first-time database/report seeding, manual startup, Docker Compose and troubleshooting,
+follow the [complete setup guide](docs/week4-day20-local-setup-guide.md).
 
-Local service URLs:
+| Service | Address |
+| --- | --- |
+| Application | http://localhost:3000/login |
+| Backend API docs | http://localhost:8000/docs |
+| Supabase Studio | http://localhost:54323 |
+| Local test email | http://localhost:54324 |
 
-- Supabase API: http://127.0.0.1:54321
-- Supabase Studio: http://127.0.0.1:54323
-- Mailpit: http://127.0.0.1:54324
-- PostgreSQL: `127.0.0.1:54322`
+Sign in with a local synthetic account or an invited staff account. Local demo account
+setup is defined in [the seed migration](database/migrations/20260815000001_report_persistence.sql).
 
-### 3. Install and verify the backend
-
-From the repository root:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r backend\requirements-dev.txt
-.\.venv\Scripts\python.exe -m pytest
-.\.venv\Scripts\python.exe -m ruff check backend
-```
-
-Run the integrated Supabase Auth backend container from the repository root. This block reads local-only values into the current PowerShell process without printing or committing them:
+After pulling database changes, apply migrations without resetting your records:
 
 ```powershell
-$lines = npx.cmd --yes supabase@2.115.0 status -o env 2>$null
-foreach ($line in $lines) {
-    if ($line -match '^([A-Z_]+)="(.*)"$') {
-        Set-Item -Path "Env:$($matches[1])" -Value $matches[2]
-    }
-}
-$env:BACKEND_PORT = '8000'
-$env:AUTH_MODE = 'supabase'
-$env:SUPABASE_URL = $env:API_URL
-$env:SUPABASE_ANON_KEY = $env:ANON_KEY
-$env:SUPABASE_SERVICE_ROLE_KEY = $env:SERVICE_ROLE_KEY
-$env:DATABASE_URL = $env:DB_URL
-$env:APP_ENV = 'local'
-# Completes the local seed with five real PDFs; preserves existing report states.
-Push-Location backend
-..\.venv\Scripts\python.exe -m app.seed_reports
-Pop-Location
-docker compose up --build --detach
-docker compose ps
+npx.cmd --yes supabase@2.115.0 migration up --local
 ```
 
-The Compose configuration translates host Supabase addresses to `host.docker.internal` inside the backend container. It does not start the frontend or Supabase.
-
-Verify the backend at http://localhost:8000/health. The expected response is:
-
-```json
-{"status":"ok"}
-```
-
-API documentation is available at http://localhost:8000/docs.
-
-### 4. Install and verify the frontend
-
-Open another PowerShell terminal only when running the services manually instead of using `scripts/start-local.ps1`:
-
-```powershell
-# Run this from the repository cloned in step 1; do not use a machine-specific
-# worktree path from a previous developer environment.
-$repo = (Get-Location).Path
-Set-Location $repo
-$lines = npx.cmd --yes supabase@2.115.0 status -o env 2>$null
-foreach ($line in $lines) {
-    if ($line -match '^([A-Z_]+)="(.*)"$') {
-        Set-Item -Path "Env:$($matches[1])" -Value $matches[2]
-    }
-}
-$env:NEXT_PUBLIC_API_BASE_URL = 'http://localhost:8000'
-$env:NEXT_PUBLIC_SUPABASE_URL = $env:API_URL
-$env:NEXT_PUBLIC_SUPABASE_ANON_KEY = $env:ANON_KEY
-Set-Location frontend
-npm.cmd ci
-npm.cmd run typecheck
-npm.cmd run lint
-npm.cmd run dev -- --port 3000
-```
-
-Open http://localhost:3000/login. Run both services from this checkout. Local synthetic account identities are documented in `database/migrations/20260815000001_report_persistence.sql`; use those only on the local stack.
-
-### 5. Shut everything down
-
-Stop a directly run backend/frontend with `Ctrl+C`. From the repository root, stop the managed containers:
-
-```powershell
-docker compose down
-npx.cmd --yes supabase@2.115.0 stop
-```
-
-## Supabase-enabled backend checks
-
-The default test command intentionally runs without database credentials and skips environment-dependent report/RLS integration cases. To run the local integration groups, obtain values from `supabase status`, set them only in the current shell, and run:
-
-```powershell
-$env:AUTH_MODE='local' # Integration suite uses synthetic test-role tokens; live UI uses supabase.
-$env:DATABASE_URL='<local DB_URL>'
-$env:SUPABASE_DB_URL='<local DB_URL>'
-$env:SUPABASE_URL='<local API_URL>'
-$env:SUPABASE_SERVICE_ROLE_KEY='<local SERVICE_ROLE_KEY>'
-.\.venv\Scripts\python.exe -m pytest backend\tests\test_reports.py backend\tests\test_week2_rls_permissions.py
-```
-
-Do not paste the values into tracked scripts. CSV unit cases explicitly use their in-memory repository, while a separate isolated CSV integration case verifies PostgreSQL import/export without deleting or depending on the normal seeded companies.
-
-## Troubleshooting
-
-### Compose says `.env` is missing
-
-```powershell
-Copy-Item .env.example .env
-```
-
-### Docker cannot connect
-
-Start Docker Desktop, ensure Linux containers are enabled, wait for startup, and rerun `docker info`.
-
-### PowerShell blocks npm, npx, or Codex scripts
-
-Use the Windows command shims: `npm.cmd`, `npx.cmd`, and `codex.cmd`.
-
-### Supabase reports `exec format error`
-
-Use the exact image names printed by the Supabase error. Stop Supabase, remove only those named cached images, and retry. For the two images observed during the Day 18 Windows test:
+To stop, press `Ctrl+C` in the backend/frontend terminals, then run:
 
 ```powershell
 npx.cmd --yes supabase@2.115.0 stop
-docker image rm --force public.ecr.aws/supabase/mailpit:v1.30.2 public.ecr.aws/supabase/postgrest:v16.1
-npx.cmd --yes supabase@2.115.0 start
 ```
 
-Do not remove unrelated images or volumes.
+Keep credentials in local environment configuration, never in Git. Use synthetic data only.
 
-### Auth or Mailpit stays unhealthy
-
-Check the container logs first. If they show the services started and the standard command only fails its health gate, use:
-
-```powershell
-npx.cmd --yes supabase@2.115.0 start --ignore-health-check
-npx.cmd --yes supabase@2.115.0 status
-```
-
-This is a local Windows/Docker workaround, not permission to ignore failures in hosted or production environments.
-
-### A port is already occupied
-
-The local stack requires ports `3000`, `8000`, and `54320` through `54329`. Stop the conflicting process or intentionally change all matching configuration references before retrying.
-
-Before starting the app, inspect only its expected ports:
-
-```powershell
-Get-NetTCPConnection -State Listen -LocalPort 3000,3001,3002,8000,8001 -ErrorAction SilentlyContinue |
-    Select-Object LocalAddress,LocalPort,OwningProcess
-```
-
-Stop a confirmed stale Node/Python process by its displayed PID, then stop any old Compose backend:
-
-```powershell
-Stop-Process -Id <PID> -Force
-docker compose down
-```
-
-Run `docker compose down` from the repository root.
-
-Do not stop ports `54320` through `54329` when keeping local Supabase available. If `127.0.0.1:8000` still serves a response but its reported PID does not exist in `Get-Process` or `tasklist`, Windows has retained an orphaned listener. Restart Windows before starting Docker Desktop and the commands above; repeated app starts cannot safely clear a nonexistent process.
-
-## Repository structure
+## Project structure
 
 ```text
-backend/             FastAPI application and pytest suite
-frontend/            Next.js application and frontend tests
-database/migrations/ PostgreSQL migrations
-database/seed/       Synthetic seed data
-supabase/            Local Supabase configuration
-docs/                Architecture, API, decisions, and internship evidence
-sample-data/         Synthetic CSV fixtures
-docker-compose.yml   Backend container for local development
+backend/       FastAPI application and tests
+frontend/      Next.js application and tests
+database/      Migrations and synthetic seed data
+supabase/      Local Supabase configuration and mirrored migrations
+docs/          Setup, architecture, API reference and project evidence
+sample-data/   Example CSV files
+scripts/       Local startup helper
 ```
 
-See `docs/week4-day20-architecture-operations.md`, `docs/api-contract.md`, and `docs/decision-log.md` for current implementation details and recorded decisions.
+## Documentation
+
+- [Setup, test commands and troubleshooting](docs/week4-day20-local-setup-guide.md)
+- [Architecture and operations](docs/week4-day20-architecture-operations.md)
+- [API reference](docs/api-contract.md)
+- [User guide](docs/week4-day20-demo-user-guide.md)
+- [Validation results and remaining work](docs/week4-day20-submission-readiness.md)
